@@ -9,6 +9,7 @@
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="auto"/>
+            <RowDefinition Height="auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="auto"/>
         </Grid.RowDefinitions>
@@ -26,15 +27,19 @@
             </Button.Content>
             </Button>
         </StackPanel>
-        <DataGrid Grid.Row="1" Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Top" x:Name="RecentProjects"
-                  AutoGenerateColumns="False">
-            <DataGrid.Columns>
-                <DataGridTextColumn Header="Title" Binding="{Binding Title}"/>
-                <DataGridTextColumn Header="Created On" Binding="{Binding CreatedOn}"/>
-                <DataGridTextColumn Header="Modified On" Binding="{Binding ModifiedOn}"/>
-                <DataGridTextColumn Header="Length" Binding="{Binding Length}"/>
-                <DataGridTextColumn Header="Scenes" Binding="{Binding Scenes}"/>
-            </DataGrid.Columns>
-        </DataGrid>
+        <StackPanel Orientation="Vertical" Grid.Row="1" Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Top"
+                    Margin="150 5">
+            <TextBlock Text="Projects" FontWeight="Bold" FontSize="30"/>
+            <DataGrid  x:Name="RecentProjects" AutoGenerateColumns="False">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Title" Binding="{Binding Title}"/>
+                    <DataGridTextColumn Header="Created On" Binding="{Binding CreatedOn}"/>
+                    <DataGridTextColumn Header="Modified On" Binding="{Binding ModifiedOn}"/>
+                    <DataGridTextColumn Header="Length" Binding="{Binding Length}"/>
+                    <DataGridTextColumn Header="Scenes" Binding="{Binding Scenes}"/>
+                </DataGrid.Columns>
+            </DataGrid>
+        </StackPanel>
+        
     </Grid>
 </UserControl>

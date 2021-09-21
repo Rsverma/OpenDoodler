@@ -1,5 +1,6 @@
 ﻿using Caliburn.Micro;
 using OpenBoardAnim.Models;
+using OpenBoardAnim.Views;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -18,11 +19,18 @@ namespace OpenBoardAnim.ViewModels
 
         protected override void OnViewLoaded(object view)
         {
-            RecentProjects.Add(new ProjectRowModel());
+            RecentProjects.Add(new ProjectRowModel { Title = "Project1" });
+            RecentProjects.Add(new ProjectRowModel { Title = "Project2" });
             base.OnViewLoaded(view);
         }
-        public async Task CreateNew()
+        public async void CreateNew()
         {
+            CreateNewView popUp = new CreateNewView();
+
+            if (popUp.ShowDialog() == true)
+            {
+                
+            }
         }
 
         private ObservableCollection<ProjectRowModel> _recentProjects = new ObservableCollection<ProjectRowModel>();
