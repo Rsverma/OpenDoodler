@@ -7,7 +7,7 @@ using System.Windows.Media.Animation;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 
-namespace WPFExperiments
+namespace OpenBoardAnim
 {
     /// <summary>
     /// Interaction logic for MainWindow.xaml

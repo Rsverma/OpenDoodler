@@ -14,7 +14,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 
-namespace WPFExperiments
+namespace OpenBoardAnim
 {
     /// <summary>
     /// Interaction logic for Page1.xaml
