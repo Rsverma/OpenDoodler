@@ -6,18 +6,19 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:OpenBoardAnim.Views"
         mc:Ignorable="d" ShowNonClientArea="False" SizeToContent="WidthAndHeight" 
-        hc:WindowAttach.IsDragElement="True"  ShowInTaskbar="False"
-        ActiveGlowColor="{DynamicResource PrimaryColor}"
-        Title="Create New Project">
-    <Grid Width="500" Height="400" Margin="10">
+        hc:WindowAttach.IsDragElement="True" WindowStartupLocation="CenterScreen"  ShowInTaskbar="False"
+        ActiveGlowColor="{DynamicResource PrimaryColor}">
+    <Grid Width="500" Height="350" Margin="10">
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*"/>
-            <ColumnDefinition Width="*"/>
-            <ColumnDefinition Width="*"/>
-            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="3*"/>
+            <ColumnDefinition Width="2*"/>
+            <ColumnDefinition Width="2*"/>
+            <ColumnDefinition Width="3*"/>
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
-            <RowDefinition Height="*"/>
+            <RowDefinition Height="auto"/>
+            <RowDefinition Height="auto"/>
+            <RowDefinition Height="0.5*"/>
             <RowDefinition Height="auto"/>
             <RowDefinition Height="auto"/>
             <RowDefinition Height="*"/>
@@ -25,44 +26,52 @@
             <RowDefinition Height="auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="auto"/>
+            <RowDefinition Height="auto"/>
+            <RowDefinition Height="*"/>
             <RowDefinition Height="auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
-        <TextBlock Text="Style:" Grid.Row="1" Grid.Column="0"/>
-        <hc:UniformSpacingPanel Grid.Row="2" Grid.ColumnSpan="4" Spacing="10">
-            <Button Height="75" Width="100" Padding="5">
-                <Button.Content>
+        <TextBlock Text="Create New Video" FontWeight="Bold" />
+        <Separator Grid.ColumnSpan="4" Grid.Row="1" FontWeight="Bold"/>
+        <TextBlock Text="Style:" Grid.Row="3" Grid.Column="0"/>
+        <hc:UniformSpacingPanel Grid.Row="4" Grid.ColumnSpan="4" Spacing="10">
+            <RadioButton Height="75" Width="100" Padding="5" Style="{StaticResource RadioButtonIcon}" >
+                <RadioButton.Content>
                     <StackPanel Orientation="Vertical">
                         <Rectangle Fill="LightGray" Height="50"/>
                         <TextBlock Text="White Board"/>
                     </StackPanel>
-                </Button.Content>
-            </Button>
-            <Button Height="75" Width="100" Padding="5">
-                <Button.Content>
+                </RadioButton.Content>
+            </RadioButton>
+            <RadioButton  Height="75" Width="100" Padding="5" Style="{StaticResource RadioButtonIcon}">
+                <RadioButton.Content>
                     <StackPanel Orientation="Vertical">
                         <Rectangle Fill="Black" Height="50"/>
                         <TextBlock Text="Black Board"/>
                     </StackPanel>
-                </Button.Content>
-            </Button>
-            <Button Height="75" Width="100" Padding="5">
-                <Button.Content>
+                </RadioButton.Content>
+            </RadioButton>
+            <RadioButton  Height="75" Width="100" Padding="5" Style="{StaticResource RadioButtonIcon}">
+                <RadioButton.Content>
                     <StackPanel Orientation="Vertical">
                         <Rectangle Fill="Green" Height="50"/>
                         <TextBlock Text="Green Board"/>
                     </StackPanel>
-                </Button.Content>
-            </Button>
+                </RadioButton.Content>
+            </RadioButton>
         </hc:UniformSpacingPanel>
-        <TextBlock Text="Title:" Grid.Row="4" Grid.Column="0"/>
-        <TextBox x:Name="Title" Grid.Row="5" Grid.ColumnSpan="4" HorizontalAlignment="Stretch"/>
-        <TextBlock Text="Resolution:" Grid.Row="7" Grid.Column="0"/>
-        <ComboBox x:Name="Resolution" Grid.Row="8" Grid.Column="0"/>
-        <TextBlock Text="Width:" Grid.Row="7" Grid.Column="1"/>
-        <hc:NumericUpDown x:Name="Width" Grid.Row="8" Grid.Column="1"/>
-        <TextBlock Text="Height:" Grid.Row="7" Grid.Column="2"/>
-        <hc:NumericUpDown x:Name="Height" Grid.Row="8" Grid.Column="2"/>
-        <CheckBox x:Name="Aspect" IsThreeState="False" Content="Constrain aspect ratio" Grid.Row="8" Grid.Column="3"/>
+        <TextBlock Text="Title:" Grid.Row="6" Grid.Column="0"/>
+        <TextBox x:Name="Title" Grid.Row="7" Grid.ColumnSpan="4" HorizontalAlignment="Stretch"/>
+        <TextBlock Text="Resolution:" Grid.Row="9" Grid.Column="0"/>
+        <ComboBox x:Name="Resolution" Grid.Row="10" Grid.Column="0"/>
+        <TextBlock Text="Width:" Grid.Row="9" Grid.Column="1"/>
+        <hc:NumericUpDown x:Name="Width" Grid.Row="10" Grid.Column="1"/>
+        <TextBlock Text="Height:" Grid.Row="9" Grid.Column="2"/>
+        <hc:NumericUpDown x:Name="Height" Grid.Row="10" Grid.Column="2"/>
+        <CheckBox x:Name="Aspect" IsThreeState="False" Content="Constrain aspect ratio" Grid.Row="10" Grid.Column="3"/>
+        <WrapPanel Grid.Row="12" Grid.ColumnSpan="4" HorizontalAlignment="Center">
+            <Button IsDefault="True" Name="btnDialogOk" Click="btnDialogOk_Click" MinWidth="60" Background="Green" Margin="0,0,10,0">_Ok</Button>
+            <Button IsCancel="True" MinWidth="60">_Cancel</Button>
+        </WrapPanel>
     </Grid>
 </hc:GlowWindow>
