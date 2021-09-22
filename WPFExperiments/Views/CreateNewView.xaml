@@ -6,7 +6,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:OpenBoardAnim.Views"
         mc:Ignorable="d" ShowNonClientArea="False" SizeToContent="WidthAndHeight" 
-        hc:WindowAttach.IsDragElement="True" WindowStartupLocation="CenterScreen"  ShowInTaskbar="False"
+         WindowStartupLocation="CenterOwner"  ShowInTaskbar="False"
         ActiveGlowColor="{DynamicResource PrimaryColor}">
     <Grid Width="500" Height="350" Margin="10">
         <Grid.ColumnDefinitions>
