@@ -5,9 +5,14 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:OpenBoardAnim.Views"
+        xmlns:helpers="clr-namespace:OpenBoardAnim.Helpers"
+        xmlns:enums="clr-namespace:OpenBoardAnim.AppConstants"
         mc:Ignorable="d" ShowNonClientArea="False" SizeToContent="WidthAndHeight" 
          WindowStartupLocation="CenterOwner"  ShowInTaskbar="False"
         ActiveGlowColor="{DynamicResource PrimaryColor}">
+    <Window.Resources>
+        <helpers:BoardStyleBrushConverter  x:Key="BoardStyleBrushConverter"/>
+    </Window.Resources>
     <Grid Width="500" Height="350" Margin="10">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="3*"/>
@@ -31,44 +36,33 @@
             <RowDefinition Height="auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
-        <TextBlock Text="Create New Video" FontWeight="Bold" />
+        <TextBlock Text="Create New Video" FontWeight="Bold" Grid.ColumnSpan="4" HorizontalAlignment="Center" />
         <Separator Grid.ColumnSpan="4" Grid.Row="1" FontWeight="Bold"/>
         <TextBlock Text="Style:" Grid.Row="3" Grid.Column="0"/>
-        <hc:UniformSpacingPanel Grid.Row="4" Grid.ColumnSpan="4" Spacing="10">
-            <RadioButton Height="75" Width="100" Padding="5" Style="{StaticResource RadioButtonIcon}" >
-                <RadioButton.Content>
+        <ListBox Grid.Row="4" Grid.ColumnSpan="4" Margin="5" 
+                  ItemsSource="{helpers:EnumToItemSource {x:Type enums:BoardStyle}}"
+                 SelectedValue="{Binding SelectedBoardStyle}"  SelectedValuePath="Value">
+            <ListBox.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <hc:UniformSpacingPanel Spacing="20"/>
+                </ItemsPanelTemplate>
+            </ListBox.ItemsPanel>
+            <ListBox.ItemTemplate>
+                <DataTemplate>
                     <StackPanel Orientation="Vertical">
-                        <Rectangle Fill="LightGray" Height="50"/>
-                        <TextBlock Text="White Board"/>
+                        <Rectangle Width="75" Height="50" Stroke="Black" Fill="{Binding BrushColor}" Margin="10" HorizontalAlignment="Center"/>
+                        <TextBlock Text="{Binding DisplayName}" HorizontalAlignment="Center"/>
                     </StackPanel>
-                </RadioButton.Content>
-            </RadioButton>
-            <RadioButton  Height="75" Width="100" Padding="5" Style="{StaticResource RadioButtonIcon}">
-                <RadioButton.Content>
-                    <StackPanel Orientation="Vertical">
-                        <Rectangle Fill="Black" Height="50"/>
-                        <TextBlock Text="Black Board"/>
-                    </StackPanel>
-                </RadioButton.Content>
-            </RadioButton>
-            <RadioButton  Height="75" Width="100" Padding="5" Style="{StaticResource RadioButtonIcon}">
-                <RadioButton.Content>
-                    <StackPanel Orientation="Vertical">
-                        <Rectangle Fill="Green" Height="50"/>
-                        <TextBlock Text="Green Board"/>
-                    </StackPanel>
-                </RadioButton.Content>
-            </RadioButton>
-        </hc:UniformSpacingPanel>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
         <TextBlock Text="Title:" Grid.Row="6" Grid.Column="0"/>
-        <TextBox x:Name="Title" Grid.Row="7" Grid.ColumnSpan="4" HorizontalAlignment="Stretch"/>
+        <TextBox x:Name="ProjectTitle" Grid.Row="7" Grid.ColumnSpan="4" HorizontalAlignment="Stretch"/>
         <TextBlock Text="Resolution:" Grid.Row="9" Grid.Column="0"/>
-        <ComboBox x:Name="Resolution" Grid.Row="10" Grid.Column="0"/>
-        <TextBlock Text="Width:" Grid.Row="9" Grid.Column="1"/>
-        <hc:NumericUpDown x:Name="Width" Grid.Row="10" Grid.Column="1"/>
-        <TextBlock Text="Height:" Grid.Row="9" Grid.Column="2"/>
-        <hc:NumericUpDown x:Name="Height" Grid.Row="10" Grid.Column="2"/>
-        <CheckBox x:Name="Aspect" IsThreeState="False" Content="Constrain aspect ratio" Grid.Row="10" Grid.Column="3"/>
+        <ComboBox x:Name="Resolutions" Grid.Row="10" Grid.Column="0"
+                  ItemsSource="{helpers:EnumToItemSource {x:Type enums:Resolution}}"
+                  DisplayMemberPath="DisplayName" SelectedValuePath="Value"
+                  SelectedValue="{Binding Path=SelectedResolution,Mode=TwoWay}"/>
         <WrapPanel Grid.Row="12" Grid.ColumnSpan="4" HorizontalAlignment="Center">
             <Button IsDefault="True" Name="btnDialogOk" Click="btnDialogOk_Click" MinWidth="60" Background="Green" Margin="0,0,10,0">_Ok</Button>
             <Button IsCancel="True" MinWidth="60">_Cancel</Button>

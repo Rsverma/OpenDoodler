@@ -13,8 +13,4 @@
     <PackageReference Include="HandyControls" Version="3.3.7" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="EventModels\" />
-  </ItemGroup>
-
 </Project>

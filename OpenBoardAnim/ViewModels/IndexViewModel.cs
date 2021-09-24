@@ -1,4 +1,5 @@
 ﻿using Caliburn.Micro;
+using OpenBoardAnim.EventModels;
 using OpenBoardAnim.Models;
 using OpenBoardAnim.Views;
 using System;
@@ -12,9 +13,10 @@ namespace OpenBoardAnim.ViewModels
 {
     class IndexViewModel : Screen
     {
-        public IndexViewModel()
+        private readonly IEventAggregator _events;
+        public IndexViewModel(IEventAggregator events)
         {
-            
+            _events = events;
         }
 
         protected override void OnViewLoaded(object view)
@@ -25,12 +27,7 @@ namespace OpenBoardAnim.ViewModels
         }
         public async void CreateNew()
         {
-            CreateNewView popUp = new CreateNewView();
-
-            if (popUp.ShowDialog() == true)
-            {
-                
-            }
+            await _events.PublishOnUIThreadAsync(new CreateNewProjectEvent());
         }
 
         private ObservableCollection<ProjectRowModel> _recentProjects = new ObservableCollection<ProjectRowModel>();

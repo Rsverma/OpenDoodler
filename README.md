@@ -1,6 +1,6 @@
 <h1 align="center">
   <br>
-  <img src="https://github.com/Rsverma/OpenDoodler/tree/main/WPFExperiments/Resources/App.ico" alt="RSV Animator" width="200">
+  <img src="https://github.com/Rsverma/OpenDoodler/tree/main/OpenBoardAnim/Resources/App.ico" alt="RSV Animator" width="200">
   <br>
   RSV Animator
   <br>
