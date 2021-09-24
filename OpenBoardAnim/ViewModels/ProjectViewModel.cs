@@ -1,12 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Caliburn.Micro;
 
 namespace OpenBoardAnim.ViewModels
 {
-    class ProjectViewModel
+    public class ProjectViewModel : Screen
     {
+
     }
 }

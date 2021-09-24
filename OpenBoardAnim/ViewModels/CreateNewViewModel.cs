@@ -1,5 +1,4 @@
 ﻿using Caliburn.Micro;
-using OpenBoardAnim.AppConstants;
 
 namespace OpenBoardAnim.ViewModels
 {

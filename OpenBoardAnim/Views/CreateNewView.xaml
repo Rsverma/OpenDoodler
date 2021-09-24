@@ -1,68 +1,68 @@
-﻿<hc:GlowWindow xmlns:hc="https://handyorg.github.io/handycontrol" 
+﻿<hc:GlowWindow
     x:Class="OpenBoardAnim.Views.CreateNewView"
-        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:OpenBoardAnim.Views"
-        xmlns:helpers="clr-namespace:OpenBoardAnim.Helpers"
-        xmlns:enums="clr-namespace:OpenBoardAnim.AppConstants"
-        mc:Ignorable="d" ShowNonClientArea="False" SizeToContent="WidthAndHeight" 
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:enums="clr-namespace:OpenBoardAnim.AppConstants"
+    xmlns:helpers="clr-namespace:OpenBoardAnim.Helpers"
+    xmlns:hc="https://handyorg.github.io/handycontrol"
+    mc:Ignorable="d" ShowNonClientArea="False" SizeToContent="WidthAndHeight"
          WindowStartupLocation="CenterOwner"  ShowInTaskbar="False"
         ActiveGlowColor="{DynamicResource PrimaryColor}">
     <Window.Resources>
-        <helpers:BoardStyleBrushConverter  x:Key="BoardStyleBrushConverter"/>
+        <helpers:BoardStyleBrushConverter  x:Key="BoardStyleBrushConverter" />
     </Window.Resources>
     <Grid Width="500" Height="350" Margin="10">
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="3*"/>
-            <ColumnDefinition Width="2*"/>
-            <ColumnDefinition Width="2*"/>
-            <ColumnDefinition Width="3*"/>
+            <ColumnDefinition Width="3*" />
+            <ColumnDefinition Width="2*" />
+            <ColumnDefinition Width="2*" />
+            <ColumnDefinition Width="3*" />
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
-            <RowDefinition Height="auto"/>
-            <RowDefinition Height="auto"/>
-            <RowDefinition Height="0.5*"/>
-            <RowDefinition Height="auto"/>
-            <RowDefinition Height="auto"/>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="auto"/>
-            <RowDefinition Height="auto"/>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="auto"/>
-            <RowDefinition Height="auto"/>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="auto"/>
-            <RowDefinition Height="*"/>
+            <RowDefinition Height="auto" />
+            <RowDefinition Height="auto" />
+            <RowDefinition Height="0.5*" />
+            <RowDefinition Height="auto" />
+            <RowDefinition Height="auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="auto" />
+            <RowDefinition Height="auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="auto" />
+            <RowDefinition Height="auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="auto" />
+            <RowDefinition Height="*" />
         </Grid.RowDefinitions>
         <TextBlock Text="Create New Video" FontWeight="Bold" Grid.ColumnSpan="4" HorizontalAlignment="Center" />
-        <Separator Grid.ColumnSpan="4" Grid.Row="1" FontWeight="Bold"/>
-        <TextBlock Text="Style:" Grid.Row="3" Grid.Column="0"/>
-        <ListBox Grid.Row="4" Grid.ColumnSpan="4" Margin="5" 
+        <Separator Grid.ColumnSpan="4" Grid.Row="1" FontWeight="Bold" />
+        <TextBlock Text="Style:" Grid.Row="3" Grid.Column="0" />
+        <ListBox Grid.Row="4" Grid.ColumnSpan="4" Margin="5"
                   ItemsSource="{helpers:EnumToItemSource {x:Type enums:BoardStyle}}"
                  SelectedValue="{Binding SelectedBoardStyle}"  SelectedValuePath="Value">
             <ListBox.ItemsPanel>
                 <ItemsPanelTemplate>
-                    <hc:UniformSpacingPanel Spacing="20"/>
+                    <hc:UniformSpacingPanel Spacing="20" />
                 </ItemsPanelTemplate>
             </ListBox.ItemsPanel>
             <ListBox.ItemTemplate>
                 <DataTemplate>
                     <StackPanel Orientation="Vertical">
-                        <Rectangle Width="75" Height="50" Stroke="Black" Fill="{Binding BrushColor}" Margin="10" HorizontalAlignment="Center"/>
-                        <TextBlock Text="{Binding DisplayName}" HorizontalAlignment="Center"/>
+                        <Rectangle Width="75" Height="50" Stroke="Black" Fill="{Binding BrushColor}" Margin="10" HorizontalAlignment="Center" />
+                        <TextBlock Text="{Binding DisplayName}" HorizontalAlignment="Center" />
                     </StackPanel>
                 </DataTemplate>
             </ListBox.ItemTemplate>
         </ListBox>
-        <TextBlock Text="Title:" Grid.Row="6" Grid.Column="0"/>
-        <TextBox x:Name="ProjectTitle" Grid.Row="7" Grid.ColumnSpan="4" HorizontalAlignment="Stretch"/>
-        <TextBlock Text="Resolution:" Grid.Row="9" Grid.Column="0"/>
+        <TextBlock Text="Title:" Grid.Row="6" Grid.Column="0" />
+        <TextBox x:Name="ProjectTitle" Grid.Row="7" Grid.ColumnSpan="4" HorizontalAlignment="Stretch" />
+        <TextBlock Text="Resolution:" Grid.Row="9" Grid.Column="0" />
         <ComboBox x:Name="Resolutions" Grid.Row="10" Grid.Column="0"
                   ItemsSource="{helpers:EnumToItemSource {x:Type enums:Resolution}}"
                   DisplayMemberPath="DisplayName" SelectedValuePath="Value"
-                  SelectedValue="{Binding Path=SelectedResolution,Mode=TwoWay}"/>
+                  SelectedValue="{Binding Path=SelectedResolution,Mode=TwoWay}" />
         <WrapPanel Grid.Row="12" Grid.ColumnSpan="4" HorizontalAlignment="Center">
             <Button IsDefault="True" Name="btnDialogOk" Click="btnDialogOk_Click" MinWidth="60" Background="Green" Margin="0,0,10,0">_Ok</Button>
             <Button IsCancel="True" MinWidth="60">_Cancel</Button>

@@ -1,18 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 
 namespace OpenBoardAnim
 {
@@ -23,12 +13,13 @@ namespace OpenBoardAnim
     {
         public Page1()
         {
-            InitializeComponent(); 
+            InitializeComponent();
             CaptureMyScreen();
         }
 
         public static readonly DependencyProperty PointProperty = DependencyProperty.Register(
-            "Point", typeof(Point), typeof(Page1), new FrameworkPropertyMetadata(new Point(0,0), OnPropertiesChanged));
+            "Point", typeof(Point), typeof(Page1), new FrameworkPropertyMetadata(new Point(0, 0), OnPropertiesChanged));
+
         private static void OnPropertiesChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
             if (d is Page1 path)
@@ -47,6 +38,7 @@ namespace OpenBoardAnim
             get => (Point)GetValue(PointProperty);
             set => SetValue(PointProperty, value);
         }
+
         private void CaptureMyScreen()
         {
             string data = "M50,150 c-25,-125 125,-125 125,-25 c0,-100 150,-100 125,25 c-25,75 -100,100 -125,175 c-25,-75 -100,-100 -125,-175";

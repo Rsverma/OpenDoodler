@@ -1,15 +1,15 @@
 ﻿<Application x:Class="OpenBoardAnim.App"
-             xmlns:hc="https://handyorg.github.io/handycontrol"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:local="clr-namespace:OpenBoardAnim">
+             xmlns:local="clr-namespace:OpenBoardAnim"
+             xmlns:hc="https://handyorg.github.io/handycontrol">
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <hc:ThemeResources/>
-                <hc:Theme/>
+                <hc:ThemeResources />
+                <hc:Theme />
                 <ResourceDictionary>
-                    <local:Bootstrapper x:Key="Bootstrapper"/>
+                    <local:Bootstrapper x:Key="Bootstrapper" />
                 </ResourceDictionary>
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>

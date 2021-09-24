@@ -1,10 +1,6 @@
 ﻿using Caliburn.Micro;
 using OpenBoardAnim.EventModels;
-using System;
-using System.Collections.Generic;
 using System.Dynamic;
-using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
@@ -29,9 +25,11 @@ namespace OpenBoardAnim.ViewModels
             dynamic settings = new ExpandoObject();
             settings.ShowInTaskbar = false;
             settings.WindowStartupLocation = WindowStartupLocation.CenterOwner;
-            CreateNewViewModel viewModel = IoC.Get<CreateNewViewModel>(); 
-            await _window.ShowDialogAsync(viewModel, null, settings);
-
+            CreateNewViewModel viewModel = IoC.Get<CreateNewViewModel>();
+            if (await _window.ShowDialogAsync(viewModel, null, settings))
+            {
+                await ActivateItemAsync(IoC.Get<ProjectViewModel>());
+            }
         }
     }
 }
