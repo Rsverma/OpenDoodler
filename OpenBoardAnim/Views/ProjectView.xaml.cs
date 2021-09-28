@@ -1,4 +1,7 @@
-﻿using System.Windows.Controls;
+﻿using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Input;
+using System.Windows.Shapes;
 
 namespace OpenBoardAnim.Views
 {
@@ -10,6 +13,24 @@ namespace OpenBoardAnim.Views
         public ProjectView()
         {
             InitializeComponent();
+        }
+
+        private void Rectangle_MouseMove(object sender, MouseEventArgs e)
+        {
+            if (e.Source is Shape shape)
+            {
+                if (e.LeftButton == MouseButtonState.Pressed)
+                {
+                    Point p = e.GetPosition(canvas);
+                    Canvas.SetLeft(shape, p.X - shape.ActualWidth / 2);
+                    Canvas.SetTop(shape, p.Y - shape.ActualHeight / 2);
+                    shape.CaptureMouse();
+                }
+                else
+                {
+                    shape.ReleaseMouseCapture();
+                }
+            }
         }
     }
 }

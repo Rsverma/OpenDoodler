@@ -13,4 +13,9 @@
     <PackageReference Include="HandyControls" Version="3.3.7" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\OpenBoardAnim.ControlsLibrary\OpenBoardAnim.ControlsLibrary.csproj" />
+    <ProjectReference Include="..\OpenBoardAnim.Utilities\OpenBoardAnim.Utilities.csproj" />
+  </ItemGroup>
+
 </Project>

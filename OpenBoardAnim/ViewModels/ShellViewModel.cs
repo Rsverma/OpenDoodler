@@ -1,5 +1,7 @@
 ﻿using Caliburn.Micro;
+using OpenBoardAnim.AppConstants;
 using OpenBoardAnim.EventModels;
+using OpenBoardAnim.Models;
 using System.Dynamic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -28,7 +30,14 @@ namespace OpenBoardAnim.ViewModels
             CreateNewViewModel viewModel = IoC.Get<CreateNewViewModel>();
             if (await _window.ShowDialogAsync(viewModel, null, settings))
             {
-                await ActivateItemAsync(IoC.Get<ProjectViewModel>());
+                ProjectViewModel projectView = IoC.Get<ProjectViewModel>();
+                projectView.Project = new ProjectModel
+                {
+                    Title = viewModel.ProjectTitle,
+                    BoardStyle = (BoardStyle)viewModel.SelectedBoardStyle,
+                    Resolution = (Resolution)viewModel.SelectedResolution
+                };
+                await ActivateItemAsync(projectView);
             }
         }
     }
