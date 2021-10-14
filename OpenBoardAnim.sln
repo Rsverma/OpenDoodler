@@ -5,11 +5,9 @@ VisualStudioVersion = 16.0.31424.327
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenBoardAnim", "OpenBoardAnim\OpenBoardAnim.csproj", "{461D5D27-3965-4285-992C-D54A0DD447FF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenBoardAnim.ControlsLibrary", "OpenBoardAnim.ControlsLibrary\OpenBoardAnim.ControlsLibrary.csproj", "{A04D510C-A3CA-4BC1-B084-AAB08BC32F06}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenBoardAnim.Utilities", "OpenBoardAnim.Utilities\OpenBoardAnim.Utilities.csproj", "{4E7C2263-6E1E-42ED-889A-8391C79C69A3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenBoardAnim.Utilities", "OpenBoardAnim.Utilities\OpenBoardAnim.Utilities.csproj", "{4E7C2263-6E1E-42ED-889A-8391C79C69A3}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenBoardAnim.Tests", "OpenBoardAnim.Tests\OpenBoardAnim.Tests.csproj", "{F716A406-93D5-4D9A-87DF-9C3DC9AFB7D5}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenBoardAnim.TimeLineTool", "OpenBoardAnim.TimeLineTool\OpenBoardAnim.TimeLineTool.csproj", "{178FC6E8-8F9F-4649-8642-9A66B82044F3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,18 +19,14 @@ Global
 		{461D5D27-3965-4285-992C-D54A0DD447FF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{461D5D27-3965-4285-992C-D54A0DD447FF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{461D5D27-3965-4285-992C-D54A0DD447FF}.Release|Any CPU.Build.0 = Release|Any CPU
-		{A04D510C-A3CA-4BC1-B084-AAB08BC32F06}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{A04D510C-A3CA-4BC1-B084-AAB08BC32F06}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{A04D510C-A3CA-4BC1-B084-AAB08BC32F06}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{A04D510C-A3CA-4BC1-B084-AAB08BC32F06}.Release|Any CPU.Build.0 = Release|Any CPU
 		{4E7C2263-6E1E-42ED-889A-8391C79C69A3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{4E7C2263-6E1E-42ED-889A-8391C79C69A3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4E7C2263-6E1E-42ED-889A-8391C79C69A3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4E7C2263-6E1E-42ED-889A-8391C79C69A3}.Release|Any CPU.Build.0 = Release|Any CPU
-		{F716A406-93D5-4D9A-87DF-9C3DC9AFB7D5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{F716A406-93D5-4D9A-87DF-9C3DC9AFB7D5}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{F716A406-93D5-4D9A-87DF-9C3DC9AFB7D5}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{F716A406-93D5-4D9A-87DF-9C3DC9AFB7D5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{178FC6E8-8F9F-4649-8642-9A66B82044F3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{178FC6E8-8F9F-4649-8642-9A66B82044F3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{178FC6E8-8F9F-4649-8642-9A66B82044F3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{178FC6E8-8F9F-4649-8642-9A66B82044F3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

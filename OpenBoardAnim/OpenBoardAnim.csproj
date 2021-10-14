@@ -14,8 +14,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\OpenBoardAnim.ControlsLibrary\OpenBoardAnim.ControlsLibrary.csproj" />
+    <ProjectReference Include="..\OpenBoardAnim.TimeLineTool\OpenBoardAnim.TimeLineTool.csproj" />
     <ProjectReference Include="..\OpenBoardAnim.Utilities\OpenBoardAnim.Utilities.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Controls\" />
   </ItemGroup>
 
 </Project>

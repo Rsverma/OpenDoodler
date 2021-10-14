@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace OpenBoardAnim.Helpers
+namespace OpenBoardAnim.Utilities
 {
     public static class EnumHelper
     {
