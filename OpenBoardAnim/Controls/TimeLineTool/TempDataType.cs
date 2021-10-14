@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace TimeLineTool
+namespace OpenBoardAnim.TimeLineTool
 {
     public class TempDataType : ITimeLineDataItem
     {

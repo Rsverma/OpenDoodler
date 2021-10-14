@@ -3,7 +3,7 @@ using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Media;
 
-namespace TimeLineTool
+namespace OpenBoardAnim.TimeLineTool
 {
     internal class TimeLineDragAdorner : Adorner
     {

@@ -3,7 +3,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 
-namespace TimeLineTool
+namespace OpenBoardAnim.TimeLineTool
 {
     //public class TimeLineItemControl:ContentPresenter
     public class TimeLineItemControl : Button

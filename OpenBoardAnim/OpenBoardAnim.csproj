@@ -10,16 +10,12 @@
   <ItemGroup>
     <PackageReference Include="Caliburn.Micro" Version="4.0.173" />
     <PackageReference Include="FFMpegCore" Version="4.5.0" />
+    <PackageReference Include="gong-wpf-dragdrop" Version="2.4.3" />
     <PackageReference Include="HandyControls" Version="3.3.7" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\OpenBoardAnim.TimeLineTool\OpenBoardAnim.TimeLineTool.csproj" />
     <ProjectReference Include="..\OpenBoardAnim.Utilities\OpenBoardAnim.Utilities.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Controls\" />
   </ItemGroup>
 
 </Project>

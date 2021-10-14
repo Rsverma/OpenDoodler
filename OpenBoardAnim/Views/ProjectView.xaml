@@ -3,9 +3,13 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:dd="clr-namespace:GongSolutions.Wpf.DragDrop;assembly=GongSolutions.Wpf.DragDrop"
              xmlns:local="clr-namespace:OpenBoardAnim.Views"
              mc:Ignorable="d"
              d:DesignHeight="450" d:DesignWidth="800">
+    <UserControl.Resources>
+        
+    </UserControl.Resources>
     <DockPanel>
         <StackPanel Height="75" x:Name="TopBar" Orientation="Horizontal" DockPanel.Dock="Top">
             <TextBlock Text="Scene editing" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="50"/>
