@@ -2,20 +2,22 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net5.0-windows</TargetFramework>
+    <TargetFramework>net6.0-windows</TargetFramework>
     <UseWPF>true</UseWPF>
     <ApplicationIcon>App.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Caliburn.Micro" Version="4.0.173" />
-    <PackageReference Include="FFMpegCore" Version="4.5.0" />
+    <PackageReference Include="FFMpegCore" Version="4.6.0" />
     <PackageReference Include="gong-wpf-dragdrop" Version="2.4.3" />
     <PackageReference Include="HandyControls" Version="3.3.7" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\OpenBoardAnim.Library\OpenBoardAnim.Library.csproj" />
     <ProjectReference Include="..\OpenBoardAnim.Utilities\OpenBoardAnim.Utilities.csproj" />
+    <ProjectReference Include="..\OpenBoardAnim.VideoTools\OpenBoardAnim.VideoTools.csproj" />
   </ItemGroup>
 
 </Project>

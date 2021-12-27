@@ -7,25 +7,23 @@
              xmlns:local="clr-namespace:OpenBoardAnim.Views"
              mc:Ignorable="d"
              d:DesignHeight="450" d:DesignWidth="800">
-    <UserControl.Resources>
-        
-    </UserControl.Resources>
+
     <DockPanel>
         <StackPanel Height="75" x:Name="TopBar" Orientation="Horizontal" DockPanel.Dock="Top">
-            <TextBlock Text="Scene editing" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="50"/>
+            <TextBlock Text="Scene editing" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="30"/>
         </StackPanel>
         <Grid Height="175" x:Name="TimeLine" DockPanel.Dock="Bottom">
-            
+
         </Grid>
         <Grid Width="100" x:Name="ObjectPicker" DockPanel.Dock="Left">
-            
+
         </Grid>
         <Grid Width="100" x:Name="ObjectModifier" DockPanel.Dock="Right">
-            
+
         </Grid>
-            <Canvas Background='Beige' Name='canvas'>
-                <Rectangle Width='50' Height='50' Fill='LightPink' Canvas.Left='350'
-                           Canvas.Top='175' MouseMove='Rectangle_MouseMove' />
-            </Canvas>
+        <Canvas Background='LightGray' x:Name='canvas'>
+            <Rectangle Width='50' Height='50' Fill='LightPink' Canvas.Left='378'
+                           Canvas.Top='121' MouseMove='Rectangle_MouseMove' />
+        </Canvas>
     </DockPanel>
 </UserControl>
