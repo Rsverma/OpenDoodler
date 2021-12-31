@@ -5,15 +5,20 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:dd="clr-namespace:GongSolutions.Wpf.DragDrop;assembly=GongSolutions.Wpf.DragDrop"
              xmlns:local="clr-namespace:OpenBoardAnim.Views"
+             xmlns:controls="clr-namespace:OpenBoardAnim.Controls"
              mc:Ignorable="d"
              d:DesignHeight="450" d:DesignWidth="800">
 
     <DockPanel>
         <StackPanel Height="75" x:Name="TopBar" Orientation="Horizontal" DockPanel.Dock="Top">
-            <TextBlock Text="Scene editing" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="30"/>
+            <TextBlock Text="Scene editing" HorizontalAlignment="Stretch" TextAlignment="Center" VerticalAlignment="Center" FontSize="30"/>
         </StackPanel>
-        <Grid Height="175" x:Name="TimeLine" DockPanel.Dock="Bottom">
+        <Grid Height="175" x:Name="TimeLine" DockPanel.Dock="Bottom" >
 
+            <!--<Canvas Background='LightGray' x:Name='canvas'>
+                <Rectangle Width='50' Height='50' Fill='LightPink' Canvas.Left='378'
+                           Canvas.Top='121' MouseMove='Rectangle_MouseMove' />
+            </Canvas>-->
         </Grid>
         <Grid Width="100" x:Name="ObjectPicker" DockPanel.Dock="Left">
 
@@ -21,9 +26,8 @@
         <Grid Width="100" x:Name="ObjectModifier" DockPanel.Dock="Right">
 
         </Grid>
-        <Canvas Background='LightGray' x:Name='canvas'>
-            <Rectangle Width='50' Height='50' Fill='LightPink' Canvas.Left='378'
-                           Canvas.Top='121' MouseMove='Rectangle_MouseMove' />
-        </Canvas>
+        <controls:ZoomBox x:Name="ZoomBoxControl" Background="Transparent" ClipToBounds="True" Focusable="False" IsTabStop="False"
+                       AllowDrop="True" >
+        </controls:ZoomBox>
     </DockPanel>
 </UserControl>

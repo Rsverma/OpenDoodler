@@ -1,4 +1,4 @@
-﻿using OpenBoardAnim.Library;
+﻿
 using System;
 using System.IO;
 
@@ -19,8 +19,8 @@ namespace OpenBoardAnim.Utilities
             {
                 #region Output folder
 
-                var documents = isFallback || string.IsNullOrWhiteSpace(UserSettings.LogsFolder) ? Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) : UserSettings.LogsFolder;
-                var folder = Path.Combine(documents, "ScreenToGif", "Logs");
+                var documents = isFallback || string.IsNullOrWhiteSpace("") ? Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) : "";
+                var folder = Path.Combine(documents, "OpenBoardAnim", "Logs");
 
                 if (!Directory.Exists(folder))
                     Directory.CreateDirectory(folder);
@@ -58,7 +58,7 @@ namespace OpenBoardAnim.Utilities
                         writer.WriteLine($"► Title - {Environment.NewLine}\t{title}");
                         writer.WriteLine($"▬ Message - {Environment.NewLine}\t{ex.Message}");
                         writer.WriteLine($"○ Type - {Environment.NewLine}\t{ex.GetType()}");
-                        writer.WriteLine(FormattableString.Invariant($"♦ [Version] Date/Hour - {Environment.NewLine}\t[{UserSettings.VersionText}] {DateTime.Now}"));
+                        writer.WriteLine(FormattableString.Invariant($"♦ [Version] Date/Hour - {Environment.NewLine}\t[{""}] {DateTime.Now}"));
                         writer.WriteLine($"▲ Source - {Environment.NewLine}\t{ex.Source}");
                         writer.WriteLine($"▼ TargetSite - {Environment.NewLine}\t{ex.TargetSite}");
 
@@ -132,8 +132,8 @@ namespace OpenBoardAnim.Utilities
             {
                 #region Output folder
 
-                var documents = isFallback || string.IsNullOrWhiteSpace(UserSettings.LogsFolder) ? Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) : UserSettings.LogsFolder;
-                var folder = Path.Combine(documents, "ScreenToGif", "Logs");
+                var documents = isFallback || string.IsNullOrWhiteSpace("") ? Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) : "";
+                var folder = Path.Combine(documents, "OpenBoardAnim", "Logs");
 
                 if (!Directory.Exists(folder))
                     Directory.CreateDirectory(folder);
@@ -169,7 +169,7 @@ namespace OpenBoardAnim.Utilities
                     using (var writer = new StreamWriter(fileStream))
                     {
                         writer.WriteLine($"► Title - {Environment.NewLine}\t{title}");
-                        writer.WriteLine(FormattableString.Invariant($"♦ [Version] Date/Hour - {Environment.NewLine}\t[{UserSettings.VersionText}] {DateTime.Now}"));
+                        writer.WriteLine(FormattableString.Invariant($"♦ [Version] Date/Hour - {Environment.NewLine}\t[{""}] {DateTime.Now}"));
 
                         if (aditional != null)
                             writer.WriteLine($"◄ Aditional - {Environment.NewLine}\t{aditional}");

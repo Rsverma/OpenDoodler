@@ -1,7 +1,9 @@
 ﻿using System.Windows;
+using System.Linq;
+using System.IO;
 using System.Windows.Controls;
 using System.Windows.Input;
-using System.Windows.Shapes;
+using Shapes = System.Windows.Shapes;
 
 namespace OpenBoardAnim.Views
 {
@@ -17,14 +19,14 @@ namespace OpenBoardAnim.Views
 
         private void Rectangle_MouseMove(object sender, MouseEventArgs e)
         {
-            if (e.Source is Shape shape)
+            if (e.Source is Shapes.Shape shape)
             {
                 if (e.LeftButton == MouseButtonState.Pressed)
                 {
-                    Point p = e.GetPosition(canvas);
-                    Canvas.SetLeft(shape, p.X - shape.ActualWidth / 2);
-                    Canvas.SetTop(shape, p.Y - shape.ActualHeight / 2);
-                    shape.CaptureMouse();
+                    //Point p = e.GetPosition(canvas);
+                    //Canvas.SetLeft(shape, p.X - shape.ActualWidth / 2);
+                    //Canvas.SetTop(shape, p.Y - shape.ActualHeight / 2);
+                    //shape.CaptureMouse();
                 }
                 else
                 {
@@ -32,5 +34,7 @@ namespace OpenBoardAnim.Views
                 }
             }
         }
+
+
     }
 }
