@@ -10,7 +10,7 @@
         x:Name="EditorWindow" Title="{DynamicResource Editor.Title}" MinHeight="500" MinWidth="700" Background="#FFF1F1F1" UseLayoutRounding="True"
         Left="{Binding Source={x:Static h:Settings.Default}, Path=EditorLeft, Mode=TwoWay}" Top="{Binding Source={x:Static h:Settings.Default}, Path=EditorTop, Mode=TwoWay}"
         Height="{Binding Source={x:Static h:Settings.Default}, Path=EditorHeight}" Width="{Binding Source={x:Static h:Settings.Default}, Path=EditorWidth}"
-        Icon="/Resources/Logo.ico" Loaded="Window_Loaded" Closing="Window_Closing" Activated="Window_Activated" KeyUp="Window_KeyUp"
+        Icon="/Resources/App.ico" Loaded="Window_Loaded" Closing="Window_Closing" Activated="Window_Activated" KeyUp="Window_KeyUp"
         FocusManager.FocusedElement="{Binding RelativeSource={x:Static RelativeSource.Self}, Mode=OneTime}" Deactivated="EditorWindow_Deactivated">
 
     <Window.Resources>
@@ -1124,56 +1124,6 @@
                 </Grid>
             </n:AwareTabItem>
 
-            <n:AwareTabItem Header="{DynamicResource Editor.Options}">
-                <Grid Height="94" Margin="2" Background="#FFFAFAFA" Effect="{StaticResource Shadow.Invariant}">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="7"/>
-                        <ColumnDefinition/>
-                    </Grid.ColumnDefinitions>
-
-                    <Grid Grid.Column="0" Margin="0,1,0,0">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        <Grid.RowDefinitions>
-                            <RowDefinition/>
-                            <RowDefinition Height="16"/>
-                        </Grid.RowDefinitions>
-
-                        <Label Grid.Row="1" Grid.ColumnSpan="2" Grid.Column="0" Content="{DynamicResource Editor.Options.Application}" 
-						       HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Padding="0" 
-						       FontSize="12" Foreground="#FF707070"/>
-
-                        <n:ImageButton Grid.Row="0" Grid.Column="0" x:Name="OptionsButton" Text="{DynamicResource Options}" Content="{StaticResource Vector.Settings}"
-						               Margin="0" MaxSize="30" VerticalContentAlignment="Top"
-						               Click="OptionsButton_Click" Style="{StaticResource Style.Button.Vertical}"/>
-
-                        <n:ImageButton Grid.Row="0" Grid.Column="1" x:Name="FeedbackButton" Text="{DynamicResource Feedback.Feedback}" Content="{StaticResource Vector.Application}"
-						               Margin="0" MaxSize="30" VerticalContentAlignment="Top"
-						               Click="FeedbackButton_OnClickButton_Click" Style="{StaticResource Style.Button.Vertical}"/>
-                    </Grid>
-
-                    <Separator Grid.Column="1" Width="1" Height="Auto" HorizontalAlignment="Left" Margin="3,2"/>
-
-                    <Grid Grid.Column="2" Margin="0,1,0,0" Visibility="Collapsed">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        <Grid.RowDefinitions>
-                            <RowDefinition/>
-                            <RowDefinition Height="20"/>
-                        </Grid.RowDefinitions>
-
-                        <Label Grid.Column="0" Grid.Row="1" Content="Features" 
-						       HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Padding="0" 
-						       FontSize="12" Foreground="#FF707070"/>
-
-                    </Grid>
-                </Grid>
-            </n:AwareTabItem>
         </n:HideableTabControl>
 
         <n:StatusBand Grid.Row="1" x:Name="EditorStatusBand"/>

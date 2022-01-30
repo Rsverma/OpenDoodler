@@ -2176,26 +2176,6 @@ namespace OpenBoardAnim.Windows
 
         #endregion
 
-        #region Options Tab
-
-        private void OptionsButton_Click(object sender, RoutedEventArgs e)
-        {
-            Pause();
-
-            var options = new Options();
-            options.ShowDialog();
-        }
-
-        private void FeedbackButton_OnClickButton_Click(object sender, RoutedEventArgs e)
-        {
-            Pause();
-
-            var feed = new Feedback { Owner = this };
-            feed.ShowDialog();
-        }
-
-        #endregion
-
         #region Other Events
 
         #region Frame ListView
