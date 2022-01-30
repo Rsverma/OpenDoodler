@@ -129,7 +129,7 @@
                                                    HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Padding="1" />
 
                                             <n:ImageButton Grid.Column="2" x:Name="RemoveButton" Content="{StaticResource Vector.Close}" VerticalAlignment="Stretch"
-                                                           Style="{StaticResource Style.Button.NoText}" MaxSize="10" Width="12" Visibility="Collapsed" 
+                                                           MaxSize="10" Width="12" Visibility="Collapsed" 
                                                            PreviewMouseLeftButtonUp="RemoveButton_OnMouseLeftButtonDown" Margin="2,0,0,0"/>
                                         </Grid>
                                     </Border>

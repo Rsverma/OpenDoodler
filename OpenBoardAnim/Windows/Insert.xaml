@@ -54,7 +54,7 @@
                 <Label Content="•" VerticalContentAlignment="Center"/>
                 <Label Content="{Binding ActualWidth, ElementName=LeftCanvas, Mode=OneWay}" HorizontalAlignment="Center" VerticalContentAlignment="Center"/>
                 <n:ImageButton x:Name="ResetCanvasButton" Content="{StaticResource Vector.PictureFit}" MaxSize="40"
-                                  Height="40" Width="45" Style="{StaticResource Style.Button.NoText}" VerticalAlignment="Bottom" HorizontalAlignment="Right" Click="ResetCanvasButton_Click"/>
+                                  Height="40" Width="45" VerticalAlignment="Bottom" HorizontalAlignment="Right" Click="ResetCanvasButton_Click"/>
             </StackPanel>
         </Grid>
 

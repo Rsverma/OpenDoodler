@@ -350,7 +350,7 @@
         </Expander>
 
         <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal">
-            <r:ImageButton x:Name="SnapButton" Content="{StaticResource Vector.Crop}" Margin="0" Style="{StaticResource Style.Button.NoText}" 
+            <r:ImageButton x:Name="SnapButton" Content="{StaticResource Vector.Crop}" Margin="0" 
                                HorizontalContentAlignment="Center" Effect="{StaticResource Shadow.Foreground.Small}" MaxSize="20" FlowDirection="LeftToRight" 
                                Padding="2" TabIndex="2">
                 <r:ImageButton.ToolTip>
@@ -358,7 +358,7 @@
                 </r:ImageButton.ToolTip>
             </r:ImageButton>
 
-            <r:ImageButton Content="{StaticResource Vector.Crop}" Margin="0" Style="{StaticResource Style.Button.NoText}" 
+            <r:ImageButton Content="{StaticResource Vector.Crop}" Margin="0" 
                                HorizontalContentAlignment="Center" Effect="{StaticResource Shadow.Foreground.Small}" MaxSize="20" FlowDirection="LeftToRight" 
                                Padding="2" TabIndex="2">
                 <r:ImageButton.ToolTip>
@@ -366,7 +366,7 @@
                 </r:ImageButton.ToolTip>
             </r:ImageButton>
 
-            <r:ImageButton Content="{StaticResource Vector.Crop}" Margin="0" Style="{StaticResource Style.Button.NoText}" 
+            <r:ImageButton Content="{StaticResource Vector.Crop}" Margin="0" 
                                HorizontalContentAlignment="Center" Effect="{StaticResource Shadow.Foreground.Small}" MaxSize="20" FlowDirection="LeftToRight" 
                                Padding="2" TabIndex="2">
                 <r:ImageButton.ToolTip>

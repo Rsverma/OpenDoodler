@@ -31,7 +31,7 @@
             </Label>
             
             <controls:ImageButton Grid.Column="2" x:Name="InnerButton" Text="{DynamicResource ExceptionViewer.OpenInner}" Content="{StaticResource Vector.Synchronize}" MaxSize="20" 
-                                  Margin="10" Padding="3" Style="{StaticResource Style.Button.Horizontal}"
+                                  Margin="10" Padding="3"
                                   IsEnabled="False" Click="InnerButton_Click" FontSize="14" FontFamily="Segoe UI Semilight"/>
         </Grid>
         

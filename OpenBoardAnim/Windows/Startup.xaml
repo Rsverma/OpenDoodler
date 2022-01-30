@@ -3,43 +3,64 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:controls="clr-namespace:OpenBoardAnim.Controls"
         xmlns:util="clr-namespace:OpenBoardAnim.Util"
-        Title="{DynamicResource Title.StartUp}" Height="220" Width="500" Icon="/Resources/App.ico" WindowStartupLocation="CenterScreen" 
+        Title="{DynamicResource Title.StartUp}" Height="720" Width="900" Icon="/Resources/App.ico" WindowStartupLocation="CenterScreen" 
         MinWidth="500" MinHeight="220" UseLayoutRounding="True">
+
+    <Window.CommandBindings>
+        <CommandBinding Command="util:Commands.Editor" CanExecute="Buttons_CanExecute" Executed="Editor_Executed"/>
+        <CommandBinding Command="util:Commands.Options" CanExecute="Buttons_CanExecute" Executed="Options_Executed"/>
+    </Window.CommandBindings>
 
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
-            <RowDefinition />
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
-        
+
         <Grid Grid.Row="0">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition/>
-                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
-            
-            <Label Grid.Column="0" Content="Open Whiteboard Animator" Margin="5" 
-                   FontSize="18" Foreground="#FF251E46" Effect="{DynamicResource Shadow.Foreground.Normal}"/>
-        </Grid>
 
-        <Grid Grid.Row="1">
+            <Label Grid.Column="0" HorizontalContentAlignment="Center" Content="Open Whiteboard Animator" Margin="5" 
+                   FontSize="38" Foreground="#FF251E46" Effect="{DynamicResource Shadow.Foreground.Normal}"/>
+
+
+            <Button Grid.Column="2" x:Name="OptionsButton" Content="{StaticResource Vector.Settings}" 
+                                  Margin="5"  Effect="{StaticResource Shadow.Foreground.Small}"
+                                  Padding="3" Command="util:Commands.Options"/>
+        </Grid>
+        <Grid Grid.Row="1" Background="DarkSlateGray">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition/>
-                <ColumnDefinition/>
-                <ColumnDefinition/>
-                <ColumnDefinition/>
             </Grid.ColumnDefinitions>
 
-            <controls:ImageButton Grid.Column="3" x:Name="EditorButton" Text="{DynamicResource Editor}" Margin="5" 
-                                  Effect="{StaticResource Shadow.Border.Tiny}" MaxSize="35" Content="{StaticResource Vector.Editor}" 
-                                  Command="util:Commands.Editor" FontSize="13">
-                <controls:ImageButton.ToolTip>
-                    <controls:HeaderedTooltip Header="{DynamicResource Editor}" Text="{DynamicResource Tooltip.Editor}" 
-                                              MaxWidth="250" Placement="Bottom" HorizontalOffset="-5"/>
-                </controls:ImageButton.ToolTip>
-            </controls:ImageButton>
+            <Button Grid.Column="0" x:Name="EditorButton" Margin="5" Background="WhiteSmoke"
+                                  Effect="{StaticResource Shadow.Border.Tiny}" MaxWidth="150"
+                    Command="util:Commands.Editor">
+                <StackPanel Orientation="Vertical">
+                    <Label Content="+" HorizontalAlignment="Center" FontSize="40"/>
+                    <Label Content="Create new Video" HorizontalAlignment="Center" FontSize="15"/>
+                </StackPanel>
+            </Button>
         </Grid>
+        <StackPanel Orientation="Vertical" Grid.Row="2" HorizontalAlignment="Center" VerticalAlignment="Top"
+                    Margin="90 5" MinHeight="300">
+            <TextBlock Text="Projects" FontWeight="Bold" FontSize="30" />
+            <DataGrid  x:Name="RecentProjects" AutoGenerateColumns="False" Width="700" MinColumnWidth="120">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Title" Binding="{Binding Title}" />
+                    <DataGridTextColumn Header="Created On" Binding="{Binding CreatedOn}" />
+                    <DataGridTextColumn Header="Modified On" Binding="{Binding ModifiedOn}" />
+                    <DataGridTextColumn Header="Length" Binding="{Binding Length}" />
+                    <DataGridTextColumn Header="Scenes" Binding="{Binding Scenes}" />
+                </DataGrid.Columns>
+            </DataGrid>
+        </StackPanel>
+        <Label Grid.Row="3" Background="Black">End of Line</Label>
     </Grid>
 </Window>
