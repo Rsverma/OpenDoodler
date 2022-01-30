@@ -20,7 +20,7 @@
     <s:String x:Key="ExceptionViewer.Title">عارض استثناء</s:String>
     <s:String x:Key="Editor.File.New.MediaProject">الإعلام أو\nمشروع</s:String>
     <s:String x:Key="InsertFrames.SelectColorFill">حدد قماش لون التعبئة</s:String>
-    <s:String x:Key="Webcam.Title">Screen To Gif - مسجل كاميرا ويب</s:String>
+    <s:String x:Key="Webcam.Title">Open Whiteboard Animator - مسجل كاميرا ويب</s:String>
     <s:String x:Key="Application.ScreenRecorder">مسجل الشاشة</s:String>
     <s:String x:Key="Editor.DragDrop.InvalidProject.Message">حاول اختيار مشروع واحد فقط.</s:String>
     <s:String x:Key="Editor.View.Zoom">زوم</s:String>
@@ -184,7 +184,7 @@
     <s:String x:Key="ImportVideo.Duration">مدة:</s:String>
     <s:String x:Key="Language.AppLanguage">اللغة التطبيق</s:String>
     <s:String x:Key="Interface.EditorBackground.GridSize.ILikeBigSquares">أحب الساحات الكبيرة</s:String>
-    <s:String x:Key="Editor.Title">Screen To Gif - محرر</s:String>
+    <s:String x:Key="Editor.Title">Open Whiteboard Animator - محرر</s:String>
     <s:String x:Key="Recorder.Continue">استمر</s:String>
     <s:String x:Key="Editor.Watermark.WarningSelection">يتعين عليك تحديد إطار واحد على الأقل لتطبيق علامة مائية إلى.</s:String>
     <s:String x:Key="Editor.DiscardingFrames">التخلص إطارات</s:String>
@@ -247,7 +247,7 @@
     <s:String x:Key="About">حول</s:String>
     <s:String x:Key="Editor.OpenMediaProject">فتح وسائل الإعلام (صورة أو فيديو) أو ملف مشروع</s:String>
     <s:String x:Key="Interface.EditorBackground.Scheme.Medium">متوسط</s:String>
-    <s:String x:Key="Title.Options">Screen To Gif - خيارات</s:String>
+    <s:String x:Key="Title.Options">Open Whiteboard Animator - خيارات</s:String>
     <s:String x:Key="Recorder.Stop">توقف</s:String>
     <s:String x:Key="Editor.Select.GoTo">اذهب إلى</s:String>
     <s:String x:Key="Caption.Vertical">عمودي:</s:String>
@@ -304,7 +304,7 @@
     <s:String x:Key="Encoder.Completed">أكملت</s:String>
     <s:String x:Key="Editor.Image.Overlay">غطاء</s:String>
     <s:String x:Key="Interface.Other">آخر</s:String>
-    <s:String x:Key="Title.StartUp">Screen To Gif - بدء التشغيل</s:String>
+    <s:String x:Key="Title.StartUp">Open Whiteboard Animator - بدء التشغيل</s:String>
     <s:String x:Key="FlipRotate.RotateRight">استدارة لليمين 90º</s:String>
     <s:String x:Key="InsertFrames.DifferentSizes">هناك فرق بين أحجام الإطارات. تحتاج إلى حل هذا قبل إدراج الإطارات.</s:String>
     <s:String x:Key="Editor.DiscardingFolders">التخلص المجلدات</s:String>

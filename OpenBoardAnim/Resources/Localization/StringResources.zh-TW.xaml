@@ -16,7 +16,7 @@
 	<s:String x:Key="Preview">預覽</s:String>    
     
  	<!--StartUp Page-->    
-	<s:String x:Key="Title.StartUp">Screen To Gif - 啟動</s:String>    
+	<s:String x:Key="Title.StartUp">Open Whiteboard Animator - 啟動</s:String>    
 	<s:String x:Key="Recorder">螢幕錄影</s:String>    
 	<s:String x:Key="Webcam">網路攝影機錄影</s:String>    
 	<s:String x:Key="Board">繪圖板錄影</s:String>    
@@ -28,7 +28,7 @@
 	<s:String x:Key="Tooltip.Editor">打開編輯器視窗，在該視窗中您可以編輯新錄製的影像。</s:String>    
     
  	<!--Options Page-->    
-	<s:String x:Key="Title.Options">Screen To Gif - 選項</s:String>    
+	<s:String x:Key="Title.Options">Open Whiteboard Animator - 選項</s:String>    
 	<s:String x:Key="Application">應用程式</s:String>    
 	<s:String x:Key="Interface">介面</s:String>    
 	<s:String x:Key="Image">圖像</s:String>    
@@ -113,10 +113,10 @@
 	<s:String x:Key="Recorder.Fps">每秒最大幀數</s:String>
 	<s:String x:Key="Recorder.SnapToWindow">貼齊視窗(拖曳後放下來貼齊)</s:String>
 	<s:String x:Key="Recorder.PreStart">啟動前</s:String>    
-	<s:String x:Key="Recorder.Paused">Screen To Gif (已暫停)</s:String>        
+	<s:String x:Key="Recorder.Paused">Open Whiteboard Animator (已暫停)</s:String>        
    
 	<!--Webcam Recorder-->
-	<s:String x:Key="Webcam.Title">Screen To Gif - 網路攝影機錄影</s:String>
+	<s:String x:Key="Webcam.Title">Open Whiteboard Animator - 網路攝影機錄影</s:String>
 	<s:String x:Key="Webcam.NoVideo">未偵測到視訊裝置:(</s:String>    
 	<s:String x:Key="Webcam.CheckVideoDevices">檢查視訊裝置。</s:String>        
    
@@ -173,7 +173,7 @@
 	<s:String x:Key="Encoder.Analyzing">正在分析未變更的像素</s:String>    
     
  	<!--Editor-->
-	<s:String x:Key="Editor.Title">Screen To Gif - 編輯器</s:String>
+	<s:String x:Key="Editor.Title">Open Whiteboard Animator - 編輯器</s:String>
 	<s:String x:Key="Editor.File">檔案</s:String>
 	<s:String x:Key="Editor.View">檢視</s:String>
 	<s:String x:Key="Editor.Edit">編輯</s:String>

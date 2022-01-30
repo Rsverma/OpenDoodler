@@ -20,7 +20,7 @@
     <s:String x:Key="ExceptionViewer.Title">Exception Viewer</s:String>
     <s:String x:Key="Editor.File.New.MediaProject">Media lub\nprojekt</s:String>
     <s:String x:Key="InsertFrames.SelectColorFill">Wybierz kolor wypełnienia</s:String>
-    <s:String x:Key="Webcam.Title">Screen To Gif - Nagrywanie kamerki</s:String>
+    <s:String x:Key="Webcam.Title">Open Whiteboard Animator - Nagrywanie kamerki</s:String>
     <s:String x:Key="Application.ScreenRecorder">Nagrywanie ekranu</s:String>
     <s:String x:Key="Editor.DragDrop.InvalidProject.Message">Spróbuj wybrać tylko jeden projekt.</s:String>
     <s:String x:Key="Editor.View.Zoom">Zoom</s:String>
@@ -183,7 +183,7 @@
     <s:String x:Key="ImportVideo.Duration">Długość trwania:</s:String>
     <s:String x:Key="Language.AppLanguage">Język aplikacji</s:String>
     <s:String x:Key="Interface.EditorBackground.GridSize.ILikeBigSquares">Lubię duże kwadraty ( ͡° ͜ʖ ͡°)</s:String>
-    <s:String x:Key="Editor.Title">Screen To Gif - Edytor</s:String>
+    <s:String x:Key="Editor.Title">Open Whiteboard Animator - Edytor</s:String>
     <s:String x:Key="Recorder.Continue">Kontynuuj</s:String>
     <s:String x:Key="Editor.Watermark.WarningSelection">Musisz wybrać co najmniej jedną klatkę, aby dodać znak wodny.</s:String>
     <s:String x:Key="Editor.DiscardingFrames">Odrzucanie klatek</s:String>
@@ -246,7 +246,7 @@
     <s:String x:Key="About">O programie</s:String>
     <s:String x:Key="Editor.OpenMediaProject">Otwórz media (obraz lub film) lub projekt</s:String>
     <s:String x:Key="Interface.EditorBackground.Scheme.Medium">Średni</s:String>
-    <s:String x:Key="Title.Options">Screen To Gif - Opcje</s:String>
+    <s:String x:Key="Title.Options">Open Whiteboard Animator - Opcje</s:String>
     <s:String x:Key="Recorder.Stop">Stop</s:String>
     <s:String x:Key="Editor.Select.GoTo">Idź do</s:String>
     <s:String x:Key="Caption.Vertical">Pionowy:</s:String>
@@ -303,7 +303,7 @@
     <s:String x:Key="Encoder.Completed">Zakończone</s:String>
     <s:String x:Key="Editor.Image.Overlay">Overlay</s:String>
     <s:String x:Key="Interface.Other">Inne</s:String>
-    <s:String x:Key="Title.StartUp">Screen To Gif - uruchomienie</s:String>
+    <s:String x:Key="Title.StartUp">Open Whiteboard Animator - uruchomienie</s:String>
     <s:String x:Key="FlipRotate.RotateRight">Obróć o 90º w prawo</s:String>
     <s:String x:Key="InsertFrames.DifferentSizes">Jest różnica między rozmiarami klatek. Musisz to rozwiązać przed wstawianiem klatek.</s:String>
     <s:String x:Key="Editor.DiscardingFolders">Odrzucanie folderów</s:String>
@@ -328,7 +328,7 @@
     <s:String x:Key="Delay.NewValue">Nowa wartość</s:String>
     <s:String x:Key="Preview">Podgląd</s:String>
     <s:String x:Key="Editor.Fade.WarningSelection">Musisz wybrać co najmniej jedną klatkę, aby dodać przejście FADE.</s:String>
-    <s:String x:Key="Recorder.Paused">Screen To Gif (Zapauzowane)</s:String>
+    <s:String x:Key="Recorder.Paused">Open Whiteboard Animator (Zapauzowane)</s:String>
     <s:String x:Key="ColorSelector.Select">Wybierz kolor</s:String>
     <s:String x:Key="Editor.Select.General">Generalne</s:String>
     <s:String x:Key="Application.ScreenRecorder.RecordClicks">Wykryj kliknięcia myszą.</s:String>

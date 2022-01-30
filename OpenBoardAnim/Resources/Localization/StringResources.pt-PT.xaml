@@ -28,7 +28,7 @@
     <s:String x:Key="Tooltip.Editor">Abre o editor. O local central desta aplicação.</s:String>
 
     <!--Options Page-->
-    <s:String x:Key="Title.Options">Screen To Gif - Opções</s:String>
+    <s:String x:Key="Title.Options">Open Whiteboard Animator - Opções</s:String>
     <s:String x:Key="Application">Geral</s:String>
     <s:String x:Key="Interface">Interface</s:String>
     <s:String x:Key="Image">Imagem</s:String>
@@ -121,10 +121,10 @@
     <s:String x:Key="Recorder.Fps">Número Máximo de Fotogramas por Segundo</s:String>
     <s:String x:Key="Recorder.SnapToWindow">Aderir a Janela (Arraste e large para enquadrar)</s:String>
     <s:String x:Key="Recorder.PreStart">Contagem Decrescente</s:String>
-    <s:String x:Key="Recorder.Paused">Screen To Gif (Pausado)</s:String>
+    <s:String x:Key="Recorder.Paused">Open Whiteboard Animator (Pausado)</s:String>
 
     <!--Webcam Recorder-->
-    <s:String x:Key="Webcam.Title">Screen To Gif - Gravador de Câmara</s:String>
+    <s:String x:Key="Webcam.Title">Open Whiteboard Animator - Gravador de Câmara</s:String>
     <s:String x:Key="Webcam.NoVideo">Nenhum dispositivo de vídeo encontrado :(</s:String>
     <s:String x:Key="Webcam.CheckVideoDevices">Verificar dispositivos de vídeo.</s:String>
 
@@ -181,7 +181,7 @@
     <s:String x:Key="Encoder.Analizing">Analisando Píxeis Não Modificados</s:String>
 
     <!--Editor-->
-    <s:String x:Key="Editor.Title">Screen To Gif - Editor</s:String>
+    <s:String x:Key="Editor.Title">Open Whiteboard Animator - Editor</s:String>
     <s:String x:Key="Editor.File">Ficheiro</s:String>
     <s:String x:Key="Editor.View">Exibir</s:String>
     <s:String x:Key="Editor.Edit">Editar</s:String>

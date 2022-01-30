@@ -18,7 +18,7 @@
 
 
     <!--StartUp Page-->
-    <s:String x:Key="Title.StartUp">Screen To Gif - Opstart</s:String>
+    <s:String x:Key="Title.StartUp">Open Whiteboard Animator - Opstart</s:String>
     <s:String x:Key="Recorder">Optag</s:String>
     <s:String x:Key="Webcam">Webcam</s:String>
     <s:String x:Key="Board">Tavle</s:String>
@@ -30,7 +30,7 @@
     <s:String x:Key="Tooltip.Editor">Åbner redigeringsfunktionen, hvor du kan tilpasse din optagelse, eller starte en ny.</s:String>
 
     <!--Options Page-->
-    <s:String x:Key="Title.Options">Screen To Gif - Indstillinger</s:String>
+    <s:String x:Key="Title.Options">Open Whiteboard Animator - Indstillinger</s:String>
     <s:String x:Key="Application">Program</s:String>
     <s:String x:Key="Interface">Brugerflade</s:String>
     <s:String x:Key="Image">Billede</s:String>
@@ -136,10 +136,10 @@
     <s:String x:Key="Recorder.Fps">Maks. rammer pr. sekund</s:String>
     <s:String x:Key="Recorder.SnapToWindow">Snap til vindue (træk til vindue og slip)</s:String>
     <s:String x:Key="Recorder.PreStart">Nedtælling</s:String>
-    <s:String x:Key="Recorder.Paused">Screen To Gif (pauset)</s:String>
+    <s:String x:Key="Recorder.Paused">Open Whiteboard Animator (pauset)</s:String>
 
     <!--Webcam Recorder-->
-    <s:String x:Key="Webcam.Title">Screen To Gif - Webcam</s:String>
+    <s:String x:Key="Webcam.Title">Open Whiteboard Animator - Webcam</s:String>
     <s:String x:Key="Webcam.NoVideo">Enhed ikke fundet :(</s:String>
     <s:String x:Key="Webcam.CheckVideoDevices">Søg efter enheder.</s:String>
 
@@ -196,7 +196,7 @@
     <s:String x:Key="Encoder.Analizing">Analyserer uændrede pixel</s:String>
 
     <!--Editor-->
-    <s:String x:Key="Editor.Title">Screen To Gif - Redigering</s:String>
+    <s:String x:Key="Editor.Title">Open Whiteboard Animator - Redigering</s:String>
     <s:String x:Key="Editor.File">Fil</s:String>
     <s:String x:Key="Editor.View">Vis</s:String>
     <s:String x:Key="Editor.Edit">Redigér</s:String>

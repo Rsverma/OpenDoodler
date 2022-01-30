@@ -20,7 +20,7 @@
     <s:String x:Key="ExceptionViewer.Title">异常查看器</s:String>
     <s:String x:Key="Editor.File.New.MediaProject">媒体或\n项目</s:String>
     <s:String x:Key="InsertFrames.SelectColorFill">选择画布的填充色</s:String>
-    <s:String x:Key="Webcam.Title">Screen To Gif - 摄像头录像机</s:String>
+    <s:String x:Key="Webcam.Title">Open Whiteboard Animator - 摄像头录像机</s:String>
     <s:String x:Key="Application.ScreenRecorder">屏幕录像机</s:String>
     <s:String x:Key="Editor.DragDrop.InvalidProject.Message">请选择一个项目</s:String>
     <s:String x:Key="Editor.View.Zoom">缩放</s:String>
@@ -182,7 +182,7 @@
     <s:String x:Key="ImportVideo.Duration">持续:</s:String>
     <s:String x:Key="Language.AppLanguage">应用程序的语言</s:String>
     <s:String x:Key="Interface.EditorBackground.GridSize.ILikeBigSquares">巨大</s:String>
-    <s:String x:Key="Editor.Title">Screen To Gif - 编辑器</s:String>
+    <s:String x:Key="Editor.Title">Open Whiteboard Animator - 编辑器</s:String>
     <s:String x:Key="Recorder.Continue">继续</s:String>
     <s:String x:Key="Editor.Watermark.WarningSelection">至少选择一帧图像才能设置水印。</s:String>
     <s:String x:Key="Editor.DiscardingFrames">丢弃帧</s:String>
@@ -244,7 +244,7 @@
     <s:String x:Key="About">关于</s:String>
     <s:String x:Key="Editor.OpenMediaProject">打开媒体 (图像或视频) 或 项目文件</s:String>
     <s:String x:Key="Interface.EditorBackground.Scheme.Medium">中等</s:String>
-    <s:String x:Key="Title.Options">Screen To Gif - 选项</s:String>
+    <s:String x:Key="Title.Options">Open Whiteboard Animator - 选项</s:String>
     <s:String x:Key="Recorder.Stop">停止</s:String>
     <s:String x:Key="Editor.Select.GoTo">跳转</s:String>
     <s:String x:Key="Caption.Vertical">垂直:</s:String>
@@ -301,7 +301,7 @@
     <s:String x:Key="Encoder.Completed">已完成</s:String>
     <s:String x:Key="Editor.Image.Overlay">覆盖</s:String>
     <s:String x:Key="Interface.Other">其他</s:String>
-    <s:String x:Key="Title.StartUp">Screen To Gif - 启动</s:String>
+    <s:String x:Key="Title.StartUp">Open Whiteboard Animator - 启动</s:String>
     <s:String x:Key="FlipRotate.RotateRight">顺时针旋转90°</s:String>
     <s:String x:Key="Editor.DiscardingFolders">丢弃文件夹</s:String>
     <s:String x:Key="Editor.File">文件</s:String>
@@ -325,7 +325,7 @@
     <s:String x:Key="Delay.NewValue">新值</s:String>
     <s:String x:Key="Editor.Cinemagraph.WarningNoDrawing">至少选择一个像素才能设置Cinemagraph效果。在上面绘制图案即可选中这些像素。</s:String>
     <s:String x:Key="Editor.Fade.WarningSelection">至少选择一帧图像才能设置渐隐切换效果。</s:String>
-    <s:String x:Key="Recorder.Paused">Screen To Gif (已暂停)</s:String>
+    <s:String x:Key="Recorder.Paused">Open Whiteboard Animator (已暂停)</s:String>
     <s:String x:Key="ColorSelector.Select">选择一个颜色</s:String>
     <s:String x:Key="Editor.Select.General">常规</s:String>
     <s:String x:Key="Application.ScreenRecorder.RecordClicks">检测鼠标点击。</s:String>

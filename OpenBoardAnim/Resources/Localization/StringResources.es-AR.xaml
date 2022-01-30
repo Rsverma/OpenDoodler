@@ -20,7 +20,7 @@
     <s:String x:Key="ExceptionViewer.Title">Visor de excepción</s:String>
     <s:String x:Key="Editor.File.New.MediaProject">Proyecto o\nmedios</s:String>
     <s:String x:Key="InsertFrames.SelectColorFill">Seleccionar el color de relleno del lienzo</s:String>
-    <s:String x:Key="Webcam.Title">Screen To Gif - Grabador de webcam</s:String>
+    <s:String x:Key="Webcam.Title">Open Whiteboard Animator - Grabador de webcam</s:String>
     <s:String x:Key="Application.ScreenRecorder">Grabador de pantalla</s:String>
     <s:String x:Key="Editor.DragDrop.InvalidProject.Message">Intentá elegir sólo un proyecto.</s:String>
     <s:String x:Key="Editor.View.Zoom">Zoom</s:String>
@@ -183,7 +183,7 @@
     <s:String x:Key="ImportVideo.Duration">Duración:</s:String>
     <s:String x:Key="Language.AppLanguage">Idioma de la aplicación</s:String>
     <s:String x:Key="Interface.EditorBackground.GridSize.ILikeBigSquares">Quiero cuadros grandes</s:String>
-    <s:String x:Key="Editor.Title">Screen To Gif - Editor</s:String>
+    <s:String x:Key="Editor.Title">Open Whiteboard Animator - Editor</s:String>
     <s:String x:Key="Recorder.Continue">Continuar</s:String>
     <s:String x:Key="Editor.Watermark.WarningSelection">Tenés que seleccionar al menos un fotograma para aplicarle la marca de agua.</s:String>
     <s:String x:Key="Editor.DiscardingFrames">Descartando fotogramas…</s:String>
@@ -243,10 +243,10 @@
     <s:String x:Key="Editor.ResizingFrames">Redimensionando fotogramas…</s:String>
     <s:String x:Key="TempFiles.Files">Archivos:</s:String>
     <s:String x:Key="Editor.Watermark.WarningNoImage">Tenés que seleccionar una imagen para aplicar a el/los fotograma/s seleccionado/s.</s:String>
-    <s:String x:Key="About">Acerca de\nScreen To Gif</s:String>
+    <s:String x:Key="About">Acerca de\nOpen Whiteboard Animator</s:String>
     <s:String x:Key="Editor.OpenMediaProject">Abrir un medio (imagen o video), o un archivo de proyecto</s:String>
     <s:String x:Key="Interface.EditorBackground.Scheme.Medium">Medio</s:String>
-    <s:String x:Key="Title.Options">Screen To Gif - Configuración</s:String>
+    <s:String x:Key="Title.Options">Open Whiteboard Animator - Configuración</s:String>
     <s:String x:Key="Recorder.Stop">Detener</s:String>
     <s:String x:Key="Editor.Select.GoTo">Ir a…</s:String>
     <s:String x:Key="Caption.Vertical">Vertical:</s:String>
@@ -303,7 +303,7 @@
     <s:String x:Key="Encoder.Completed">Completado</s:String>
     <s:String x:Key="Editor.Image.Overlay">Capa superpuesta</s:String>
     <s:String x:Key="Interface.Other">Otros</s:String>
-    <s:String x:Key="Title.StartUp">Screen To Gif - Inicio</s:String>
+    <s:String x:Key="Title.StartUp">Open Whiteboard Animator - Inicio</s:String>
     <s:String x:Key="FlipRotate.RotateRight">Girar a la derecha 90º</s:String>
     <s:String x:Key="InsertFrames.DifferentSizes">Hay una diferencia entre los tamaños de los fotogramas. Necesitás resolver esto antes de insertar los fotogramas.</s:String>
     <s:String x:Key="Editor.DiscardingFolders">Descartando carpetas</s:String>
@@ -328,7 +328,7 @@
     <s:String x:Key="Delay.NewValue">Nuevo valor</s:String>
     <s:String x:Key="Preview">Vista previa</s:String>
     <s:String x:Key="Editor.Fade.WarningSelection">Tenés que seleccionar al menos un fotograma para aplicar la transición de desvanecimiento.</s:String>
-    <s:String x:Key="Recorder.Paused">Screen To Gif (pausado)</s:String>
+    <s:String x:Key="Recorder.Paused">Open Whiteboard Animator (pausado)</s:String>
     <s:String x:Key="ColorSelector.Select">Seleccionar un color</s:String>
     <s:String x:Key="Editor.Select.General">General</s:String>
     <s:String x:Key="Application.ScreenRecorder.RecordClicks">Detectar clics del mouse</s:String>

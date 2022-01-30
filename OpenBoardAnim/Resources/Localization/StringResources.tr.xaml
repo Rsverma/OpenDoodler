@@ -20,7 +20,7 @@
     <s:String x:Key="ExceptionViewer.Title">İstisna Görüntüleyici</s:String>
     <s:String x:Key="Editor.File.New.MediaProject">Medya veya\nProje</s:String>
     <s:String x:Key="InsertFrames.SelectColorFill">Select the Canvas Fill Color</s:String>
-    <s:String x:Key="Webcam.Title">Screen To Gif - Webcam Recorder</s:String>
+    <s:String x:Key="Webcam.Title">Open Whiteboard Animator - Webcam Recorder</s:String>
     <s:String x:Key="Application.ScreenRecorder">Ekran Kaydedici</s:String>
     <s:String x:Key="Editor.DragDrop.InvalidProject.Message">Yalnızca bir proje seçmeyi deneyin.</s:String>
     <s:String x:Key="Editor.View.Zoom">Zoom</s:String>
@@ -183,7 +183,7 @@
     <s:String x:Key="ImportVideo.Duration">Geçen süre:</s:String>
     <s:String x:Key="Language.AppLanguage">Uygulama Dili</s:String>
     <s:String x:Key="Interface.EditorBackground.GridSize.ILikeBigSquares">Büyük Kareleri Severim.</s:String>
-    <s:String x:Key="Editor.Title">Screen To Gif - Editör</s:String>
+    <s:String x:Key="Editor.Title">Open Whiteboard Animator - Editör</s:String>
     <s:String x:Key="Recorder.Continue">Devam</s:String>
     <s:String x:Key="Editor.Watermark.WarningSelection">Filigranı uygulamak için en az bir kare seçmelisiniz.</s:String>
     <s:String x:Key="Editor.DiscardingFrames">Kareleri İptal Etme</s:String>
@@ -246,7 +246,7 @@
     <s:String x:Key="About">Hakkında</s:String>
     <s:String x:Key="Editor.OpenMediaProject">Bir Medya (Görünütü veya Video) yada bir Proje Dosyası Aç</s:String>
     <s:String x:Key="Interface.EditorBackground.Scheme.Medium">Orta</s:String>
-    <s:String x:Key="Title.Options">Screen To Gif - Ayarlar</s:String>
+    <s:String x:Key="Title.Options">Open Whiteboard Animator - Ayarlar</s:String>
     <s:String x:Key="Recorder.Stop">Dur</s:String>
     <s:String x:Key="Editor.Select.GoTo">Git</s:String>
     <s:String x:Key="Caption.Vertical">Dikey:</s:String>
@@ -303,7 +303,7 @@
     <s:String x:Key="Encoder.Completed">Tamamlandı</s:String>
     <s:String x:Key="Editor.Image.Overlay">Kaplama</s:String>
     <s:String x:Key="Interface.Other">Diğer</s:String>
-    <s:String x:Key="Title.StartUp">Screen To Gif - Başlangıç</s:String>
+    <s:String x:Key="Title.StartUp">Open Whiteboard Animator - Başlangıç</s:String>
     <s:String x:Key="FlipRotate.RotateRight">Sağa 90º Döndür</s:String>
     <s:String x:Key="InsertFrames.DifferentSizes">Kare boyutlanrı arasında farklılıklar var. Kareleri eklemeden önce bunu çözmeniz gerekiyor.</s:String>
     <s:String x:Key="Editor.DiscardingFolders">Klasörleri İptal Etme</s:String>
@@ -328,7 +328,7 @@
     <s:String x:Key="Delay.NewValue">Yeni Değer</s:String>
     <s:String x:Key="Preview">Önizleme</s:String>
     <s:String x:Key="Editor.Fade.WarningSelection">Karartma Geçişlerini uygulamak için en az bir kare seçmeniz gerekiyor.</s:String>
-    <s:String x:Key="Recorder.Paused">Screen To Gif (Duraklatıldı)</s:String>
+    <s:String x:Key="Recorder.Paused">Open Whiteboard Animator (Duraklatıldı)</s:String>
     <s:String x:Key="ColorSelector.Select">Renk Seç</s:String>
     <s:String x:Key="Editor.Select.General">Genel</s:String>
     <s:String x:Key="Application.ScreenRecorder.RecordClicks">Fare tıklamalarını kayıtta göster.</s:String>

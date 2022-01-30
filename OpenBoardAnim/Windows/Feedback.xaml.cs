@@ -113,7 +113,7 @@ namespace OpenBoardAnim.Windows.Other
             var mail = new MailMessage
             {
                 From = new MailAddress("OpenBoardAnim@outlook.com"),
-                Subject = "Screen To Gif - Feedback",
+                Subject = "Open Whiteboard Animator - Feedback",
                 IsBodyHtml = true
             };
 
@@ -125,7 +125,7 @@ namespace OpenBoardAnim.Windows.Other
             sb.Append("<html xmlns:msxsl=\"urn:schemas-microsoft-com:xslt\">");
             sb.Append("<head><meta content=\"en-us\" http-equiv=\"Content-Language\" />" +
                 "<meta content=\"text/html; charset=utf-16\" http-equiv=\"Content-Type\" />" +
-                "<title>Screen To Gif - Feedback</title>" +
+                "<title>Open Whiteboard Animator - Feedback</title>" +
                 "</head>");
 
             sb.AppendFormat("<style>{0}</style>", Util.Other.GetTextResource("OpenBoardAnim.Resources.Style.css"));

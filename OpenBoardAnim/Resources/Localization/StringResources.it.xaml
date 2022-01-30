@@ -18,7 +18,7 @@
 
 
     <!--StartUp Page-->
-    <s:String x:Key="Title.StartUp">Screen To Gif - Schermata iniziale</s:String>
+    <s:String x:Key="Title.StartUp">Open Whiteboard Animator - Schermata iniziale</s:String>
     <s:String x:Key="Recorder">Registratore</s:String>
     <s:String x:Key="Webcam">Webcam</s:String>
     <s:String x:Key="Board">Lavagna</s:String>
@@ -30,7 +30,7 @@
     <s:String x:Key="Tooltip.Editor">Apre la finestra dell'editor, la parte centrale di questa app, dalla quale puoi coinciare e editare una nuova registrazione.</s:String>
 
     <!--Options Page-->
-    <s:String x:Key="Title.Options">Screen To Gif - Opzioni</s:String>
+    <s:String x:Key="Title.Options">Open Whiteboard Animator - Opzioni</s:String>
     <s:String x:Key="Application">Applicazione</s:String>
     <s:String x:Key="Interface">Interfaccia</s:String>
     <s:String x:Key="Image">Immagine</s:String>
@@ -136,10 +136,10 @@
     <s:String x:Key="Recorder.Fps">Max Frame per Secondo</s:String>
     <s:String x:Key="Recorder.SnapToWindow">Ancora alla finestra (trascina e rilascia per ancorare)</s:String>
     <s:String x:Key="Recorder.PreStart">Pre Avvio</s:String>
-    <s:String x:Key="Recorder.Paused">Screen To Gif (in pausa)</s:String>
+    <s:String x:Key="Recorder.Paused">Open Whiteboard Animator (in pausa)</s:String>
     
     <!--Webcam Recorder-->
-    <s:String x:Key="Webcam.Title">Screen To Gif - Webcam Recorder</s:String>
+    <s:String x:Key="Webcam.Title">Open Whiteboard Animator - Webcam Recorder</s:String>
     <s:String x:Key="Webcam.NoVideo">Nessuna scheda video trovata :(</s:String>
     <s:String x:Key="Webcam.CheckVideoDevices">Controllo scheda video.</s:String>
     
@@ -196,7 +196,7 @@
     <s:String x:Key="Encoder.Analyzing">Analisi pixel che non cambiano</s:String>
 
     <!--Editor-->
-    <s:String x:Key="Editor.Title">Screen To Gif - Editor</s:String>
+    <s:String x:Key="Editor.Title">Open Whiteboard Animator - Editor</s:String>
     <s:String x:Key="Editor.File">File</s:String>
     <s:String x:Key="Editor.View">Visualizza</s:String>
     <s:String x:Key="Editor.Edit">Modifica</s:String>

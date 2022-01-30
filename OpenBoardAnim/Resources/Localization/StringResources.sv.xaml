@@ -25,7 +25,7 @@
     <s:String x:Key="ExceptionViewer.Title">Undantags Vy</s:String>
     <s:String x:Key="Editor.File.New.MediaProject">Media eller\nProjekt</s:String>
     <s:String x:Key="InsertFrames.SelectColorFill">Välj fyllningsfärg för Canvas</s:String>
-    <s:String x:Key="Webcam.Title">Screen To Gif - Webbkamera Inspelning</s:String>
+    <s:String x:Key="Webcam.Title">Open Whiteboard Animator - Webbkamera Inspelning</s:String>
     <s:String x:Key="Application.ScreenRecorder">Skärm Inspelning</s:String>
     <s:String x:Key="Editor.DragDrop.InvalidProject.Message">Prova att enbart välja ett projekt.</s:String>
     <s:String x:Key="Editor.View.Zoom">Zoom</s:String>
@@ -188,7 +188,7 @@
     <s:String x:Key="ImportVideo.Duration">Varaktighet:</s:String>
     <s:String x:Key="Language.AppLanguage">Applikations språk</s:String>
     <s:String x:Key="Interface.EditorBackground.GridSize.ILikeBigSquares">Jag gillar stora fyrkanter</s:String>
-    <s:String x:Key="Editor.Title">Screen To Gif - Redigering</s:String>
+    <s:String x:Key="Editor.Title">Open Whiteboard Animator - Redigering</s:String>
     <s:String x:Key="Recorder.Continue">Fortsätt</s:String>
     <s:String x:Key="Editor.Watermark.WarningSelection">Du måste välja åtminstone en bildruta för att tillämpa en vattenstämpel till.</s:String>
     <s:String x:Key="Editor.DiscardingFrames">Förkasta bildrutor</s:String>
@@ -251,7 +251,7 @@
     <s:String x:Key="About">Om</s:String>
     <s:String x:Key="Editor.OpenMediaProject">Öppna Media (bild eller video) eller en projekt fil</s:String>
     <s:String x:Key="Interface.EditorBackground.Scheme.Medium">Medium</s:String>
-    <s:String x:Key="Title.Options">Screen To Gif - Alternativ</s:String>
+    <s:String x:Key="Title.Options">Open Whiteboard Animator - Alternativ</s:String>
     <s:String x:Key="Recorder.Stop">Stopp</s:String>
     <s:String x:Key="Editor.Select.GoTo">Gå till</s:String>
     <s:String x:Key="Caption.Vertical">Vertikal:</s:String>
@@ -308,7 +308,7 @@
     <s:String x:Key="Encoder.Completed">Färdigställ</s:String>
     <s:String x:Key="Editor.Image.Overlay">Överlägg</s:String>
     <s:String x:Key="Interface.Other">Andra</s:String>
-    <s:String x:Key="Title.StartUp">Screen to Gif</s:String>
+    <s:String x:Key="Title.StartUp">Open Whiteboard Animator</s:String>
     <s:String x:Key="FlipRotate.RotateRight">Totera Höger 90º</s:String>
     <s:String x:Key="InsertFrames.DifferentSizes">Det finns en skillnad mellan bild storlekarna. Du måste lösa detta innan du sätter in bildrutorna.</s:String>
     <s:String x:Key="Editor.DiscardingFolders">Kasta bort mappar</s:String>

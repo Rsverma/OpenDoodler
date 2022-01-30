@@ -17,7 +17,7 @@
     <s:String x:Key="Preview">Preview</s:String>
 
     <!--StartUp Page-->
-    <s:String x:Key="Title.StartUp">Screen To Gif - StartUp</s:String>
+    <s:String x:Key="Title.StartUp">Open Whiteboard Animator - StartUp</s:String>
     <s:String x:Key="Recorder">Recorder</s:String>
     <s:String x:Key="Webcam">Webcam</s:String>
     <s:String x:Key="Board">Board</s:String>
@@ -29,7 +29,7 @@
     <s:String x:Key="Tooltip.Editor">Opens the editor window, the central point of this app, where you can start and edit a new recording.</s:String>
 
     <!--Options Page-->
-    <s:String x:Key="Title.Options">Screen To Gif - Options</s:String>
+    <s:String x:Key="Title.Options">Open Whiteboard Animator - Options</s:String>
     <s:String x:Key="Application">Application</s:String>
     <s:String x:Key="Interface">Interface</s:String>
     <s:String x:Key="Image">Image</s:String>
@@ -131,10 +131,10 @@
     <s:String x:Key="Recorder.Fps">Maximum Frames per Second</s:String>
     <s:String x:Key="Recorder.SnapToWindow">Snap to Window (Drag and release to snap)</s:String>
     <s:String x:Key="Recorder.PreStart">Pre Start</s:String>
-    <s:String x:Key="Recorder.Paused">Screen To Gif (Paused)</s:String>
+    <s:String x:Key="Recorder.Paused">Open Whiteboard Animator (Paused)</s:String>
     
     <!--Webcam Recorder-->
-    <s:String x:Key="Webcam.Title">Screen To Gif - Webcam Recorder</s:String>
+    <s:String x:Key="Webcam.Title">Open Whiteboard Animator - Webcam Recorder</s:String>
     <s:String x:Key="Webcam.NoVideo">No video device detected :(</s:String>
     <s:String x:Key="Webcam.CheckVideoDevices">Check for video devices.</s:String>
     
@@ -193,7 +193,7 @@
     <s:String x:Key="Encoder.Remove">Remove</s:String>
 
     <!--Editor-->
-    <s:String x:Key="Editor.Title">Screen To Gif - Editor</s:String>
+    <s:String x:Key="Editor.Title">Open Whiteboard Animator - Editor</s:String>
     <s:String x:Key="Editor.File">File</s:String>
     <s:String x:Key="Editor.View">View</s:String>
     <s:String x:Key="Editor.Edit">Edit</s:String>

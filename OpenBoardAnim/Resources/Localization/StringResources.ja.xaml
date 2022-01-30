@@ -17,7 +17,7 @@
   <s:String x:Key="Suppress">抑える</s:String>
   <s:String x:Key="Preview">プレビュー</s:String>
   <!--StartUp Page-->
-  <s:String x:Key="Title.StartUp">Screen To Gif - 起動画面</s:String>
+  <s:String x:Key="Title.StartUp">Open Whiteboard Animator - 起動画面</s:String>
   <s:String x:Key="Recorder">レコーダー</s:String>
   <s:String x:Key="Webcam">Webカメラ</s:String>
   <s:String x:Key="Board">ホワイトボード</s:String>
@@ -28,14 +28,14 @@
   <s:String x:Key="Tooltip.Board">描画を記録できるホワイトボード レコーダーを開きます。</s:String>
   <s:String x:Key="Tooltip.Editor">新しい記録を始めたり、編集したりできる このアプリのメイン機能である エディタ ウィンドウを開きます。</s:String>
   <!--Options Page-->
-  <s:String x:Key="Title.Options">Screen To Gif - オプション</s:String>
+  <s:String x:Key="Title.Options">Open Whiteboard Animator - オプション</s:String>
   <s:String x:Key="Application">アプリケーション</s:String>
   <s:String x:Key="Interface">インターフェース</s:String>
   <s:String x:Key="Image">画像</s:String>
   <s:String x:Key="Language">言語</s:String>
   <s:String x:Key="TemporaryFiles">一時ファイル</s:String>
   <s:String x:Key="Donate">寄付</s:String>
-  <s:String x:Key="About">Screen To Gif について</s:String>
+  <s:String x:Key="About">Open Whiteboard Animator について</s:String>
   <s:String x:Key="Application.Homepage">起動時のウィンドウ</s:String>
   <s:String x:Key="Application.Homepage.StartUp">ランチャー</s:String>
   <s:String x:Key="Application.Homepage.Recorder">スクリーン レコーダー</s:String>
@@ -120,9 +120,9 @@
   <s:String x:Key="Recorder.Fps">最大フレーム/秒</s:String>
   <s:String x:Key="Recorder.SnapToWindow">ウィンドウに吸着する (スナップしたいところへドラッグして離す)</s:String>
   <s:String x:Key="Recorder.PreStart">開始まで</s:String>
-  <s:String x:Key="Recorder.Paused">Screen To Gif (Paused)</s:String>
+  <s:String x:Key="Recorder.Paused">Open Whiteboard Animator (Paused)</s:String>
   <!--Webカメラ レコーダー-->
-  <s:String x:Key="Webcam.Title">Screen To Gif - Webカメラ レコーダー</s:String>
+  <s:String x:Key="Webcam.Title">Open Whiteboard Animator - Webカメラ レコーダー</s:String>
   <s:String x:Key="Webcam.NoVideo">ビデオデバイスが見つかりません</s:String>
   <s:String x:Key="Webcam.CheckVideoDevices">ビデオデバイスを確認してください</s:String>
   <!--Color Selector-->
@@ -175,7 +175,7 @@
   <s:String x:Key="Encoder.Processing">実行中 {0}</s:String>
   <s:String x:Key="Encoder.Analyzing">変更されていないピクセルを検出中</s:String>
   <!--Editor-->
-  <s:String x:Key="Editor.Title">Screen To Gif - エディタ</s:String>
+  <s:String x:Key="Editor.Title">Open Whiteboard Animator - エディタ</s:String>
   <s:String x:Key="Editor.File">ファイル</s:String>
   <s:String x:Key="Editor.View">表示</s:String>
   <s:String x:Key="Editor.Edit">編集</s:String>

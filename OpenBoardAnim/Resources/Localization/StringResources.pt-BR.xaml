@@ -29,7 +29,7 @@
     <s:String x:Key="Tooltip.Editor">Abre o editor. O local central deste aplicativo.</s:String>
 
     <!--Options Page-->
-    <s:String x:Key="Title.Options">Screen To Gif - Opções</s:String>
+    <s:String x:Key="Title.Options">Open Whiteboard Animator - Opções</s:String>
     <s:String x:Key="Application">Geral</s:String>
     <s:String x:Key="Interface">Interface</s:String>
     <s:String x:Key="Image">Imagem</s:String>
@@ -131,10 +131,10 @@
     <s:String x:Key="Recorder.Fps">Quantidade Máxima de Quadros por Segundo</s:String>
     <s:String x:Key="Recorder.SnapToWindow">Enquadre na Janela (Arraste e solte para enquadrar)</s:String>
     <s:String x:Key="Recorder.PreStart">Contagem Regressiva</s:String>
-    <s:String x:Key="Recorder.Paused">Screen To Gif (Pausado)</s:String>
+    <s:String x:Key="Recorder.Paused">Open Whiteboard Animator (Pausado)</s:String>
 
     <!--Webcam Recorder-->
-    <s:String x:Key="Webcam.Title">Screen To Gif - Gravador de Câmera</s:String>
+    <s:String x:Key="Webcam.Title">Open Whiteboard Animator - Gravador de Câmera</s:String>
     <s:String x:Key="Webcam.NoVideo">Nenhum dispositivo de vídeo encontrado :(</s:String>
     <s:String x:Key="Webcam.CheckVideoDevices">Checar dispositivos de vídeo.</s:String>
 
@@ -193,7 +193,7 @@
     <s:String x:Key="Encoder.Remove">Remover</s:String>
     
     <!--Editor-->
-    <s:String x:Key="Editor.Title">Screen To Gif - Editor</s:String>
+    <s:String x:Key="Editor.Title">Open Whiteboard Animator - Editor</s:String>
     <s:String x:Key="Editor.File">Arquivo</s:String>
     <s:String x:Key="Editor.View">Exibir</s:String>
     <s:String x:Key="Editor.Edit">Editar</s:String>

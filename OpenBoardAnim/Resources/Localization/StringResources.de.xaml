@@ -18,7 +18,7 @@
 
 
     <!--StartUp Page-->
-    <system:String x:Key="Title.StartUp">Screen To Gif - Start</system:String>
+    <system:String x:Key="Title.StartUp">Open Whiteboard Animator - Start</system:String>
     <system:String x:Key="Rekorder">Rekorder</system:String>
     <system:String x:Key="Webcam">Webcam</system:String>
     <system:String x:Key="Board">Board</system:String>
@@ -30,7 +30,7 @@
     <system:String x:Key="Tooltip.Editor">Öffnet das Editor-Fenster, der zentrale Punkt dieses Programmes, wo die Aufnahmen berarbeitet werden können.</system:String>
 
     <!--Options Page-->
-    <system:String x:Key="Title.Options">Screen To Gif - Optionen</system:String>
+    <system:String x:Key="Title.Options">Open Whiteboard Animator - Optionen</system:String>
     <system:String x:Key="Application">Programm</system:String>
     <system:String x:Key="Interface">Oberfläche</system:String>
     <system:String x:Key="Image">Bild</system:String>
@@ -136,10 +136,10 @@
     <system:String x:Key="Rekorder.Fps">Maximale Frames pro Sekunde</system:String>
     <system:String x:Key="Rekorder.SnapToWindow">Einschnappen beim Fenster (Ziehen und loslassen zum Einschnappen)</system:String>
     <system:String x:Key="Rekorder.PreStart">Vorstart</system:String>
-    <system:String x:Key="Rekorder.Paused">Screen To Gif (Pausiert)</system:String>
+    <system:String x:Key="Rekorder.Paused">Open Whiteboard Animator (Pausiert)</system:String>
     
     <!--Webcam Rekorder-->
-    <system:String x:Key="Webcam.Title">Screen To Gif - Webcam-Rekorder</system:String>
+    <system:String x:Key="Webcam.Title">Open Whiteboard Animator - Webcam-Rekorder</system:String>
     <system:String x:Key="Webcam.NoVideo">Kein Videogerät ausgewählt :(</system:String>
     <system:String x:Key="Webcam.CheckVideoDevices">Suche nach Videogeräten.</system:String>
     
@@ -196,7 +196,7 @@
     <system:String x:Key="Encoder.Analizing">Analysiere unveränderte Pixels</system:String>
 
     <!--Editor-->
-    <system:String x:Key="Editor.Title">Screen To Gif - Editor</system:String>
+    <system:String x:Key="Editor.Title">Open Whiteboard Animator - Editor</system:String>
     <system:String x:Key="Editor.File">Datei</system:String>
     <system:String x:Key="Editor.View">Anzeige</system:String>
     <system:String x:Key="Editor.Edit">Bearbeiten</system:String>

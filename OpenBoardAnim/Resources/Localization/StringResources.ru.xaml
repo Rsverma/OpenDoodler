@@ -20,7 +20,7 @@
     <s:String x:Key="ExceptionViewer.Title">Exception Viewer</s:String>
     <s:String x:Key="Editor.File.New.MediaProject">Медиа или\nпроект</s:String>
     <s:String x:Key="InsertFrames.SelectColorFill">Выберите цвет заливки холста</s:String>
-    <s:String x:Key="Webcam.Title">Screen To Gif - запись с вебкамеры</s:String>
+    <s:String x:Key="Webcam.Title">Open Whiteboard Animator - запись с вебкамеры</s:String>
     <s:String x:Key="Application.ScreenRecorder">Запись с экрана</s:String>
     <s:String x:Key="Editor.DragDrop.InvalidProject.Message">Попробуйте выбрать лишь один проект.</s:String>
     <s:String x:Key="Editor.View.Zoom">Масштаб</s:String>
@@ -182,7 +182,7 @@
     <s:String x:Key="ImportVideo.Duration">Продолжительность:</s:String>
     <s:String x:Key="Language.AppLanguage">Язык приложения</s:String>
     <s:String x:Key="Interface.EditorBackground.GridSize.ILikeBigSquares">Мне нравятся огромные квадраты</s:String>
-    <s:String x:Key="Editor.Title">Screen To Gif - Редактор</s:String>
+    <s:String x:Key="Editor.Title">Open Whiteboard Animator - Редактор</s:String>
     <s:String x:Key="Recorder.Continue">Плодолжить</s:String>
     <s:String x:Key="Editor.Watermark.WarningSelection">Выберите хотя бы один кадр, чтобы добавить водяной знак.</s:String>
     <s:String x:Key="Editor.DiscardingFrames">Discarding Frames</s:String>
@@ -244,7 +244,7 @@
     <s:String x:Key="About">О программе</s:String>
     <s:String x:Key="Editor.OpenMediaProject">Open a Media (Image or Video) or a Project File</s:String>
     <s:String x:Key="Interface.EditorBackground.Scheme.Medium">Средняя</s:String>
-    <s:String x:Key="Title.Options">Screen To Gif - Настройки</s:String>
+    <s:String x:Key="Title.Options">Open Whiteboard Animator - Настройки</s:String>
     <s:String x:Key="Recorder.Stop">Стоп</s:String>
     <s:String x:Key="Editor.Select.GoTo">Перейти</s:String>
     <s:String x:Key="Caption.Vertical">По вертикали:</s:String>
@@ -301,7 +301,7 @@
     <s:String x:Key="Encoder.Completed">Завершено</s:String>
     <s:String x:Key="Editor.Image.Overlay">Наложение</s:String>
     <s:String x:Key="Interface.Other">Прочее</s:String>
-    <s:String x:Key="Title.StartUp">Screen To Gif - Запуск</s:String>
+    <s:String x:Key="Title.StartUp">Open Whiteboard Animator - Запуск</s:String>
     <s:String x:Key="FlipRotate.RotateRight">Повернуть направо на 90º</s:String>
     <s:String x:Key="Editor.DiscardingFolders">Discarding Folders</s:String>
     <s:String x:Key="Editor.File">Файл</s:String>
@@ -325,7 +325,7 @@
     <s:String x:Key="Delay.NewValue">Новое значение</s:String>
     <s:String x:Key="Editor.Cinemagraph.WarningNoDrawing">Выберите хотя бы один пиксел, чтобы добавить Cinemagraph to. Select the pixels by drawing on top of them.</s:String>
     <s:String x:Key="Editor.Fade.WarningSelection">Выберите хотя бы один кадр, чтобы добавить Fade Transition.</s:String>
-    <s:String x:Key="Recorder.Paused">Screen To Gif (Приостановлено)</s:String>
+    <s:String x:Key="Recorder.Paused">Open Whiteboard Animator (Приостановлено)</s:String>
     <s:String x:Key="ColorSelector.Select">Выберите цвет</s:String>
     <s:String x:Key="Editor.Select.General">Основные</s:String>
     <s:String x:Key="Application.ScreenRecorder.RecordClicks">Определять щелчки мыши</s:String>

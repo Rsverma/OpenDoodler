@@ -20,7 +20,7 @@
     <s:String x:Key="ExceptionViewer.Title">Visualisation d'exception</s:String>
     <s:String x:Key="Editor.File.New.MediaProject">Media ou\nProjet</s:String>
     <s:String x:Key="InsertFrames.SelectColorFill">Sélectionnez la couleur de remplissage</s:String>
-    <s:String x:Key="Webcam.Title">Screen To Gif - Enregistreur de WebCam</s:String>
+    <s:String x:Key="Webcam.Title">Open Whiteboard Animator - Enregistreur de WebCam</s:String>
     <s:String x:Key="Application.ScreenRecorder">Enregistreur d'écran</s:String>
     <s:String x:Key="Editor.DragDrop.InvalidProject.Message">Essayez de choisir un seul projet.</s:String>
     <s:String x:Key="Editor.View.Zoom">Zoom</s:String>
@@ -183,7 +183,7 @@
     <s:String x:Key="ImportVideo.Duration">Durée:</s:String>
     <s:String x:Key="Language.AppLanguage">Langue de l'application</s:String>
     <s:String x:Key="Interface.EditorBackground.GridSize.ILikeBigSquares">J'aime les gros carrés</s:String>
-    <s:String x:Key="Editor.Title">Screen To Gif - Éditeur</s:String>
+    <s:String x:Key="Editor.Title">Open Whiteboard Animator - Éditeur</s:String>
     <s:String x:Key="Recorder.Continue">Continuer</s:String>
     <s:String x:Key="Editor.Watermark.WarningSelection">Vous devez sélectionner au moins une frame pour appliquer un filigrane</s:String>
     <s:String x:Key="Editor.DiscardingFrames">Supprimer les Frames</s:String>
@@ -246,7 +246,7 @@
     <s:String x:Key="About">À propos</s:String>
     <s:String x:Key="Editor.OpenMediaProject">Ouvrez un média (image ou vidéo) ou un fichier de projet</s:String>
     <s:String x:Key="Interface.EditorBackground.Scheme.Medium">Moyen</s:String>
-    <s:String x:Key="Title.Options">Screen To Gif - Options</s:String>
+    <s:String x:Key="Title.Options">Open Whiteboard Animator - Options</s:String>
     <s:String x:Key="Recorder.Stop">Stop</s:String>
     <s:String x:Key="Editor.Select.GoTo">Aller à</s:String>
     <s:String x:Key="Caption.Vertical">Vertical:</s:String>
@@ -303,7 +303,7 @@
     <s:String x:Key="Encoder.Completed">Terminé</s:String>
     <s:String x:Key="Editor.Image.Overlay">Superposition</s:String>
     <s:String x:Key="Interface.Other">Autre</s:String>
-    <s:String x:Key="Title.StartUp">Screen To Gif - Démarrage</s:String>
+    <s:String x:Key="Title.StartUp">Open Whiteboard Animator - Démarrage</s:String>
     <s:String x:Key="FlipRotate.RotateRight">Rotation à droite 90º</s:String>
     <s:String x:Key="InsertFrames.DifferentSizes">Il existe une différence entre les tailles d'image. Vous devez résoudre ce avant d'insérer les images.</s:String>
     <s:String x:Key="Editor.DiscardingFolders">Rejeter dossiers</s:String>
@@ -328,7 +328,7 @@
     <s:String x:Key="Delay.NewValue">Nouvelle valeur</s:String>
     <s:String x:Key="Preview">Aperçu</s:String>
     <s:String x:Key="Editor.Fade.WarningSelection">Vous devez sélectionner au moins une frame pour appliquer la Transition fondu</s:String>
-    <s:String x:Key="Recorder.Paused">Screen To Gif (en pause)</s:String>
+    <s:String x:Key="Recorder.Paused">Open Whiteboard Animator (en pause)</s:String>
     <s:String x:Key="ColorSelector.Select">Sélectionnez une Couleur</s:String>
     <s:String x:Key="Editor.Select.General">Général</s:String>
     <s:String x:Key="Application.ScreenRecorder.RecordClicks">Détecter clics de souris.</s:String>
