@@ -5,11 +5,19 @@
              xmlns:vm="clr-namespace:OpenBoardAnim.ViewModels"
              xmlns:views="clr-namespace:OpenBoardAnim.Views">
     <Application.Resources>
-        <DataTemplate DataType="{x:Type vm:LaunchViewModel}">
-            <views:LaunchView/>
-        </DataTemplate>
-        <DataTemplate DataType="{x:Type vm:EditorViewModel}">
-            <views:EditorView/>
-        </DataTemplate>
+
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/HandyControl;component/Themes/SkinDefault.xaml"/>
+                <ResourceDictionary Source="pack://application:,,,/HandyControl;component/Themes/Theme.xaml"/>
+
+            </ResourceDictionary.MergedDictionaries>
+            <DataTemplate DataType="{x:Type vm:LaunchViewModel}">
+                <views:LaunchView/>
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:EditorViewModel}">
+                <views:EditorView/>
+            </DataTemplate>
+        </ResourceDictionary>
     </Application.Resources>
 </Application>

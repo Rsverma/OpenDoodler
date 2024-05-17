@@ -3,10 +3,78 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:hc="https://handyorg.github.io/handycontrol"
              xmlns:local="clr-namespace:OpenBoardAnim.Views"
+             xmlns:PresentationOptions="http://schemas.microsoft.com/winfx/2006/xaml/presentation/options" 
              mc:Ignorable="d" 
-             d:DesignHeight="450" d:DesignWidth="800">
+             d:DesignHeight="750" d:DesignWidth="1200">
     <Grid>
-        <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="50"> Editor</TextBlock>  
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="auto" />
+        </Grid.RowDefinitions>
+        <hc:SimplePanel Margin="0 22">
+            <Grid VerticalAlignment="Stretch" Background="Gray">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="auto"/>
+                </Grid.ColumnDefinitions>
+                <Canvas Margin="200 10" Grid.Column="1" Background="White">
+                    <Image Height="500" Source="/Resources/pencil.png">
+                        <Image.RenderTransform>
+                            <MatrixTransform x:Name="ButtonMatrixTransform">
+                                <MatrixTransform.Matrix >
+                                    <Matrix />
+                                </MatrixTransform.Matrix>
+                            </MatrixTransform>
+                        </Image.RenderTransform>
+                        <Image.Triggers>
+                            <EventTrigger RoutedEvent="Button.Loaded">
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <MatrixAnimationUsingPath Storyboard.TargetName="ButtonMatrixTransform" Storyboard.TargetProperty="Matrix"
+DoesRotateWithTangent="False" Duration="0:0:1" RepeatBehavior="Forever" >
+                                            <MatrixAnimationUsingPath.PathGeometry>
+                                                <PathGeometry 
+      Figures="M 10,100 C 35,0 135,0 160,100 180,190 285,200 310,100" 
+      PresentationOptions:Freeze="True" />
+                                            </MatrixAnimationUsingPath.PathGeometry>
+                                        </MatrixAnimationUsingPath>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </EventTrigger>
+                        </Image.Triggers>
+                    </Image>
+                </Canvas>
+                <ToggleButton HorizontalAlignment="Left" VerticalAlignment="Stretch" Grid.Column="0" Content="Graphics" IsChecked="{Binding IsOpen,ElementName=DrawerLeft}"/>
+                <ToggleButton HorizontalAlignment="Right" VerticalAlignment="Stretch" Grid.Column="2" Content="Actions" IsChecked="{Binding IsOpen,ElementName=DrawerRight}"/>
+            </Grid>
+            <hc:Drawer Name="DrawerLeft" Dock="Left"  ShowMask="False">
+                <Border Background="{DynamicResource RegionBrush}" Width="300" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource BorderBrush}">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition/>
+                        </Grid.RowDefinitions>
+                        <TextBlock Margin="10,0,0,0" Text="Controls" Style="{StaticResource TextBlockTitle}" HorizontalAlignment="Left"/>
+                        <Button Command="hc:ControlCommands.Close" Grid.Row="0" HorizontalAlignment="Right" Foreground="{DynamicResource PrimaryTextBrush}" Style="{StaticResource ButtonIcon}" hc:IconElement.Geometry="{StaticResource DeleteFillCircleGeometry}"/>
+                    </Grid>
+                </Border>
+            </hc:Drawer>
+            <hc:Drawer Name="DrawerRight" Dock="Right" ShowMask="False">
+                <Border Background="{DynamicResource RegionBrush}" Width="300" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource BorderBrush}">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition/>
+                        </Grid.RowDefinitions>
+                        <TextBlock Margin="10,0,0,0" Text="Actions" Style="{StaticResource TextBlockTitle}" HorizontalAlignment="Left"/>
+                        <Button Command="hc:ControlCommands.Close" Grid.Row="0" HorizontalAlignment="Right" Foreground="{DynamicResource PrimaryTextBrush}" Style="{StaticResource ButtonIcon}" hc:IconElement.Geometry="{StaticResource DeleteFillCircleGeometry}"/>
+                    </Grid>
+                </Border>
+            </hc:Drawer>
+        </hc:SimplePanel>
+        <Border Grid.Row="1" Height="300"/>
     </Grid>
 </UserControl>

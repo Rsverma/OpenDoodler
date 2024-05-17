@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:OpenBoardAnim" xmlns:views="clr-namespace:OpenBoardAnim.Views"
          xmlns:vm="clr-namespace:OpenBoardAnim.ViewModels"
         mc:Ignorable="d"
-        Title="Open Doodler" Height="450" Width="800">
+        Title="Open Doodler" WindowState="Maximized" MinHeight="650" MinWidth="1200">
     <ContentControl Content="{Binding Path = Navigation.CurrentView}"/>
 </Window>
     

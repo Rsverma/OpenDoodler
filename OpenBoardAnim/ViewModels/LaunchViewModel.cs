@@ -1,5 +1,6 @@
 ﻿
 using OpenBoardAnim.Core;
+using OpenBoardAnim.Models;
 using OpenBoardAnim.Services;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
@@ -9,17 +10,17 @@ namespace OpenBoardAnim.ViewModels
 {
     public class LaunchViewModel : ViewModel
     {
-        private BindingList<string> _recentProjects;
+        private BindingList<ProjectModel> _recentProjects;
         private INavigationService _navigation;
 
         public LaunchViewModel(INavigationService navigation)
         {
-            RecentProjects = new BindingList<string>();
-            RecentProjects.Add("test");
-            RecentProjects.Add("test2");
-            RecentProjects.Add("test");
-            RecentProjects.Add("test2");
-            RecentProjects.Add("test");
+            RecentProjects = new BindingList<ProjectModel>();
+            RecentProjects.Add(new ProjectModel { Title="test"});
+            RecentProjects.Add(new ProjectModel { Title = "test2" });
+            RecentProjects.Add(new ProjectModel { Title = "test" });
+            RecentProjects.Add(new ProjectModel { Title = "test2" });
+            RecentProjects.Add(new ProjectModel { Title = "test" });
 
             Navigation = navigation;
 
@@ -29,7 +30,7 @@ namespace OpenBoardAnim.ViewModels
         }
 
         public ICommand CreateNewWindowCommand { get; set; }
-        public BindingList<string> RecentProjects { get => _recentProjects;
+        public BindingList<ProjectModel> RecentProjects { get => _recentProjects;
             set
             {
                 _recentProjects = value;
