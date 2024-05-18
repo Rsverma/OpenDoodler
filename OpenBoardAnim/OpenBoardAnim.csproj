@@ -18,7 +18,12 @@
 
   <ItemGroup>
     <PackageReference Include="HandyControl" Version="3.5.1" />
+    <PackageReference Include="MaterialDesignThemes" Version="5.0.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\OpenBoardAnim.Library\OpenBoardAnim.Library.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -27,7 +27,6 @@ namespace OpenBoardAnim
             services.AddSingleton<EditorViewModel>();
             services.AddSingleton<Func<Type, ViewModel>>(sp => vMType => (ViewModel)sp.GetRequiredService(vMType));
 
-
             _serviceProvider = services.BuildServiceProvider();
         }
         protected override void OnStartup(StartupEventArgs e)

@@ -1,12 +1,41 @@
 ﻿<UserControl x:Class="OpenBoardAnim.Views.EditorLibraryView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:hc="https://handyorg.github.io/handycontrol"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:OpenBoardAnim.Views"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
-    <Grid>
-            
-    </Grid>
+    <Border Background="{DynamicResource RegionBrush}" Width="300" BorderThickness="0,0,1,0" BorderBrush="{DynamicResource BorderBrush}">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+            <TextBlock Margin="10,0,0,5" Text="Library" Style="{StaticResource TextBlockTitle}" HorizontalAlignment="Left"/>
+            <Button Command="hc:ControlCommands.Close" Grid.Row="0" HorizontalAlignment="Right" Foreground="{DynamicResource PrimaryTextBrush}" Style="{StaticResource ButtonIcon}" hc:IconElement.Geometry="{StaticResource DeleteFillCircleGeometry}"/>
+            <hc:TabControl Grid.Row="1" IsAnimationEnabled="True" IsDraggable="True" IsTabFillEnabled="True" TabItemWidth="20">
+                <hc:TabItem Header="{materialDesign:PackIcon imageFrame}">
+                    <WrapPanel Background="{DynamicResource RegionBrush}"/>
+                </hc:TabItem>
+                <hc:TabItem IsSelected="True" Header="{materialDesign:PackIcon AccountGroup}">
+                    <WrapPanel Background="#FFE8563F"/>
+                </hc:TabItem>
+                <hc:TabItem Header="{materialDesign:PackIcon shape}">
+                    <WrapPanel Background="#FF3F4EE8"/>
+                </hc:TabItem>
+                <hc:TabItem Header="{materialDesign:PackIcon FormatLetterCase}">
+                    <WrapPanel Background="#FFE83F6D"/>
+                </hc:TabItem>
+                <hc:TabItem Header="{materialDesign:PackIcon music}">
+                    <WrapPanel Background="#FFB23FE8"/>
+                </hc:TabItem>
+                <hc:TabItem Header="{materialDesign:PackIcon CloudUpload}">
+                    <WrapPanel Background="#FF3FE8E8"/>
+                </hc:TabItem>
+            </hc:TabControl>
+        </Grid>
+    </Border>
 </UserControl>
