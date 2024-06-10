@@ -22,12 +22,8 @@
                     <BeginStoryboard>
                         <Storyboard>
                             <MatrixAnimationUsingPath Storyboard.TargetName="ButtonMatrixTransform" Storyboard.TargetProperty="Matrix"
-DoesRotateWithTangent="False" Duration="0:0:1" RepeatBehavior="Forever" >
-                                <MatrixAnimationUsingPath.PathGeometry>
-                                    <PathGeometry 
-      Figures="M 10,100 C 35,0 135,0 160,100 180,190 285,200 310,100" 
-      PresentationOptions:Freeze="True" />
-                                </MatrixAnimationUsingPath.PathGeometry>
+DoesRotateWithTangent="False" Duration="0:0:1" RepeatBehavior="Forever" PathGeometry="{Binding CustPath}" >
+                                
                             </MatrixAnimationUsingPath>
                         </Storyboard>
                     </BeginStoryboard>

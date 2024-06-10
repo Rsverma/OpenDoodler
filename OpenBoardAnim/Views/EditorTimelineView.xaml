@@ -7,5 +7,7 @@
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
 
-    <Border />
+    <Border >
+        <TextBlock Text="{Binding Text1}"></TextBlock>
+    </Border>
 </UserControl>

@@ -15,12 +15,25 @@
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
             <TextBlock Margin="10,0,0,5" Text="Library" Style="{StaticResource TextBlockTitle}" HorizontalAlignment="Left"/>
-            <Button Command="hc:ControlCommands.Close" Grid.Row="0" HorizontalAlignment="Right" Foreground="{DynamicResource PrimaryTextBrush}" Style="{StaticResource ButtonIcon}" hc:IconElement.Geometry="{StaticResource DeleteFillCircleGeometry}"/>
             <hc:TabControl Grid.Row="1" IsAnimationEnabled="True" IsDraggable="True" IsTabFillEnabled="True" TabItemWidth="20">
-                <hc:TabItem Header="{materialDesign:PackIcon imageFrame}">
-                    <WrapPanel Background="{DynamicResource RegionBrush}"/>
+                <hc:TabItem IsSelected="True" Header="{materialDesign:PackIcon imageFrame}">
+                    <hc:CoverView Background="DarkGray" ItemWidth="160" ItemHeight="160" ItemContentHeight="20" ItemsSource="{Binding Scenes}">
+                        <hc:CoverView.ItemHeaderTemplate>
+                            <DataTemplate>
+                                <Image Source="{Binding ImgPath}"/>
+                            </DataTemplate>
+                        </hc:CoverView.ItemHeaderTemplate>
+                        <hc:CoverView.ItemTemplate>
+                            <DataTemplate>
+                                <WrapPanel>
+                                    <TextBlock HorizontalAlignment="Stretch" Text="{Binding Name}"/>
+                                    <Button Margin="2" Style="{StaticResource ButtonPrimary}" Command="{Binding AddGraphicCommand}">Add</Button>
+                                </WrapPanel>
+                            </DataTemplate>
+                        </hc:CoverView.ItemTemplate>
+                    </hc:CoverView>
                 </hc:TabItem>
-                <hc:TabItem IsSelected="True" Header="{materialDesign:PackIcon AccountGroup}">
+                <hc:TabItem Header="{materialDesign:PackIcon AccountGroup}">
                     <WrapPanel Background="#FFE8563F"/>
                 </hc:TabItem>
                 <hc:TabItem Header="{materialDesign:PackIcon shape}">

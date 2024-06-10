@@ -17,6 +17,7 @@ namespace OpenBoardAnim
         {
             IServiceCollection services = new ServiceCollection();
             services.AddSingleton<INavigationService, NavigationService>();
+            services.AddSingleton<IPubSubService, PubSubService>();
             services.AddSingleton<MainWindow>(provider =>
             new MainWindow
             {
@@ -24,6 +25,10 @@ namespace OpenBoardAnim
             });
             services.AddSingleton<MainViewModel>();
             services.AddSingleton<LaunchViewModel>();
+            services.AddSingleton<EditorActionsViewModel>();
+            services.AddSingleton<EditorCanvasViewModel>();
+            services.AddSingleton<EditorLibraryViewModel>();
+            services.AddSingleton<EditorTimelineViewModel>();
             services.AddSingleton<EditorViewModel>();
             services.AddSingleton<Func<Type, ViewModel>>(sp => vMType => (ViewModel)sp.GetRequiredService(vMType));
 

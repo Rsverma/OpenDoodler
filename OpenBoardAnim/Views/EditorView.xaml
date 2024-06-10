@@ -5,31 +5,39 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:hc="https://handyorg.github.io/handycontrol"
              xmlns:local="clr-namespace:OpenBoardAnim.Views"
+             xmlns:vm="clr-namespace:OpenBoardAnim.ViewModels"
              mc:Ignorable="d" 
              d:DesignHeight="750" d:DesignWidth="1200">
+    <UserControl.Resources>
+        <DataTemplate DataType="{x:Type vm:EditorCanvasViewModel}">
+            <local:EditorCanvasView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:EditorLibraryViewModel}">
+            <local:EditorLibraryView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:EditorActionsViewModel}">
+            <local:EditorActionsView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:EditorTimelineViewModel}">
+            <local:EditorTimelineView />
+        </DataTemplate>
+    </UserControl.Resources>
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="*"/>
             <RowDefinition Height="auto" />
         </Grid.RowDefinitions>
-        <hc:SimplePanel>
-            <Grid VerticalAlignment="Stretch" Background="Gray">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="auto"/>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="auto"/>
-                </Grid.ColumnDefinitions>
-                <ToggleButton HorizontalAlignment="Left" VerticalAlignment="Stretch" Grid.Column="0" Content="Graphics" IsChecked="{Binding IsOpen,ElementName=DrawerLeft}"/>
-                <local:EditorCanvasView Margin="10" Width="640" Height="480" Grid.Column="1"/>
-                <ToggleButton HorizontalAlignment="Right" VerticalAlignment="Stretch" Grid.Column="2" Content="Actions" IsChecked="{Binding IsOpen,ElementName=DrawerRight}"/>
-            </Grid>
-            <hc:Drawer Name="DrawerLeft" Dock="Left"  ShowMask="False">
-                <local:EditorLibraryView/>
-            </hc:Drawer>
-            <hc:Drawer Name="DrawerRight" Dock="Right" ShowMask="False">
-                <local:EditorActionsView/>
-            </hc:Drawer>
+        <hc:SimplePanel Margin="10 0" Background="Gray">
+            <ContentControl Margin="10" Width="640" Height="480" Content="{Binding Canvas}"/>
         </hc:SimplePanel>
-        <local:EditorTimelineView Grid.Row="1" Height="240"/>
+        <ContentControl Grid.Row="1" Margin="20 0" Height="240" Content="{Binding Timeline}"/>
+        <Expander Name="DrawerLeft" Grid.RowSpan="2" Header="Library" ExpandDirection="Right" Background="White"
+                  HorizontalAlignment="Left" Style="{StaticResource Expander.Small}" BorderThickness="0 1 1 1" BorderBrush="Black">
+            <ContentControl Content="{Binding Library}"/>
+        </Expander>
+        <Expander Name="DrawerRight" Grid.RowSpan="2" Header="Actions" ExpandDirection="Left" Background="White"
+                  HorizontalAlignment="Right" Style="{StaticResource Expander.Small}" BorderThickness="1 1 0 1" BorderBrush="Black">
+            <ContentControl Content="{Binding Actions}"/>
+        </Expander>
     </Grid>
 </UserControl>
