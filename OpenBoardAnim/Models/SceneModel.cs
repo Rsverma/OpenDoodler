@@ -9,19 +9,20 @@ namespace OpenBoardAnim.Models
         public SceneModel()
         {
 
-            AddGraphicCommand = new RelayCommand(AddGraphicCommandHandler,
+            ReplaceSceneCommand = new RelayCommand(ReplaceSceneCommandHandler,
                 canExecute: o => true);
         }
-        public Action<SceneModel> AddScene;
-        private void AddGraphicCommandHandler(object obj)
+        public Action<SceneModel> ReplaceScene;
+        private void ReplaceSceneCommandHandler(object obj)
         {
-            if (AddScene != null) { AddScene(this); }
+            ReplaceScene?.Invoke(this);
         }
 
         public string Name { get; set; }
         public string ImgPath { get; set; }
-        public  PathGeometry Shape {  get; set; }
-        public ICommand AddGraphicCommand { get; set; }
+        public Geometry ImgGeometry { get; set; }
+        public string Shape { get; set; }
+        public ICommand ReplaceSceneCommand { get; set; }
 
     }
 }

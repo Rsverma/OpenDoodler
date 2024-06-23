@@ -31,14 +31,18 @@ namespace OpenBoardAnim.ViewModels
         }
         private void GraphicAddedHandler(object obj)
         {
-            throw new NotImplementedException();
+            GraphicModel model = (GraphicModel)obj;
+            if(model != null )
+            {
+
+            }
         }
 
         private void SceneReplacedHandler(object obj)
         {
-            PathGeometry model = (PathGeometry)obj;
+            Geometry model = (Geometry)obj;
             if(model!=null)
-                CustPath = model;
+                CustPath = PathGeometry.CreateFromGeometry(model);
 
         }
     }

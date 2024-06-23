@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using OpenBoardAnim.Core;
+using OpenBoardAnim.Library.Repositories;
 using OpenBoardAnim.Services;
 using OpenBoardAnim.ViewModels;
 using System.Windows;
@@ -30,6 +31,8 @@ namespace OpenBoardAnim
             services.AddSingleton<EditorLibraryViewModel>();
             services.AddSingleton<EditorTimelineViewModel>();
             services.AddSingleton<EditorViewModel>();
+            services.AddSingleton<SceneRepository>();
+            services.AddSingleton<GraphicRepository>();
             services.AddSingleton<Func<Type, ViewModel>>(sp => vMType => (ViewModel)sp.GetRequiredService(vMType));
 
             _serviceProvider = services.BuildServiceProvider();

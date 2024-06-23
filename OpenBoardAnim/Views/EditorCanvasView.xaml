@@ -21,8 +21,8 @@
                 <EventTrigger RoutedEvent="Button.Loaded">
                     <BeginStoryboard>
                         <Storyboard>
-                            <MatrixAnimationUsingPath Storyboard.TargetName="ButtonMatrixTransform" Storyboard.TargetProperty="Matrix"
-DoesRotateWithTangent="False" Duration="0:0:1" RepeatBehavior="Forever" PathGeometry="{Binding CustPath}" >
+                            <MatrixAnimationUsingPath Storyboard.TargetName="ButtonMatrixTransform" Storyboard.TargetProperty="Matrix" DoesRotateWithTangent="False" Duration="0:0:1" RepeatBehavior="Forever" 
+                                                      PathGeometry="{Binding CustPath, UpdateSourceTrigger=PropertyChanged}" >
                                 
                             </MatrixAnimationUsingPath>
                         </Storyboard>
