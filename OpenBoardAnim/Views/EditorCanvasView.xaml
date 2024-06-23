@@ -5,30 +5,26 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:PresentationOptions="http://schemas.microsoft.com/winfx/2006/xaml/presentation/options" 
              xmlns:local="clr-namespace:OpenBoardAnim.Views"
+             xmlns:controls="clr-namespace:OpenBoardAnim.Controls"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
 
-    <Canvas Background="White">
-        <Image Height="500" Source="/Resources/pencil.png">
-            <Image.RenderTransform>
-                <MatrixTransform x:Name="ButtonMatrixTransform">
-                    <MatrixTransform.Matrix >
-                        <Matrix />
-                    </MatrixTransform.Matrix>
-                </MatrixTransform>
-            </Image.RenderTransform>
-            <Image.Triggers>
-                <EventTrigger RoutedEvent="Button.Loaded">
-                    <BeginStoryboard>
-                        <Storyboard>
-                            <MatrixAnimationUsingPath Storyboard.TargetName="ButtonMatrixTransform" Storyboard.TargetProperty="Matrix" DoesRotateWithTangent="False" Duration="0:0:1" RepeatBehavior="Forever" 
-                                                      PathGeometry="{Binding CustPath, UpdateSourceTrigger=PropertyChanged}" >
-                                
-                            </MatrixAnimationUsingPath>
-                        </Storyboard>
-                    </BeginStoryboard>
-                </EventTrigger>
-            </Image.Triggers>
-        </Image>
-    </Canvas>
+    <ListBox ItemsSource="{Binding SceneGraphics}">
+        <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate>
+                <Canvas Background="White"/>
+            </ItemsPanelTemplate>
+        </ItemsControl.ItemsPanel>
+        <ItemsControl.ItemContainerStyle>
+            <Style TargetType="ListBoxItem">
+                <Setter Property="Canvas.Left" Value="{Binding X,Mode=TwoWay}"/>
+                <Setter Property="Canvas.Top" Value="{Binding Y,Mode=TwoWay}"/>
+            </Style>
+        </ItemsControl.ItemContainerStyle>
+        <ListBox.ItemTemplate>
+            <DataTemplate>
+                <controls:DraggablePath DataContext="{Binding}"/>
+            </DataTemplate>
+        </ListBox.ItemTemplate>
+    </ListBox>    
 </UserControl>
