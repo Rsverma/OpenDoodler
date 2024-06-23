@@ -6,10 +6,45 @@
              xmlns:local="clr-namespace:OpenBoardAnim.Controls"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800"
-             Width="{Binding Width,Mode=TwoWay}" Height="{Binding Height,Mode=TwoWay}"
-             
-             MouseLeftButtonDown="Path_MouseLeftButtonDown" MouseLeftButtonUp="Path_MouseLeftButtonUp" MouseMove="Path_MouseMove">
-    <Grid Background="Transparent">
+             Width="{Binding Width,Mode=TwoWay}" Height="{Binding Height,Mode=TwoWay}">
+    <UserControl.Resources>
+        <ControlTemplate x:Key="MoveThumbTemplate" TargetType="{x:Type local:MoveThumb}">
+            <Rectangle Fill="Transparent"/>
+        </ControlTemplate>
+        <ControlTemplate x:Key="ResizeDecoratorTemplate" TargetType="Control">
+            <Grid>
+                <Thumb Height="3" Cursor="SizeNS" Margin="0 -4 0 0"
+          VerticalAlignment="Top" HorizontalAlignment="Stretch"/>
+                <Thumb Width="3" Cursor="SizeWE" Margin="-4 0 0 0"
+          VerticalAlignment="Stretch" HorizontalAlignment="Left"/>
+                <Thumb Width="3" Cursor="SizeWE" Margin="0 0 -4 0"
+          VerticalAlignment="Stretch" HorizontalAlignment="Right"/>
+                <Thumb Height="3" Cursor="SizeNS" Margin="0 0 0 -4"
+          VerticalAlignment="Bottom"  HorizontalAlignment="Stretch"/>
+                <Thumb Width="7" Height="7" Cursor="SizeNWSE" Margin="-6 -6 0 0"
+          VerticalAlignment="Top" HorizontalAlignment="Left"/>
+                <Thumb Width="7" Height="7" Cursor="SizeNESW" Margin="0 -6 -6 0"
+          VerticalAlignment="Top" HorizontalAlignment="Right"/>
+                <Thumb Width="7" Height="7" Cursor="SizeNESW" Margin="-6 0 0 -6"
+          VerticalAlignment="Bottom" HorizontalAlignment="Left"/>
+                <Thumb Width="7" Height="7" Cursor="SizeNWSE" Margin="0 0 -6 -6"
+          VerticalAlignment="Bottom" HorizontalAlignment="Right"/>
+            </Grid>
+        </ControlTemplate>
+        <ControlTemplate x:Key="DesignerItemTemplate" TargetType="ContentControl">
+            <Grid DataContext="{Binding RelativeSource={RelativeSource TemplatedParent}}">
+                <local:MoveThumb Template="{StaticResource MoveThumbTemplate}" Cursor="SizeAll"/>
+                <Control Template="{StaticResource ResizeDecoratorTemplate}"/>
+                <ContentPresenter Content="{TemplateBinding ContentControl.Content}"/>
+            </Grid>
+        </ControlTemplate>
+    </UserControl.Resources>
+    <ContentControl Name="DesignerItem"
+                   Width="100"
+                   Height="100"
+                   Canvas.Top="100"
+                   Canvas.Left="100"
+                   Template="{StaticResource DesignerItemTemplate}">
         <Path Data="{Binding ImgGeometry}" Stretch="Fill" Stroke="Black"/>
-    </Grid>
+    </ContentControl>
 </UserControl>

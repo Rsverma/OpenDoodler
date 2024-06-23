@@ -102,7 +102,7 @@ namespace OpenBoardAnim.ViewModels
         }
         private void AddGraphicHandler(GraphicModel model)
         {
-            _pubSub.Publish(SubTopic.GraphicAdded, model);
+            _pubSub.Publish(SubTopic.GraphicAdded, model.Clone());
         }
 
     }

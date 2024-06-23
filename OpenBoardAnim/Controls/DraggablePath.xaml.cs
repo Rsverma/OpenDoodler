@@ -1,4 +1,6 @@
-﻿using System;
+﻿using OpenBoardAnim.Models;
+using OpenBoardAnim.Utils;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -45,6 +47,13 @@ namespace OpenBoardAnim.Controls
                 prevX = transform.X;
                 prevY = transform.Y;
             }
+            GraphicModel model = draggable.DataContext as GraphicModel;
+            if (model != null)
+            {
+                model.X = prevX;
+                model.Y = prevY;
+            }
+            draggable.RenderTransform = null;
             draggable.ReleaseMouseCapture();
         }
 

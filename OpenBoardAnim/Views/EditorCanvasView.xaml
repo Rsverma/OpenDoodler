@@ -5,10 +5,49 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:PresentationOptions="http://schemas.microsoft.com/winfx/2006/xaml/presentation/options" 
              xmlns:local="clr-namespace:OpenBoardAnim.Views"
-             xmlns:controls="clr-namespace:OpenBoardAnim.Controls"
+             xmlns:s="clr-namespace:OpenBoardAnim.Controls"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
+    <UserControl.Resources>
 
+        <!-- MoveThumb Template -->
+        <ControlTemplate x:Key="MoveThumbTemplate" TargetType="{x:Type s:MoveThumb}">
+            <Rectangle Fill="Transparent"/>
+        </ControlTemplate>
+
+        <!-- ResizeDecorator Template -->
+        <ControlTemplate x:Key="ResizeDecoratorTemplate" TargetType="{x:Type Control}">
+            <Grid>
+                <s:ResizeThumb Height="3" Cursor="SizeNS" Margin="0 -4 0 0"
+                       VerticalAlignment="Top" HorizontalAlignment="Stretch"/>
+                <s:ResizeThumb Width="3" Cursor="SizeWE" Margin="-4 0 0 0"
+                       VerticalAlignment="Stretch" HorizontalAlignment="Left"/>
+                <s:ResizeThumb Width="3" Cursor="SizeWE" Margin="0 0 -4 0"
+                       VerticalAlignment="Stretch" HorizontalAlignment="Right"/>
+                <s:ResizeThumb Height="3" Cursor="SizeNS" Margin="0 0 0 -4"
+                       VerticalAlignment="Bottom" HorizontalAlignment="Stretch"/>
+                <s:ResizeThumb Width="7" Height="7" Cursor="SizeNWSE" Margin="-6 -6 0 0"
+                       VerticalAlignment="Top" HorizontalAlignment="Left"/>
+                <s:ResizeThumb Width="7" Height="7" Cursor="SizeNESW" Margin="0 -6 -6 0"
+                       VerticalAlignment="Top" HorizontalAlignment="Right"/>
+                <s:ResizeThumb Width="7" Height="7" Cursor="SizeNESW" Margin="-6 0 0 -6"
+                       VerticalAlignment="Bottom" HorizontalAlignment="Left"/>
+                <s:ResizeThumb Width="7" Height="7" Cursor="SizeNWSE" Margin="0 0 -6 -6"
+                       VerticalAlignment="Bottom" HorizontalAlignment="Right"/>
+            </Grid>
+        </ControlTemplate>
+
+
+        <!-- Designer Item Template-->
+        <ControlTemplate x:Key="DesignerItemTemplate" TargetType="ContentControl">
+            <Grid DataContext="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ContentControl}}}">
+                <s:MoveThumb Template="{StaticResource MoveThumbTemplate}" Cursor="SizeAll"/>
+                <Control Template="{StaticResource ResizeDecoratorTemplate}"/>
+                <ContentPresenter Content="{TemplateBinding ContentControl.Content}"/>
+            </Grid>
+        </ControlTemplate>
+
+    </UserControl.Resources>
     <ListBox ItemsSource="{Binding SceneGraphics}">
         <ItemsControl.ItemsPanel>
             <ItemsPanelTemplate>
@@ -23,7 +62,10 @@
         </ItemsControl.ItemContainerStyle>
         <ListBox.ItemTemplate>
             <DataTemplate>
-                <controls:DraggablePath DataContext="{Binding}"/>
+                <ContentControl Width="130" MinWidth="50" Height="130" MinHeight="50"
+                    Canvas.Top="150" Canvas.Left="150" Template="{StaticResource DesignerItemTemplate}">
+                    <Path Data="{Binding ImgGeometry}" Stretch="Fill" Stroke="Black"/>
+                </ContentControl>
             </DataTemplate>
         </ListBox.ItemTemplate>
     </ListBox>    
