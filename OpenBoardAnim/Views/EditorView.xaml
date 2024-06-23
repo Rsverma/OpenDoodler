@@ -28,9 +28,9 @@
             <RowDefinition Height="auto" />
         </Grid.RowDefinitions>
         <hc:SimplePanel Margin="10 0" Background="Gray">
-            <ContentControl Margin="10" Width="640" Height="480" Content="{Binding Canvas}"/>
+            <ContentControl Margin="10" Width="960" Height="540" Content="{Binding Canvas}"/>
         </hc:SimplePanel>
-        <ContentControl Grid.Row="1" Margin="20 0" Height="240" Content="{Binding Timeline}"/>
+        <ContentControl Grid.Row="1" Margin="20 0" Height="140" Content="{Binding Timeline}"/>
         <Expander Name="DrawerLeft" Grid.RowSpan="2" Header="Library" ExpandDirection="Right" Background="White"
                   HorizontalAlignment="Left" Style="{StaticResource Expander.Small}" BorderThickness="0 1 1 1" BorderBrush="Black">
             <ContentControl Content="{Binding Library}"/>

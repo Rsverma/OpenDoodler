@@ -7,7 +7,21 @@
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
 
-    <Border >
-        <TextBlock Text="{Binding Text1}"></TextBlock>
+    <Border BorderThickness="0 1 0 0" BorderBrush="Black">
+        <ListBox Margin="10 20" BorderThickness="0" ItemsSource="{Binding Scenes}" SelectedItem="{Binding SelectedScene}">
+            <ListBox.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <StackPanel Orientation="Horizontal"/>
+                </ItemsPanelTemplate>
+            </ListBox.ItemsPanel>
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <Border Margin="0" BorderBrush="Black" BorderThickness="1" Width="140" Height="80" CornerRadius="10">
+                        <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" Text="{Binding Name}"></TextBlock>    
+                    </Border>
+                    
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
     </Border>
 </UserControl>

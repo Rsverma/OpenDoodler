@@ -1,14 +1,16 @@
 ﻿using OpenBoardAnim.Core;
+using System.ComponentModel;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Media.Media3D;
 
 namespace OpenBoardAnim.Models
 {
-    public class SceneModel
+    public class SceneModel : ObservableObject
     {
         public SceneModel()
         {
-
+            Graphics = new BindingList<GraphicModel>();
             ReplaceSceneCommand = new RelayCommand(ReplaceSceneCommandHandler,
                 canExecute: o => true);
         }
@@ -18,10 +20,37 @@ namespace OpenBoardAnim.Models
             ReplaceScene?.Invoke(this);
         }
 
-        public string Name { get; set; }
-        public string ImgPath { get; set; }
-        public Geometry ImgGeometry { get; set; }
-        public string Shape { get; set; }
+        public SceneModel Clone()
+        {
+            return new SceneModel
+            {
+                Name = Name,
+                Graphics = new BindingList<GraphicModel>(Graphics.Select(x=>x.Clone()).ToList()),
+            };
+        }
+
+        private string _name;
+        public string Name
+        {
+            get { return _name; }
+            set
+            {
+                _name = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private BindingList<GraphicModel> _graphics;
+        public BindingList<GraphicModel> Graphics
+        {
+            get { return _graphics; }
+            set
+            {
+                _graphics = value;
+                OnPropertyChanged();
+            }
+        }
+        public int Index { get; set; }
         public ICommand ReplaceSceneCommand { get; set; }
 
     }

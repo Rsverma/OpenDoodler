@@ -14,6 +14,8 @@ namespace OpenBoardAnim.Models
         public ICommand AddGraphicCommand { get; set; }
         public double Width { get; set; } = 100;
         public double Height { get; set; } = 100;
+        public double Delay { get; set; }
+        public double Duration { get; set; }
         public GraphicModel()
         {
 

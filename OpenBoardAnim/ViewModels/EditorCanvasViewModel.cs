@@ -13,9 +13,8 @@ namespace OpenBoardAnim.ViewModels
         public EditorCanvasViewModel(IPubSubService pubSub)
         {
             _pubSub = pubSub;
-            _pubSub.Subscribe(SubTopic.SceneReplaced, SceneReplacedHandler);
+            _pubSub.Subscribe(SubTopic.SceneChanged, SceneChangedHandler);
             _pubSub.Subscribe(SubTopic.GraphicAdded, GraphicAddedHandler);
-            SceneGraphics = [];
         }
 
         private BindingList<GraphicModel> _sceneGraphics;
@@ -39,11 +38,13 @@ namespace OpenBoardAnim.ViewModels
             }
         }
 
-        private void SceneReplacedHandler(object obj)
+        private void SceneChangedHandler(object obj)
         {
-            Geometry model = (Geometry)obj;
+            SceneModel model = (SceneModel)obj;
             if(model!=null)
-                { }
+            {
+                SceneGraphics = model.Graphics;
+            }
 
         }
     }

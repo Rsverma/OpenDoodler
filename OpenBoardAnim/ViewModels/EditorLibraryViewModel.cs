@@ -26,9 +26,7 @@ namespace OpenBoardAnim.ViewModels
             new SceneModel
             {
                 Name = e.Name,
-                ImgPath = e.FilePath,
                 ReplaceScene = ReplaceSceneHandler,
-                ImgGeometry = GetPathGeometryFromSVG(Path.Combine(folder, e.FilePath))
             }).ToList();
             Scenes = new BindingList<SceneModel>(scenes);
 
@@ -86,7 +84,7 @@ namespace OpenBoardAnim.ViewModels
 
         private void ReplaceSceneHandler(SceneModel model)
         {
-            _pubSub.Publish(SubTopic.SceneReplaced, model.ImgGeometry);
+            _pubSub.Publish(SubTopic.SceneReplaced, model.Clone());
         }
 
         private BindingList<GraphicModel> _graphics;
