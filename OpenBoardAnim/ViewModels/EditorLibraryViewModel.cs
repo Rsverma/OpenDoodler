@@ -41,12 +41,10 @@ namespace OpenBoardAnim.ViewModels
             Graphics = new BindingList<GraphicModel>(graphics);
         }
 
-        private Geometry GetPathGeometryFromSVG(string filePath)
+        private DrawingGroup GetPathGeometryFromSVG(string filePath)
         {
             var svgFileReader = new FileSvgReader(new WpfDrawingSettings());
-            var drawingGroup = svgFileReader.Read(filePath);
-            GeometryGroup geometryGroup = ConvertToGeometry(drawingGroup);
-            return geometryGroup;
+            return svgFileReader.Read(filePath);
         }
 
         private static GeometryGroup ConvertToGeometry(DrawingGroup drawingGroup)
@@ -66,7 +64,8 @@ namespace OpenBoardAnim.ViewModels
                     }
                 }
             }
-
+            
+            geometryGroup.Transform = drawingGroup.Transform;
             return geometryGroup;
         }
 

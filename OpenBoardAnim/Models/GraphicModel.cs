@@ -9,7 +9,7 @@ namespace OpenBoardAnim.Models
     {
         public string Name { get; set; }
         public string ImgPath { get; set; }
-        public Geometry ImgGeometry { get; set; }
+        public DrawingGroup ImgGeometry { get; set; }
         public string Shape { get; set; }
         public ICommand AddGraphicCommand { get; set; }
         public double Width { get; set; } = 100;

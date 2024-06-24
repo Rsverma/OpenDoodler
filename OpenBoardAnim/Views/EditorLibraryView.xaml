@@ -35,18 +35,22 @@
                     </hc:CoverView>
                 </hc:TabItem>
                 <hc:TabItem IsSelected="True" Header="{materialDesign:PackIcon AccountGroup}" ToolTip="Graphics">
-                    <hc:CoverView Background="DarkGray" ItemWidth="160" ItemHeight="160" ItemContentHeight="20" ItemsSource="{Binding Graphics}">
+                    <hc:CoverView Background="DarkGray" ItemWidth="120" ItemContentHeight="30" ItemsSource="{Binding Graphics}">
                         <hc:CoverView.ItemHeaderTemplate>
                             <DataTemplate>
-                                <svgc:SvgBitmap UriSource="{Binding ImgPath}"/>
+                                <Image>
+                                    <Image.Source>
+                                        <DrawingImage Drawing="{Binding ImgGeometry}"/>
+                                    </Image.Source>
+                                </Image>
                             </DataTemplate>
                         </hc:CoverView.ItemHeaderTemplate>
                         <hc:CoverView.ItemTemplate>
                             <DataTemplate>
-                                <WrapPanel>
-                                    <TextBlock HorizontalAlignment="Stretch" Text="{Binding Name}"/>
-                                    <Button Margin="2" Style="{StaticResource ButtonPrimary}" Command="{Binding AddGraphicCommand}">Add</Button>
-                                </WrapPanel>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock VerticalAlignment="Center" Text="{Binding Name}"/>
+                                    <Button Style="{StaticResource ButtonPrimary}" Command="{Binding AddGraphicCommand}">Add</Button>
+                                </StackPanel>
                             </DataTemplate>
                         </hc:CoverView.ItemTemplate>
                     </hc:CoverView>

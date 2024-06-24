@@ -62,9 +62,12 @@
         </ItemsControl.ItemContainerStyle>
         <ListBox.ItemTemplate>
             <DataTemplate>
-                <ContentControl Width="130" MinWidth="50" Height="130" MinHeight="50"
-                    Canvas.Top="150" Canvas.Left="150" Template="{StaticResource DesignerItemTemplate}">
-                    <Path Data="{Binding ImgGeometry}" Stretch="Fill" Stroke="Black"/>
+                <ContentControl Width="130" MinWidth="50" Height="130" MinHeight="50" Template="{StaticResource DesignerItemTemplate}">
+                    <Image IsHitTestVisible="False">
+                        <Image.Source>
+                            <DrawingImage Drawing="{Binding ImgGeometry}"/>
+                        </Image.Source>
+                    </Image>
                 </ContentControl>
             </DataTemplate>
         </ListBox.ItemTemplate>
