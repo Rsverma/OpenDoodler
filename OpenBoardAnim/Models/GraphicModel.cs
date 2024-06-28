@@ -8,9 +8,7 @@ namespace OpenBoardAnim.Models
     public class GraphicModel : ObservableObject
     {
         public string Name { get; set; }
-        public string ImgPath { get; set; }
         public DrawingGroup ImgGeometry { get; set; }
-        public string Shape { get; set; }
         public ICommand AddGraphicCommand { get; set; }
         public double Width { get; set; } = 100;
         public double Height { get; set; } = 100;
@@ -31,9 +29,7 @@ namespace OpenBoardAnim.Models
                 Height = Height,
                 Width = Width,
                 ImgGeometry = ImgGeometry,
-                ImgPath = ImgPath,
                 Name = Name,
-                Shape = Shape,
                 X = X,
                 Y = Y
             };

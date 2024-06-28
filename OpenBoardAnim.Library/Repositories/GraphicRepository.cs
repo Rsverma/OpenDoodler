@@ -2,38 +2,21 @@
 {
     public class GraphicRepository
     {
-        public GraphicRepository()
+        private readonly DataContext _context;
+
+        public GraphicRepository(DataContext context)
         {
-            GraphicEntities = new List<GraphicEntity>()
-            {
-                new GraphicEntity()
-                {
-                    Name = "peep-102",
-                    FilePath = "Resources\\peep-102.svg"
-
-                },
-                new GraphicEntity()
-                {
-                    Name = "peep-64",
-                    FilePath = "Resources\\peep-64.svg"
-
-                },
-                new GraphicEntity()
-                {
-                    Name = "peep-43",
-                    FilePath = "Resources\\peep-43.svg"
-
-                },
-                new GraphicEntity()
-                {
-                    Name = "peep-61",
-                    FilePath = "Resources\\peep-61.svg"
-
-                }
-            };
-
+            _context = context;
         }
-        public List<GraphicEntity> GraphicEntities { get; set; }
+        public List<GraphicEntity> GetAllGraphics()
+        {
+            return _context.Graphics.ToList();
+        }
 
+        public void AddNewGraphic(GraphicEntity entity)
+        {
+            _context.Graphics.Add(entity);
+            _context.SaveChanges();
+        }
     }
 }

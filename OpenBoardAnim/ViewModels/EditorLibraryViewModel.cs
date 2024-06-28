@@ -22,7 +22,7 @@ namespace OpenBoardAnim.ViewModels
             _sRepo = sRepo;
             _gRepo = gRepo;
             string folder = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
-            List <SceneModel> scenes = sRepo.SceneEntities.Select(e =>
+            List <SceneModel> scenes = _sRepo.SceneEntities.Select(e =>
             new SceneModel
             {
                 Name = e.Name,
@@ -30,11 +30,10 @@ namespace OpenBoardAnim.ViewModels
             }).ToList();
             Scenes = new BindingList<SceneModel>(scenes);
 
-            List<GraphicModel> graphics = gRepo.GraphicEntities.Select(e =>
+            List<GraphicModel> graphics = _gRepo.GetAllGraphics().Select(e =>
             new GraphicModel
             {
                 Name = e.Name,
-                ImgPath = e.FilePath,
                 AddGraphic = AddGraphicHandler,
                 ImgGeometry = GetPathGeometryFromSVG(Path.Combine(folder, e.FilePath))
             }).ToList();

@@ -1,5 +1,7 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using OpenBoardAnim.Core;
+using OpenBoardAnim.Library;
 using OpenBoardAnim.Library.Repositories;
 using OpenBoardAnim.Services;
 using OpenBoardAnim.ViewModels;
@@ -24,6 +26,7 @@ namespace OpenBoardAnim
             {
                 DataContext = provider.GetRequiredService<MainViewModel>()
             });
+            services.AddSingleton<DataContext>();
             services.AddSingleton<MainViewModel>();
             services.AddSingleton<LaunchViewModel>();
             services.AddSingleton<EditorActionsViewModel>();
@@ -34,7 +37,7 @@ namespace OpenBoardAnim
             services.AddSingleton<SceneRepository>();
             services.AddSingleton<GraphicRepository>();
             services.AddSingleton<Func<Type, ViewModel>>(sp => vMType => (ViewModel)sp.GetRequiredService(vMType));
-
+            
             _serviceProvider = services.BuildServiceProvider();
         }
         protected override void OnStartup(StartupEventArgs e)
