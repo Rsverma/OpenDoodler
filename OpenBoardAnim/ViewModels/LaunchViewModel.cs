@@ -1,9 +1,12 @@
-﻿
-using OpenBoardAnim.Core;
+﻿using OpenBoardAnim.Core;
+using OpenBoardAnim.Library;
+using OpenBoardAnim.Library.Repositories;
 using OpenBoardAnim.Models;
 using OpenBoardAnim.Services;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
+using System.IO;
+using System.Text.Json;
 using System.Windows.Input;
 
 namespace OpenBoardAnim.ViewModels
@@ -12,21 +15,41 @@ namespace OpenBoardAnim.ViewModels
     {
         private BindingList<ProjectModel> _recentProjects;
         private INavigationService _navigation;
+        private readonly IPubSubService _pubSub;
 
-        public LaunchViewModel(INavigationService navigation)
+        public LaunchViewModel(INavigationService navigation, IPubSubService pubSub, ProjectRepository project)
         {
-            RecentProjects = new BindingList<ProjectModel>();
-            RecentProjects.Add(new ProjectModel { Title="test"});
-            RecentProjects.Add(new ProjectModel { Title = "test2" });
-            RecentProjects.Add(new ProjectModel { Title = "test" });
-            RecentProjects.Add(new ProjectModel { Title = "test2" });
-            RecentProjects.Add(new ProjectModel { Title = "test" });
+            List<ProjectEntity> projects = project.GetRecentProjects();
+            var models = projects.Select(x => new ProjectModel
+            {
+                CreatedOn = x.CreatedOn,
+                ModifiedOn = x.LatestLaunchTime,
+                Scenes = x.SceneCount,
+                Title = x.Title,
+                FilePath = x.FilePath,
+                EditProject = EditProjectHandler
+            }).ToList();
+            RecentProjects = new BindingList<ProjectModel>(models);
 
             Navigation = navigation;
-
+            _pubSub = pubSub;
             CreateNewWindowCommand = new RelayCommand(
-                execute: o => { Navigation.NavigateTo<EditorViewModel>(); },
+                execute: o => CreateAndLaunchNewProject(),
                 canExecute: o => true);
+        }
+
+        private void EditProjectHandler(ProjectModel model)
+        {
+            string json = File.ReadAllText(model.FilePath);
+            ProjectDetails project = JsonSerializer.Deserialize<ProjectDetails>(json);
+            Navigation.NavigateTo<EditorViewModel>();
+            _pubSub.Publish(SubTopic.ProjectLaunched, project);
+        }
+
+        private void CreateAndLaunchNewProject()
+        {
+            Navigation.NavigateTo<EditorViewModel>();
+            _pubSub.Publish(SubTopic.ProjectLaunched, new ProjectDetails());
         }
 
         public ICommand CreateNewWindowCommand { get; set; }

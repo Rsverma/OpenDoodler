@@ -21,12 +21,15 @@ namespace OpenBoardAnim
             IServiceCollection services = new ServiceCollection();
             services.AddSingleton<INavigationService, NavigationService>();
             services.AddSingleton<IPubSubService, PubSubService>();
+            services.AddSingleton<DataContext>();
+            services.AddSingleton<GraphicRepository>();
+            services.AddSingleton<SceneRepository>();
+            services.AddSingleton<ProjectRepository>();
             services.AddSingleton<MainWindow>(provider =>
             new MainWindow
             {
                 DataContext = provider.GetRequiredService<MainViewModel>()
             });
-            services.AddSingleton<DataContext>();
             services.AddSingleton<MainViewModel>();
             services.AddSingleton<LaunchViewModel>();
             services.AddSingleton<EditorActionsViewModel>();
@@ -34,8 +37,6 @@ namespace OpenBoardAnim
             services.AddSingleton<EditorLibraryViewModel>();
             services.AddSingleton<EditorTimelineViewModel>();
             services.AddSingleton<EditorViewModel>();
-            services.AddSingleton<SceneRepository>();
-            services.AddSingleton<GraphicRepository>();
             services.AddSingleton<Func<Type, ViewModel>>(sp => vMType => (ViewModel)sp.GetRequiredService(vMType));
             
             _serviceProvider = services.BuildServiceProvider();

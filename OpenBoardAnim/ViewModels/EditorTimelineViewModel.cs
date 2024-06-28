@@ -14,17 +14,6 @@ namespace OpenBoardAnim.ViewModels
         {
             _pubSub = pubSub;
             _pubSub.Subscribe(SubTopic.SceneReplaced, SceneReplacedHandler);
-            Scenes = new BindingList<SceneModel> { new SceneModel
-            {
-                Name="1",
-                Index = 1
-            } ,new SceneModel
-            {
-                Name="2",
-                Index = 2
-            } ,_addScene
-            };
-            SelectedScene = Scenes.FirstOrDefault();
         }
 
         private void SceneReplacedHandler(object obj)
@@ -45,6 +34,8 @@ namespace OpenBoardAnim.ViewModels
             set
             {
                 _scenes = value;
+                _scenes.Add(_addScene);
+                SelectedScene = _scenes.FirstOrDefault();
                 OnPropertyChanged();
             }
         }

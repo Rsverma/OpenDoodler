@@ -1,5 +1,6 @@
 ﻿using OpenBoardAnim.Core;
 using System.ComponentModel;
+using System.Text.Json.Serialization;
 using System.Windows.Input;
 using System.Windows.Media;
 
@@ -9,6 +10,7 @@ namespace OpenBoardAnim.Models
     {
         public string Name { get; set; }
         public DrawingGroup ImgGeometry { get; set; }
+        [JsonIgnore]
         public ICommand AddGraphicCommand { get; set; }
         public double Width { get; set; } = 100;
         public double Height { get; set; } = 100;
@@ -59,7 +61,7 @@ namespace OpenBoardAnim.Models
 
         private void AddGraphicCommandHandler(object obj)
         {
-            if (AddGraphic != null) { AddGraphic(this); }
+            AddGraphic?.Invoke(this);
         }
 
 

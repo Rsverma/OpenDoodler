@@ -1,5 +1,6 @@
 ﻿using OpenBoardAnim.Core;
 using System.ComponentModel;
+using System.Text.Json.Serialization;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Media3D;
@@ -51,6 +52,7 @@ namespace OpenBoardAnim.Models
             }
         }
         public int Index { get; set; }
+        [JsonIgnore]
         public ICommand ReplaceSceneCommand { get; set; }
 
     }

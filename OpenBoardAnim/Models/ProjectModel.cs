@@ -1,13 +1,29 @@
-﻿using System;
+﻿using OpenBoardAnim.Core;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Input;
 
 namespace OpenBoardAnim.Models
 {
     public class ProjectModel
     {
+        public ProjectModel()
+        {
+            EditProjectCommand = new RelayCommand(EditProjectCommandHandler,
+                canExecute: o => true);
+        }
+        public Action<ProjectModel> EditProject;
+
+        public ICommand EditProjectCommand { get; set; }
+
+        private void EditProjectCommandHandler(object obj)
+        {
+            EditProject?.Invoke(this);
+        }
+        public string FilePath { get; set; }
         private string _title;
 
         public string Title

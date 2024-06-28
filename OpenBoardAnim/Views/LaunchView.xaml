@@ -15,16 +15,17 @@
                 </Grid.RowDefinitions>
                 <TextBlock Foreground="White" Margin="2 0" FontWeight="Bold">Recent Projects</TextBlock>
                 <DataGrid ItemsSource="{Binding RecentProjects}" Grid.Row="1" Margin="2 5" AutoGenerateColumns="False" CanUserResizeColumns="False">
+                    
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="Title" Binding="{Binding Title}" Width="*"/>
-                        <DataGridTextColumn Header="Created On" Binding="{Binding CreatedOn}" Width="auto"/>
-                        <DataGridTextColumn Header="Modified On" Binding="{Binding ModifiedOn}" Width="auto"/>
-                        <DataGridTextColumn Header="Length" Binding="{Binding Length}" Width="auto"/>
-                        <DataGridTextColumn Header="Scenes" Binding="{Binding Scenes}" Width="auto"/>
+                        <DataGridTextColumn Header="Created On" Binding="{Binding CreatedOn}" Width="SizeToCells" MinWidth="150"/>
+                        <DataGridTextColumn Header="Modified On" Binding="{Binding ModifiedOn}" Width="SizeToCells" MinWidth="150"/>
+                        <DataGridTextColumn Header="Length" Binding="{Binding Length}" Width="SizeToHeader"/>
+                        <DataGridTextColumn Header="Scenes" Binding="{Binding Scenes}" Width="SizeToHeader"/>
                         <DataGridTemplateColumn Header="Edit" Width="auto">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
-                                    <Button >Edit</Button>
+                                    <Button Command="{Binding EditProjectCommand}">Edit</Button>
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>

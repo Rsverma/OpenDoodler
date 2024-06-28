@@ -11,10 +11,10 @@
         <StackPanel Orientation="Vertical" Margin="20 0">
             <TextBlock Margin="0,20,0,10" Text="Action" Style="{StaticResource TextBlockTitle}" HorizontalAlignment="Center"/>
             <StackPanel Orientation="Horizontal">
-                <Button Style="{StaticResource ButtonSuccess}">Save</Button>
+                <Button Style="{StaticResource ButtonSuccess}" Command="{Binding SaveProjectCommand}">Save</Button>
                 <Button Margin="10 10" Style="{StaticResource ButtonPrimary}">Preview</Button>
                 <Button>Export</Button>
-                <Button Margin="10 10" Style="{StaticResource ButtonDanger}">Close</Button>
+                <Button Margin="10 10" Style="{StaticResource ButtonDanger}" Command="{Binding CloseProjectCommand}">Close</Button>
             </StackPanel>
             <TextBlock Margin="0 10" Style="{StaticResource TextBlockSubTitle}" HorizontalAlignment="Left">Settings</TextBlock>
             <StackPanel Orientation="Horizontal">

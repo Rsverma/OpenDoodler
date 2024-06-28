@@ -7,6 +7,7 @@ namespace OpenBoardAnim.Services
         SceneReplaced,
         SceneChanged,
         GraphicAdded,
+        ProjectLaunched,
     }
 
     public interface IPubSubService
