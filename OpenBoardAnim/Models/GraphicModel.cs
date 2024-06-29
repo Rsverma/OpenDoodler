@@ -9,6 +9,8 @@ namespace OpenBoardAnim.Models
     public class GraphicModel : ObservableObject
     {
         public string Name { get; set; }
+        public string SVGPath { get; set; }
+        [JsonIgnore]
         public DrawingGroup ImgGeometry { get; set; }
         [JsonIgnore]
         public ICommand AddGraphicCommand { get; set; }

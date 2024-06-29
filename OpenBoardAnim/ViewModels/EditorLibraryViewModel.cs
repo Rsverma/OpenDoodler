@@ -1,71 +1,29 @@
 ﻿using OpenBoardAnim.Core;
-using OpenBoardAnim.Library.Repositories;
 using OpenBoardAnim.Models;
 using OpenBoardAnim.Services;
-using SharpVectors.Converters;
-using SharpVectors.Renderers.Wpf;
 using System.ComponentModel;
-using System.IO;
-using System.Windows.Media;
 
 namespace OpenBoardAnim.ViewModels
 {
     public class EditorLibraryViewModel : ViewModel
     {
         private IPubSubService _pubSub;
-        private readonly SceneRepository _sRepo;
-        private readonly GraphicRepository _gRepo;
+        private readonly CacheService _cache;
 
-        public EditorLibraryViewModel(IPubSubService pubSub,SceneRepository sRepo,GraphicRepository gRepo)
+        public EditorLibraryViewModel(IPubSubService pubSub,CacheService cache)
         {
             _pubSub = pubSub;
-            _sRepo = sRepo;
-            _gRepo = gRepo;
-            string folder = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
-            List <SceneModel> scenes = _sRepo.SceneEntities.Select(e =>
-            new SceneModel
+            _cache = cache;
+            Graphics = cache.LoadedGraphics;
+            foreach (var graphic in Graphics)
             {
-                Name = e.Name,
-                ReplaceScene = ReplaceSceneHandler,
-            }).ToList();
-            Scenes = new BindingList<SceneModel>(scenes);
-
-            List<GraphicModel> graphics = _gRepo.GetAllGraphics().Select(e =>
-            new GraphicModel
-            {
-                Name = e.Name,
-                AddGraphic = AddGraphicHandler,
-                ImgGeometry = GetPathGeometryFromSVG(Path.Combine(folder, e.FilePath))
-            }).ToList();
-            Graphics = new BindingList<GraphicModel>(graphics);
-        }
-
-        private DrawingGroup GetPathGeometryFromSVG(string filePath)
-        {
-            var svgFileReader = new FileSvgReader(new WpfDrawingSettings());
-            return svgFileReader.Read(filePath);
-        }
-
-        private static GeometryGroup ConvertToGeometry(DrawingGroup drawingGroup)
-        {
-            var geometryGroup = new GeometryGroup();
-            if (drawingGroup != null)
-            {
-                foreach (var drawing in drawingGroup.Children)
-                {
-                    if (drawing is GeometryDrawing geometryDrawing)
-                    {
-                        geometryGroup.Children.Add(geometryDrawing.Geometry);
-                    }
-                    else if (drawing is DrawingGroup innerGroup)
-                    {
-                        geometryGroup.Children.Add(ConvertToGeometry(innerGroup));
-                    }
-                }
+                graphic.AddGraphic = AddGraphicHandler;
             }
-            
-            geometryGroup.Transform = drawingGroup.Transform;
-            return geometryGroup;
+            Scenes = cache.LoadedScenes;
+            foreach (var scene in Scenes)
+            {
+                scene.ReplaceScene = ReplaceSceneHandler;
+            }
         }
 
         private BindingList<SceneModel> _scenes;

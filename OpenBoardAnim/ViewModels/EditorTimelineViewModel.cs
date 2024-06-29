@@ -1,7 +1,6 @@
 ﻿using OpenBoardAnim.Core;
 using OpenBoardAnim.Models;
 using OpenBoardAnim.Services;
-using System.Collections.ObjectModel;
 using System.ComponentModel;
 
 namespace OpenBoardAnim.ViewModels

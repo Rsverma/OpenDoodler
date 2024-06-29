@@ -1,10 +1,7 @@
 ﻿using Microsoft.Win32;
 using OpenBoardAnim.Core;
-using OpenBoardAnim.Library.Repositories;
 using OpenBoardAnim.Models;
 using OpenBoardAnim.Services;
-using System.IO;
-using System.Text.Json;
 using System.Windows.Input;
 
 namespace OpenBoardAnim.ViewModels
@@ -13,13 +10,13 @@ namespace OpenBoardAnim.ViewModels
     {
         private IPubSubService _pubSub;
         private readonly INavigationService _navigation;
-        private readonly ProjectRepository _pRepo;
+        private readonly CacheService _cache;
 
-        public EditorActionsViewModel(IPubSubService pubSub, INavigationService navigation, ProjectRepository pRepo)
+        public EditorActionsViewModel(IPubSubService pubSub, INavigationService navigation, CacheService Cache)
         {
             _pubSub = pubSub;
             _navigation = navigation;
-            _pRepo = pRepo;
+            _cache = Cache;
             CloseProjectCommand = new RelayCommand(
                 execute: o => CloseProject(),
                 canExecute: o => true);
@@ -44,22 +41,12 @@ namespace OpenBoardAnim.ViewModels
                 };
                 if (saveFileDialog.ShowDialog() == true)
                 {
-                    Project.Path = saveFileDialog.FileName;
-                    Project.Title = Path.GetFileNameWithoutExtension(Project.Path);
-                    File.WriteAllText(saveFileDialog.FileName, JsonSerializer.Serialize(Project));
-                    _pRepo.SaveNewProject(new Library.ProjectEntity
-                    {
-                        Title = Project.Title,
-                        CreatedOn = Project.CreatedOn,
-                        FilePath = Project.Path,
-                        LatestLaunchTime = DateTime.Now,
-                        SceneCount = Project.Scenes.Count,
-                    });
+                    _cache.SaveNewProject(Project, saveFileDialog.FileName);
                 }
                 else
                     return;
             }
-                //File.WriteAllText(saveFileDialog.FileName, txtEditor.Text);
+            _cache.UpdateExistingProject(Project);
         }
 
         private void CloseProject()

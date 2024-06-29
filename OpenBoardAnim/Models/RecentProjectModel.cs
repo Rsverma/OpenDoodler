@@ -8,14 +8,17 @@ using System.Windows.Input;
 
 namespace OpenBoardAnim.Models
 {
-    public class ProjectModel
+    public class RecentProjectModel
     {
-        public ProjectModel()
+        public RecentProjectModel()
         {
             EditProjectCommand = new RelayCommand(EditProjectCommandHandler,
                 canExecute: o => true);
+            DeleteProjectCommand = new RelayCommand(DeleteProjectCommandHandler,
+                canExecute: o => true);
         }
-        public Action<ProjectModel> EditProject;
+        public Action<RecentProjectModel> EditProject;
+        public Action<RecentProjectModel> DeleteProject;
 
         public ICommand EditProjectCommand { get; set; }
 
@@ -23,6 +26,13 @@ namespace OpenBoardAnim.Models
         {
             EditProject?.Invoke(this);
         }
+        public ICommand DeleteProjectCommand { get; set; }
+
+        private void DeleteProjectCommandHandler(object obj)
+        {
+            DeleteProject?.Invoke(this);
+        }
+        public int ProjectID { get; set; }
         public string FilePath { get; set; }
         private string _title;
 
@@ -40,12 +50,12 @@ namespace OpenBoardAnim.Models
             set { _createdOn = value; }
         }
 
-        private DateTime _modifiedOn;
+        private DateTime _latestLaunchTime;
 
-        public DateTime ModifiedOn
+        public DateTime LatestLaunchTime
         {
-            get { return _modifiedOn; }
-            set { _modifiedOn = value; }
+            get { return _latestLaunchTime; }
+            set { _latestLaunchTime = value; }
         }
 
         private int _length;

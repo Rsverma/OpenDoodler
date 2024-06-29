@@ -1,47 +1,42 @@
 ﻿using OpenBoardAnim.Core;
-using OpenBoardAnim.Library;
-using OpenBoardAnim.Library.Repositories;
 using OpenBoardAnim.Models;
 using OpenBoardAnim.Services;
 using System.ComponentModel;
-using System.ComponentModel.DataAnnotations;
-using System.IO;
-using System.Text.Json;
 using System.Windows.Input;
 
 namespace OpenBoardAnim.ViewModels
 {
     public class LaunchViewModel : ViewModel
     {
-        private BindingList<ProjectModel> _recentProjects;
+        private BindingList<RecentProjectModel> _recentProjects;
         private INavigationService _navigation;
         private readonly IPubSubService _pubSub;
+        private readonly CacheService _cache;
 
-        public LaunchViewModel(INavigationService navigation, IPubSubService pubSub, ProjectRepository project)
+        public LaunchViewModel(INavigationService navigation, IPubSubService pubSub,CacheService cache)
         {
-            List<ProjectEntity> projects = project.GetRecentProjects();
-            var models = projects.Select(x => new ProjectModel
-            {
-                CreatedOn = x.CreatedOn,
-                ModifiedOn = x.LatestLaunchTime,
-                Scenes = x.SceneCount,
-                Title = x.Title,
-                FilePath = x.FilePath,
-                EditProject = EditProjectHandler
-            }).ToList();
-            RecentProjects = new BindingList<ProjectModel>(models);
-
             Navigation = navigation;
             _pubSub = pubSub;
+            _cache = cache;
             CreateNewWindowCommand = new RelayCommand(
                 execute: o => CreateAndLaunchNewProject(),
                 canExecute: o => true);
+            RecentProjects = cache.RecentProjects;
+            foreach (var proj in RecentProjects)
+            {
+                proj.EditProject = EditProjectHandler;
+                proj.DeleteProject = DeleteProjectHandler;
+            }
         }
 
-        private void EditProjectHandler(ProjectModel model)
+        private void DeleteProjectHandler(RecentProjectModel model)
         {
-            string json = File.ReadAllText(model.FilePath);
-            ProjectDetails project = JsonSerializer.Deserialize<ProjectDetails>(json);
+            _cache.DeleteProject(model);
+        }
+
+        private void EditProjectHandler(RecentProjectModel model)
+        {
+            ProjectDetails project = _cache.LoadProjectFromFile(model);
             Navigation.NavigateTo<EditorViewModel>();
             _pubSub.Publish(SubTopic.ProjectLaunched, project);
         }
@@ -53,7 +48,8 @@ namespace OpenBoardAnim.ViewModels
         }
 
         public ICommand CreateNewWindowCommand { get; set; }
-        public BindingList<ProjectModel> RecentProjects { get => _recentProjects;
+        public BindingList<RecentProjectModel> RecentProjects {
+            get => _recentProjects;
             set
             {
                 _recentProjects = value;

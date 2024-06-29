@@ -33,7 +33,7 @@
                         <DataGridTemplateColumn Header="Delete" Width="auto">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
-                                    <Button >Delete</Button>
+                                    <Button Command="{Binding DeleteProjectCommand}">Delete</Button>
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>

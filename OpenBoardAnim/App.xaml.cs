@@ -19,19 +19,20 @@ namespace OpenBoardAnim
         public App()
         {
             IServiceCollection services = new ServiceCollection();
-            services.AddSingleton<INavigationService, NavigationService>();
-            services.AddSingleton<IPubSubService, PubSubService>();
             services.AddSingleton<DataContext>();
             services.AddSingleton<GraphicRepository>();
             services.AddSingleton<SceneRepository>();
             services.AddSingleton<ProjectRepository>();
+            services.AddSingleton<INavigationService, NavigationService>();
+            services.AddSingleton<IPubSubService, PubSubService>();
+            services.AddSingleton<CacheService>();
             services.AddSingleton<MainWindow>(provider =>
             new MainWindow
             {
                 DataContext = provider.GetRequiredService<MainViewModel>()
             });
             services.AddSingleton<MainViewModel>();
-            services.AddSingleton<LaunchViewModel>();
+            services.AddTransient<LaunchViewModel>();
             services.AddSingleton<EditorActionsViewModel>();
             services.AddSingleton<EditorCanvasViewModel>();
             services.AddSingleton<EditorLibraryViewModel>();

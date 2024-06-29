@@ -29,5 +29,15 @@ namespace OpenBoardAnim.Library.Repositories
             _context.Projects.Add(entity);
             _context.SaveChanges();
         }
+
+        public void DeleteProject(int projectID)
+        {
+            ProjectEntity project = _context.Projects.Find(projectID);
+            if (project != null)
+            {
+                _context.Projects.Remove(project);
+                _context.SaveChanges();
+            }
+        }
     }
 }
