@@ -35,7 +35,10 @@ namespace OpenBoardAnim.Models
                 ImgGeometry = ImgGeometry,
                 Name = Name,
                 X = X,
-                Y = Y
+                Y = Y,
+                SVGPath = SVGPath,
+                Delay  = Delay,
+                Duration    = Duration,
             };
         }
 

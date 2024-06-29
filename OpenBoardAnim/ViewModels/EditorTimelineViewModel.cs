@@ -8,7 +8,7 @@ namespace OpenBoardAnim.ViewModels
     public class EditorTimelineViewModel : ViewModel
     {
         private readonly IPubSubService _pubSub;
-        SceneModel _addScene = new SceneModel{Name = "+",Index = 3};
+        private SceneModel _addScene;
         public EditorTimelineViewModel(IPubSubService pubSub)
         {
             _pubSub = pubSub;
@@ -33,7 +33,7 @@ namespace OpenBoardAnim.ViewModels
             set
             {
                 _scenes = value;
-                _scenes.Add(_addScene);
+                _addScene = _scenes.LastOrDefault();
                 SelectedScene = _scenes.FirstOrDefault();
                 OnPropertyChanged();
             }
@@ -61,12 +61,13 @@ namespace OpenBoardAnim.ViewModels
 
         private void AddNewScene()
         {
+            int index = _scenes.Count;
             SceneModel newScene = new SceneModel
             {
-                Name = _addScene.Index.ToString(),
-                Index = _addScene.Index
+                Name = index.ToString(),
+                Index = index
             };
-            _scenes.Insert(_addScene.Index - 1, newScene);
+            _scenes.Insert(index - 1, newScene);
             ++_addScene.Index;
             _selectedScene = newScene;
         }

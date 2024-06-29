@@ -6,6 +6,7 @@ using OpenBoardAnim.Utils;
 using System.ComponentModel;
 using System.IO;
 using System.Text.Json;
+using System.Windows.Controls;
 
 namespace OpenBoardAnim.Services
 {
@@ -34,6 +35,13 @@ namespace OpenBoardAnim.Services
         {
             string json = File.ReadAllText(model.FilePath);
             ProjectDetails project = JsonSerializer.Deserialize<ProjectDetails>(json);
+            foreach (var s in project.Scenes)
+            {
+                foreach (var g in s.Graphics)
+                {
+                    g.ImgGeometry = SVGHelper.GetPathGeometryFromSVG(g.SVGPath);
+                }
+            }
             return project;
         }
         public void SaveNewProject(ProjectDetails project, string filePath)
@@ -78,7 +86,7 @@ namespace OpenBoardAnim.Services
             new GraphicModel
             {
                 Name = e.Name,
-                SVGPath = e.FilePath,
+                SVGPath = Path.Combine(folder, e.FilePath),
                 ImgGeometry = SVGHelper.GetPathGeometryFromSVG(Path.Combine(folder, e.FilePath))
             }).ToList();
             LoadedGraphics = new BindingList<GraphicModel>(graphics);

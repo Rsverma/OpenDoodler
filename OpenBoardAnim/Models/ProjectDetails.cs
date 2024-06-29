@@ -19,7 +19,7 @@ namespace OpenBoardAnim.Models
                     Index = 1
                 } ,new SceneModel
                 {
-                    Name="2",
+                    Name="+",
                     Index = 2
                 }   
             };
