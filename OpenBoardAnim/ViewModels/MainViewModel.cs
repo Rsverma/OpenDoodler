@@ -6,9 +6,13 @@ namespace OpenBoardAnim.ViewModels
     public class MainViewModel : ViewModel
     {
         private INavigationService _navigation;
+        private string _title;
+        private string _userName;
 
-        public MainViewModel(INavigationService navService) 
+        public MainViewModel(INavigationService navService)
         {
+            Title = "Open Board Animator";
+            UserName = "RSV";
             Navigation = navService;
             NavigateToLaunchCommand = new RelayCommand(
                 execute: o => { Navigation.NavigateTo<LaunchViewModel>(); },
@@ -26,6 +30,24 @@ namespace OpenBoardAnim.ViewModels
             set
             {
                 _navigation = value;
+                OnPropertyChanged();
+            }
+        }
+        public string Title
+        {
+            get => _title;
+            set
+            {
+                _title = value;
+                OnPropertyChanged();
+            }
+        }
+        public string UserName
+        {
+            get => _userName;
+            set
+            {
+                _userName = value;
                 OnPropertyChanged();
             }
         }

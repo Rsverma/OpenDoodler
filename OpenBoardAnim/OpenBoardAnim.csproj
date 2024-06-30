@@ -9,11 +9,18 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Resources\App.ico" />
     <None Remove="Resources\pencil.png" />
   </ItemGroup>
 
   <ItemGroup>
     <Content Include="App.ico" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Resources\App.ico">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Resource>
   </ItemGroup>
 
   <ItemGroup>

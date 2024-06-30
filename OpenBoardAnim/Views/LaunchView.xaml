@@ -25,7 +25,7 @@
                         <DataGridTemplateColumn Header="Edit" Width="auto">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
-                                    <Button Command="{Binding EditProjectCommand}">Edit</Button>
+                                    <Button Style="{StaticResource ButtonSuccess}" Command="{Binding EditProjectCommand}">Edit</Button>
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
@@ -33,7 +33,7 @@
                         <DataGridTemplateColumn Header="Delete" Width="auto">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
-                                    <Button Command="{Binding DeleteProjectCommand}">Delete</Button>
+                                    <Button Style="{StaticResource ButtonDanger}" Command="{Binding DeleteProjectCommand}">Delete</Button>
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
