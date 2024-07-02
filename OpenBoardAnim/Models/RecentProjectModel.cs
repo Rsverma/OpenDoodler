@@ -8,7 +8,7 @@ using System.Windows.Input;
 
 namespace OpenBoardAnim.Models
 {
-    public class RecentProjectModel
+    public class RecentProjectModel : ObservableObject
     {
         public RecentProjectModel()
         {

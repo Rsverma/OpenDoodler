@@ -9,7 +9,7 @@ using System.Windows.Input;
 
 namespace OpenBoardAnim.Models
 {
-    public class ProjectDetails
+    public class ProjectDetails : ObservableObject
     {
         public ProjectDetails()
         {

@@ -25,12 +25,8 @@ namespace OpenBoardAnim
             services.AddSingleton<ProjectRepository>();
             services.AddSingleton<INavigationService, NavigationService>();
             services.AddSingleton<IPubSubService, PubSubService>();
+            services.AddSingleton<IDialogService, DialogService>();
             services.AddSingleton<CacheService>();
-            services.AddSingleton<MainWindow>(provider =>
-            new MainWindow
-            {
-                DataContext = provider.GetRequiredService<MainViewModel>()
-            });
             services.AddSingleton<MainViewModel>();
             services.AddTransient<LaunchViewModel>();
             services.AddSingleton<EditorActionsViewModel>();
@@ -39,7 +35,12 @@ namespace OpenBoardAnim
             services.AddSingleton<EditorTimelineViewModel>();
             services.AddSingleton<EditorViewModel>();
             services.AddSingleton<Func<Type, ViewModel>>(sp => vMType => (ViewModel)sp.GetRequiredService(vMType));
-            
+
+            services.AddSingleton<MainWindow>(provider =>
+            new MainWindow
+            {
+                DataContext = provider.GetRequiredService<MainViewModel>()
+            });
             _serviceProvider = services.BuildServiceProvider();
         }
         protected override void OnStartup(StartupEventArgs e)

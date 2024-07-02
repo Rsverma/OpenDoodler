@@ -14,10 +14,6 @@ namespace OpenBoardAnim.Models
         public DrawingGroup ImgGeometry { get; set; }
         [JsonIgnore]
         public ICommand AddGraphicCommand { get; set; }
-        public double Width { get; set; } = 100;
-        public double Height { get; set; } = 100;
-        public double Delay { get; set; }
-        public double Duration { get; set; }
         public GraphicModel()
         {
 
@@ -60,6 +56,50 @@ namespace OpenBoardAnim.Models
             set
             {
                 y = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private double _delay = 0;
+        public double Delay
+    {
+            get { return _delay; }
+            set
+            {
+                _delay = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private double _duration = 0;
+        public double Duration
+        {
+            get { return _duration; }
+            set
+            {
+                _duration = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private double _height = 100;
+        public double Height
+        {
+            get { return _height; }
+            set
+            {
+                _height = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private double _width = 100;
+        public double Width
+        {
+            get { return _width; }
+            set
+            {
+                _width = value;
                 OnPropertyChanged();
             }
         }

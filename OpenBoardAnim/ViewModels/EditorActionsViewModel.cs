@@ -2,6 +2,7 @@
 using OpenBoardAnim.Core;
 using OpenBoardAnim.Models;
 using OpenBoardAnim.Services;
+using System.ComponentModel;
 using System.Windows.Input;
 
 namespace OpenBoardAnim.ViewModels
@@ -11,12 +12,16 @@ namespace OpenBoardAnim.ViewModels
         private IPubSubService _pubSub;
         private readonly INavigationService _navigation;
         private readonly CacheService _cache;
+        private readonly IDialogService _dialog;
 
-        public EditorActionsViewModel(IPubSubService pubSub, INavigationService navigation, CacheService Cache)
+        public EditorActionsViewModel(IPubSubService pubSub, INavigationService navigation, CacheService Cache,
+            IDialogService dialog)
         {
             _pubSub = pubSub;
+            pubSub.Subscribe(SubTopic.SceneChanged, SceneChangedHandler);
             _navigation = navigation;
             _cache = Cache;
+            _dialog = dialog;
             CloseProjectCommand = new RelayCommand(
                 execute: o => CloseProject(),
                 canExecute: o => true);
@@ -27,8 +32,19 @@ namespace OpenBoardAnim.ViewModels
                 execute: o => { },
                 canExecute: o => false);
             PreviewProjectCommand = new RelayCommand(
-                execute: o => { },
-                canExecute: o => false);
+                execute: o => PreviewProject(),
+                canExecute: o => true);
+        }
+
+        private void PreviewProject()
+        {
+            _ = _dialog.ShowDialog(DialogType.PreviewProject, Project);
+        }
+
+        private void SceneChangedHandler(object obj)
+        {
+            SceneModel scene = (SceneModel)obj;
+            CurrentScene = scene;
         }
 
         private void SaveProject()
@@ -59,5 +75,18 @@ namespace OpenBoardAnim.ViewModels
         public ICommand SaveProjectCommand { get; set; }
         public ICommand ExportProjectCommand { get; set; }
         public ICommand PreviewProjectCommand { get; set; }
+        private SceneModel _currentScene;
+
+        public SceneModel CurrentScene
+        {
+            get { return _currentScene; }
+            set
+            {
+                _currentScene = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(SceneGraphics));
+            }
+        }
+        public BindingList<GraphicModel> SceneGraphics => CurrentScene?.Graphics;
     }
 }
