@@ -71,7 +71,7 @@ namespace OpenBoardAnim.Models
             }
         }
 
-        private double _duration = 0;
+        private double _duration = 1;
         public double Duration
         {
             get { return _duration; }

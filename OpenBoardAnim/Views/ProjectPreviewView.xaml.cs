@@ -16,7 +16,6 @@ using System.Windows.Media.Imaging;
 using System.Windows.Media.Media3D;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
-using static MaterialDesignThemes.Wpf.Theme;
 
 namespace OpenBoardAnim.Views
 {
@@ -40,6 +39,7 @@ namespace OpenBoardAnim.Views
                 {
                     Source = new BitmapImage(new Uri("pack://application:,,,/Resources/pencil.png"))
                 };
+                    PreviewCanvas.Children.Add(hand);
                 for (int i = 0; i < project.Scenes.Count - 1; i++)
                 {
                     SceneModel scene = project.Scenes[i];
@@ -74,6 +74,7 @@ namespace OpenBoardAnim.Views
                         }
                     }
                 }
+                PreviewCanvas.Children.Remove(hand);
             }
         }
 

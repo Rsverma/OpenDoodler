@@ -62,7 +62,7 @@
         </ItemsControl.ItemContainerStyle>
         <ListBox.ItemTemplate>
             <DataTemplate>
-                <ContentControl Width="{Binding Width,Mode=TwoWay}" MinWidth="50" Height="{Binding Height,Mode=TwoWay}" MinHeight="50"
+                <ContentControl 
                                 Template="{StaticResource DesignerItemTemplate}">
                     
                     <Image IsHitTestVisible="False">

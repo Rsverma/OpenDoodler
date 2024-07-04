@@ -7,7 +7,7 @@ using System.Windows.Media.Animation;
 using System.Windows.Media.Media3D;
 using System.Windows.Shapes;
 
-namespace OpenBoardAnim.Views
+namespace OpenBoardAnim.Utils
 {
     public class PathAnimationExample
     {
@@ -15,8 +15,8 @@ namespace OpenBoardAnim.Views
         private List<Path> _paths;
         private GraphicModel _graphic;
         private UIElement _hand;
-        List<double> _lengths=new List<double>();
-        private int i=0;
+        List<double> _lengths = new List<double>();
+        private int i = 0;
         public PathAnimationExample(Canvas canvas, List<Path> paths, GraphicModel graphic, UIElement hand)
         {
             _canvas = canvas;
@@ -36,8 +36,6 @@ namespace OpenBoardAnim.Views
         }
         public async void AnimatePathOnCanvas()
         {
-            if (i==0)
-                _canvas.Children.Add(_hand);
             Canvas.SetLeft(_hand, _graphic.X);
             Canvas.SetTop(_hand, _graphic.Y);
             // Create a MatrixTransform for the ellipse
@@ -46,7 +44,7 @@ namespace OpenBoardAnim.Views
 
             Path path = _paths[i];
             // Add the path to the canvas
-            _canvas.Children.Insert(_canvas.Children.Count-1,path);
+            _canvas.Children.Insert(_canvas.Children.Count - 1, path);
             Canvas.SetLeft(path, _graphic.X);
             Canvas.SetTop(path, _graphic.Y);
             double ratio = _lengths[i] / _lengths.Sum();
@@ -60,7 +58,7 @@ namespace OpenBoardAnim.Views
             };
             dashOffsetAnimation.Completed += DashOffsetAnimation_Completed;
             // Start the animation
-            path.BeginAnimation(Path.StrokeDashOffsetProperty, dashOffsetAnimation);
+            path.BeginAnimation(Shape.StrokeDashOffsetProperty, dashOffsetAnimation);
 
 
             // Create the animation
@@ -76,12 +74,10 @@ namespace OpenBoardAnim.Views
         }
 
         private void DashOffsetAnimation_Completed(object sender, EventArgs e)
-        {   
+        {
             i++;
             if (i < _paths.Count)
                 AnimatePathOnCanvas();
-            else
-                _canvas.Children.Remove(_hand);
         }
 
         // Helper method to calculate total length of the geometry
