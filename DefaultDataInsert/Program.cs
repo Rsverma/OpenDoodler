@@ -24,5 +24,11 @@ GraphicEntity entity2 = new GraphicEntity
     Name = "peep-61",
     FilePath = "resources\\peep-61.svg"
 };
+GraphicEntity entity3 = new GraphicEntity
+{
+    Name = "undraw_love_is_in_the_air_4uud",
+    FilePath = "resources\\undraw_love_is_in_the_air_4uud.svg"
+};
 gr.AddNewGraphic(entity1);
 gr.AddNewGraphic(entity2);
+gr.AddNewGraphic(entity3);

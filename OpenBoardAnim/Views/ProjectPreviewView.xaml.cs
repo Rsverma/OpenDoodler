@@ -13,6 +13,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
+using System.Windows.Media.Media3D;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using static MaterialDesignThemes.Wpf.Theme;
@@ -35,7 +36,11 @@ namespace OpenBoardAnim.Views
             NameScope.SetNameScope(this, new NameScope());
             if (project != null)
             {
-                for (int i = 0; i < project.Scenes.Count-1; i++)
+                Image hand = new Image
+                {
+                    Source = new BitmapImage(new Uri("pack://application:,,,/Resources/pencil.png"))
+                };
+                for (int i = 0; i < project.Scenes.Count - 1; i++)
                 {
                     SceneModel scene = project.Scenes[i];
                     if (scene != null)
@@ -44,43 +49,33 @@ namespace OpenBoardAnim.Views
                         {
                             GraphicModel graphic = scene.Graphics[j];
                             await Task.Delay((int)graphic.Delay * 1000);
-                            GeometryGroup geo = SVGHelper.ConvertToGeometry(graphic.ImgGeometry);
-                            PathGeometry path = geo.GetFlattenedPathGeometry();
-                            path.Freeze();
-
-                            MoveHandAlongPath(j, graphic, path);
-                            await Task.Delay((int)graphic.Duration * 1000);
-                            var image = new Image
+                            List<GeometryWithFill> list = SVGHelper.ConvertToGeometry(graphic.ImgGeometry.Clone(), new TransformGroup());
+                            List<Path> paths = new List<Path>();
+                            foreach (GeometryWithFill geo in list)
                             {
-                                Source = new DrawingImage(graphic.ImgGeometry)
-                            };
-                            image.Height = graphic.Height;
-                            image.Width = graphic.Width;
-                            PreviewCanvas.Children.Add(image);
-                            Canvas.SetLeft(image, graphic.X);
-                            Canvas.SetTop(image, graphic.Y);
+                                PathGeometry pathGeo = geo.Geometry.GetFlattenedPathGeometry();
+                                pathGeo.Freeze();
+                                Path path = new Path
+                                {
+                                    Data = pathGeo,
+                                    Fill = geo.Brush,
+                                    Stroke = Brushes.Black,
+                                    StrokeThickness = 1
+                                };
+                                paths.Add(path);
+                            }
+                            var example = new PathAnimationExample(PreviewCanvas, paths, graphic, hand);
+                            example.AnimatePathOnCanvas();
+
+
+                            //var animation = new ControlPathAnimation();
+                            //animation.AnimateControlAlongPath(PreviewCanvas, path, graphic, hand);
+                            await Task.Delay((int)graphic.Duration * 1000);
                         }
                     }
                 }
             }
         }
 
-        private void MoveHandAlongPath(int j, GraphicModel graphic, PathGeometry path)
-        {
-            MatrixTransform buttonMatrixTransform = new MatrixTransform();
-            hand.RenderTransform = buttonMatrixTransform;
-            this.RegisterName("ButtonMatrixTransform" + j, buttonMatrixTransform);
-
-            MatrixAnimationUsingPath matrixAnimation = new MatrixAnimationUsingPath();
-            matrixAnimation.PathGeometry = path;
-            matrixAnimation.Duration = TimeSpan.FromSeconds(graphic.Duration);
-            Storyboard.SetTargetName(matrixAnimation, "ButtonMatrixTransform" + j);
-            Storyboard.SetTargetProperty(matrixAnimation, new PropertyPath(MatrixTransform.MatrixProperty));
-
-            // Create a Storyboard to contain and apply the animation.
-            Storyboard pathAnimationStoryboard = new Storyboard();
-            pathAnimationStoryboard.Children.Add(matrixAnimation);
-            pathAnimationStoryboard.Begin(this);
-        }
     }
 }
