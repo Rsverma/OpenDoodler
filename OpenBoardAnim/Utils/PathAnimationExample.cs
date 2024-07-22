@@ -17,6 +17,7 @@ namespace OpenBoardAnim.Utils
         private UIElement _hand;
         List<double> _lengths = new List<double>();
         private int i = 0;
+        public TaskCompletionSource<bool> tcs = new TaskCompletionSource<bool>();
         public PathAnimationExample(Canvas canvas, List<Path> paths, GraphicModel graphic, UIElement hand)
         {
             _canvas = canvas;
@@ -78,6 +79,8 @@ namespace OpenBoardAnim.Utils
             i++;
             if (i < _paths.Count)
                 AnimatePathOnCanvas();
+            else
+                tcs?.TrySetResult(true);
         }
 
         // Helper method to calculate total length of the geometry

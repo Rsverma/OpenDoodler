@@ -67,10 +67,10 @@ namespace OpenBoardAnim.Views
                             var example = new PathAnimationExample(PreviewCanvas, paths, graphic, hand);
                             example.AnimatePathOnCanvas();
 
+                            await example.tcs.Task;
 
                             //var animation = new ControlPathAnimation();
                             //animation.AnimateControlAlongPath(PreviewCanvas, path, graphic, hand);
-                            await Task.Delay((int)graphic.Duration * 1000);
                         }
                     }
                 }
