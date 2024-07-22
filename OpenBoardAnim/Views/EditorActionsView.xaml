@@ -5,8 +5,21 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:OpenBoardAnim.Views"
+             xmlns:models="clr-namespace:OpenBoardAnim.Models"
              mc:Ignorable="d"
              d:DesignHeight="450" d:DesignWidth="800">
+    <UserControl.Resources>
+        <DataTemplate DataType="{x:Type models:DrawingModel}">
+            <Image>
+                <Image.Source>
+                    <DrawingImage Drawing="{Binding ImgDrawingGroup}"/>
+                </Image.Source>
+            </Image>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type models:TextModel}">
+            <Path Data="{Binding TextGeometry}" Fill="Black" Stroke="Black" StrokeThickness="1" VerticalAlignment="Center"/>
+        </DataTemplate>
+    </UserControl.Resources>
     <Border Background="{DynamicResource BackgroundBrush}" Width="300" BorderThickness="1,0,0,0" BorderBrush="{DynamicResource BorderBrush}">
         <Grid Margin="20 0">
             <Grid.RowDefinitions>
@@ -43,11 +56,8 @@
                                     <RowDefinition Height="*"/>
                                     <RowDefinition Height="*"/>
                                 </Grid.RowDefinitions>
-                                <Image Grid.RowSpan="2" >
-                                    <Image.Source>
-                                        <DrawingImage Drawing="{Binding ImgGeometry}"/>
-                                    </Image.Source>
-                                </Image>
+                                <ContentControl  Grid.RowSpan="2" Content="{Binding}"/>
+                                
                                 <TextBlock Grid.Column="1" VerticalAlignment="Center">Delay:</TextBlock>
                                 <hc:NumericUpDown Grid.Column="2" Height="30" HorizontalAlignment="Stretch" Style="{StaticResource NumericUpDownPlus}"
                                       Value="{Binding Delay,Mode=TwoWay}" Minimum="0" ValueFormat="0s"/>

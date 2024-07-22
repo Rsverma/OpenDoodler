@@ -1,43 +1,13 @@
 ﻿using OpenBoardAnim.Core;
-using System.ComponentModel;
 using System.Text.Json.Serialization;
 using System.Windows.Input;
 using System.Windows.Media;
 
 namespace OpenBoardAnim.Models
 {
-    public class GraphicModel : ObservableObject
+    public abstract class GraphicModelBase : ObservableObject
     {
         public string Name { get; set; }
-        public string SVGPath { get; set; }
-        [JsonIgnore]
-        public DrawingGroup ImgGeometry { get; set; }
-        [JsonIgnore]
-        public ICommand AddGraphicCommand { get; set; }
-        public GraphicModel()
-        {
-
-            AddGraphicCommand = new RelayCommand(AddGraphicCommandHandler,
-                canExecute: o => true);
-        }
-        public Action<GraphicModel> AddGraphic;
-        
-        public GraphicModel Clone()
-        {
-            return new GraphicModel
-            {
-                Height = Height,
-                Width = Width,
-                ImgGeometry = ImgGeometry,
-                Name = Name,
-                X = X,
-                Y = Y,
-                SVGPath = SVGPath,
-                Delay  = Delay,
-                Duration    = Duration,
-            };
-        }
-
         private double x;
         public double X
         {
@@ -62,7 +32,7 @@ namespace OpenBoardAnim.Models
 
         private double _delay = 0;
         public double Delay
-    {
+        {
             get { return _delay; }
             set
             {
@@ -104,11 +74,17 @@ namespace OpenBoardAnim.Models
             }
         }
 
-        private void AddGraphicCommandHandler(object obj)
+        private double _resizeRatio = 1;
+        public double ResizeRatio
         {
-            AddGraphic?.Invoke(this);
+            get { return _resizeRatio; }
+            set
+            {
+                _resizeRatio = value;
+                OnPropertyChanged();
+            }
         }
 
-
+        public abstract GraphicModelBase Clone();
     }
 }

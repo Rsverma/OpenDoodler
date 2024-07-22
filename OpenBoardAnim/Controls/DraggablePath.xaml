@@ -45,6 +45,6 @@
                    Canvas.Top="100"
                    Canvas.Left="100"
                    Template="{StaticResource DesignerItemTemplate}">
-        <Path Data="{Binding ImgGeometry}" Stretch="Fill" Stroke="Black"/>
+        <Path Data="{Binding ImgDrawingGroup}" Stretch="Fill" Stroke="Black"/>
     </ContentControl>
 </UserControl>

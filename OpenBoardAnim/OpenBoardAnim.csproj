@@ -32,6 +32,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\OpenBoardAnim.Library\OpenBoardAnim.Library.csproj" />
+    <ProjectReference Include="..\OpenBoardAnim.Utilities\OpenBoardAnim.Utilities.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -39,7 +39,9 @@ namespace OpenBoardAnim.Views
                 {
                     Source = new BitmapImage(new Uri("pack://application:,,,/Resources/pencil.png"))
                 };
-                    PreviewCanvas.Children.Add(hand);
+                PreviewCanvas.Children.Add(hand);
+                Canvas.SetLeft(hand, 0);
+                Canvas.SetTop(hand, 1150);
                 for (int i = 0; i < project.Scenes.Count - 1; i++)
                 {
                     SceneModel scene = project.Scenes[i];
@@ -47,23 +49,13 @@ namespace OpenBoardAnim.Views
                     {
                         for (int j = 0; j < scene.Graphics.Count; j++)
                         {
-                            GraphicModel graphic = scene.Graphics[j];
+                            GraphicModelBase graphic = scene.Graphics[j];
                             await Task.Delay((int)graphic.Delay * 1000);
-                            List<GeometryWithFill> list = SVGHelper.ConvertToGeometry(graphic.ImgGeometry.Clone(), new TransformGroup());
-                            List<Path> paths = new List<Path>();
-                            foreach (GeometryWithFill geo in list)
-                            {
-                                PathGeometry pathGeo = geo.Geometry.GetFlattenedPathGeometry();
-                                pathGeo.Freeze();
-                                Path path = new Path
-                                {
-                                    Data = pathGeo,
-                                    Fill = geo.Brush,
-                                    Stroke = Brushes.Black,
-                                    StrokeThickness = 1
-                                };
-                                paths.Add(path);
-                            }
+                            List<Path> paths = [];
+                            if (graphic is DrawingModel drawing)
+                                paths = GetPathsForGraphic(drawing);
+                            else if (graphic is TextModel text)
+                                paths.Add(GetPathFromGeometry(Brushes.Black, text.TextGeometry));
                             var example = new PathAnimationExample(PreviewCanvas, paths, graphic, hand);
                             example.AnimatePathOnCanvas();
 
@@ -78,5 +70,35 @@ namespace OpenBoardAnim.Views
             }
         }
 
+        private static List<Path> GetPathsForGraphic(DrawingModel graphic)
+        {
+            List<Path> paths = new List<Path>();
+            TransformGroup group = new TransformGroup();
+            group.Children.Add(new ScaleTransform(graphic.ResizeRatio, graphic.ResizeRatio));
+            List<GeometryWithFill> list = GeometryHelper.ConvertToGeometry(graphic.ImgDrawingGroup.Clone(), group);
+            foreach (GeometryWithFill geo in list)
+            {
+                PathGeometry pathGeometry = geo.Geometry.GetFlattenedPathGeometry();
+                
+                PathGeometry pathGeo = pathGeometry;
+                Path path = GetPathFromGeometry(geo.Brush, pathGeo);
+                paths.Add(path);
+            }
+
+            return paths;
+        }
+
+        private static Path GetPathFromGeometry(Brush brush, PathGeometry pathGeo)
+        {
+            pathGeo.Freeze();
+            Path path = new Path
+            {
+                Data = pathGeo,
+                Fill = brush,
+                Stroke = Brushes.Black,
+                StrokeThickness = 1
+            };
+            return path;
+        }
     }
 }

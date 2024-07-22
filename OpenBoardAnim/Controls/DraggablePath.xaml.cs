@@ -47,7 +47,7 @@ namespace OpenBoardAnim.Controls
                 prevX = transform.X;
                 prevY = transform.Y;
             }
-            GraphicModel model = draggable.DataContext as GraphicModel;
+            DrawingModel model = draggable.DataContext as DrawingModel;
             if (model != null)
             {
                 model.X = prevX;

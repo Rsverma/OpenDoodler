@@ -22,7 +22,7 @@ namespace OpenBoardAnim.Controls
 
             if (designerItem != null)
             {
-                var model = designerItem.DataContext as GraphicModel;
+                var model = designerItem.DataContext as GraphicModelBase;
                 if (model != null)
                 {
 

@@ -7,6 +7,7 @@ namespace OpenBoardAnim.Controls
     public class ResizeThumb : Thumb
     {
         private double originalRatio = -1;
+        private double originalHeight = -1;
         public ResizeThumb()
         {
             DragDelta += new DragDeltaEventHandler(this.ResizeThumb_DragDelta);
@@ -23,8 +24,9 @@ namespace OpenBoardAnim.Controls
                     designerItem.Height = designerItem.ActualHeight;
                     designerItem.Width = designerItem.ActualWidth;
                     originalRatio = designerItem.ActualHeight / designerItem.ActualWidth;
+                    originalHeight = designerItem.Height;
                 }
-                var model = designerItem.DataContext as GraphicModel;
+                var model = designerItem.DataContext as GraphicModelBase;
                 if (model != null)
                 {
                     double deltaVertical, deltaHorizontal;
@@ -58,11 +60,13 @@ namespace OpenBoardAnim.Controls
                         default:
                             break;
                     }
+                    double newRatio = designerItem.Height / designerItem.Width;
+                    if (newRatio > originalRatio) designerItem.Height = originalRatio * designerItem.Width;
+                    else designerItem.Width = designerItem.Height / originalRatio;
+                    model.ResizeRatio = designerItem.Height/ originalHeight;
                 }
             }
-            double newRatio = designerItem.Height / designerItem.Width;
-            if(newRatio > originalRatio)designerItem.Height = originalRatio*designerItem.Width;
-            else designerItem.Width = designerItem.Height/ originalRatio;
+
             e.Handled = true;
         }
     }

@@ -19,7 +19,7 @@ namespace OpenBoardAnim.Services
         private List<SceneEntity> _sceneEntities;
         public BindingList<RecentProjectModel> RecentProjects { get; set; }
         public ProjectDetails CurrentProject { get; set; }
-        public BindingList<GraphicModel> LoadedGraphics { get; set; }
+        public BindingList<DrawingModel> LoadedGraphics { get; set; }
         public BindingList<SceneModel> LoadedScenes { get; set; }
 
         public CacheService(GraphicRepository gRepo, SceneRepository sRepo, ProjectRepository pRepo)
@@ -39,7 +39,8 @@ namespace OpenBoardAnim.Services
             {
                 foreach (var g in s.Graphics)
                 {
-                    g.ImgGeometry = SVGHelper.GetPathGeometryFromSVG(g.SVGPath);
+                    if(g is DrawingModel d)
+                        d.ImgDrawingGroup = GeometryHelper.GetPathGeometryFromSVG(d.SVGPath);
                 }
             }
             return project;
@@ -82,14 +83,14 @@ namespace OpenBoardAnim.Services
             string folder = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
             
             _graphicEntities = _gRepo.GetAllGraphics();
-            List<GraphicModel> graphics = _graphicEntities.Select(e =>
-            new GraphicModel
+            List<DrawingModel> graphics = _graphicEntities.Select(e =>
+            new DrawingModel
             {
                 Name = e.Name,
                 SVGPath = Path.Combine(folder, e.FilePath),
-                ImgGeometry = SVGHelper.GetPathGeometryFromSVG(Path.Combine(folder, e.FilePath))
+                ImgDrawingGroup = GeometryHelper.GetPathGeometryFromSVG(Path.Combine(folder, e.FilePath))
             }).ToList();
-            LoadedGraphics = new BindingList<GraphicModel>(graphics);
+            LoadedGraphics = new BindingList<DrawingModel>(graphics);
         }
 
         private void LoadRecentProjects()

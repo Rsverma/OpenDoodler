@@ -11,7 +11,7 @@ namespace OpenBoardAnim.Models
     {
         public SceneModel()
         {
-            Graphics = new BindingList<GraphicModel>();
+            Graphics = new BindingList<GraphicModelBase>();
             ReplaceSceneCommand = new RelayCommand(ReplaceSceneCommandHandler,
                 canExecute: o => true);
         }
@@ -26,7 +26,7 @@ namespace OpenBoardAnim.Models
             return new SceneModel
             {
                 Name = Name,
-                Graphics = new BindingList<GraphicModel>(Graphics.Select(x=>x.Clone()).ToList()),
+                Graphics = new BindingList<GraphicModelBase>(Graphics.Select(x=>x.Clone()).ToList()),
             };
         }
 
@@ -41,8 +41,8 @@ namespace OpenBoardAnim.Models
             }
         }
 
-        private BindingList<GraphicModel> _graphics;
-        public BindingList<GraphicModel> Graphics
+        private BindingList<GraphicModelBase> _graphics;
+        public BindingList<GraphicModelBase> Graphics
         {
             get { return _graphics; }
             set

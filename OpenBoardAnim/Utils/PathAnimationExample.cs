@@ -13,12 +13,12 @@ namespace OpenBoardAnim.Utils
     {
         private Canvas _canvas;
         private List<Path> _paths;
-        private GraphicModel _graphic;
+        private GraphicModelBase _graphic;
         private UIElement _hand;
         List<double> _lengths = new List<double>();
         private int i = 0;
         public TaskCompletionSource<bool> tcs = new TaskCompletionSource<bool>();
-        public PathAnimationExample(Canvas canvas, List<Path> paths, GraphicModel graphic, UIElement hand)
+        public PathAnimationExample(Canvas canvas, List<Path> paths, GraphicModelBase graphic, UIElement hand)
         {
             _canvas = canvas;
             _paths = paths;

@@ -40,7 +40,7 @@
                             <DataTemplate>
                                 <Image>
                                     <Image.Source>
-                                        <DrawingImage Drawing="{Binding ImgGeometry}"/>
+                                        <DrawingImage Drawing="{Binding ImgDrawingGroup}"/>
                                     </Image.Source>
                                 </Image>
                             </DataTemplate>
@@ -59,7 +59,42 @@
                     <WrapPanel Background="#FF3F4EE8"/>
                 </hc:TabItem>
                 <hc:TabItem Header="{materialDesign:PackIcon FormatLetterCase}">
-                    <WrapPanel Background="#FFE83F6D"/>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="auto" />
+                            <RowDefinition Height="auto" />
+                            <RowDefinition Height="auto" />
+                            <RowDefinition Height="auto" />
+                            <RowDefinition Height="auto" />
+                            <RowDefinition Height="auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+                        <TextBlock Margin="5 5 2 5" Text="Text" VerticalAlignment="Center"/>
+                        <TextBlock Margin="5 5 2 5" Text="Font Family" Grid.Row="1" VerticalAlignment="Center"/>
+                        <TextBlock Margin="5 5 2 5" Text="Font Style" Grid.Row="2" VerticalAlignment="Center"/>
+                        <TextBlock Margin="5 5 2 5" Text="Font Size" Grid.Row="4" VerticalAlignment="Center"/>
+                        <hc:TextBox Margin="5 5 2 5" Grid.Column="1" hc:InfoElement.Placeholder="Enter Text to display" Text="{Binding RawText}"/>
+                        <hc:ComboBox x:Name="fontSelector" Margin="5 5 2 5" Grid.Column="1" Grid.Row="1"
+                                     ItemsSource="{x:Static Fonts.SystemFontFamilies}" SelectedItem="{Binding SelectedFontFamily}"/>
+                        <hc:ComboBox x:Name="typefaceSelector" Margin="5 5 2 5" Grid.Column="1" Grid.Row="2"
+                                     ItemsSource="{Binding SelectedItem.FamilyTypefaces, ElementName=fontSelector}" DisplayMemberPath="AdjustedFaceNames[en-US]"
+                                     SelectedItem="{Binding SelectedTypeFace}"/>
+                        <hc:NumericUpDown x:Name="sizeSelector" Margin="5 5 2 5" Grid.Column="1" Grid.Row="4" Minimum="1" Value="{Binding FontSize}"/>
+                        <Button Margin="5 5 2 5" Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="5" Style="{DynamicResource ButtonPrimary}" 
+                                 Command="{Binding AddTextCommand}" Content ="Add Text"/>
+                        <TextBlock Margin="5 5 2 5" Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="6"
+                                   FontFamily="{Binding SelectedItem.Source, ElementName=fontSelector}"
+                                   FontStretch="{Binding SelectedItem.Stretch, ElementName=typefaceSelector}"
+                                   FontStyle="{Binding SelectedItem.Style, ElementName=typefaceSelector}"
+                                   FontWeight="{Binding SelectedItem.Weight, ElementName=typefaceSelector}"
+                                   Text="Sample" 
+                                   FontSize="{Binding Value, ElementName=sizeSelector}"
+                                   HorizontalAlignment="Center" />
+                    </Grid>
                 </hc:TabItem>
                 <hc:TabItem Header="{materialDesign:PackIcon music}">
                     <WrapPanel Background="#FFB23FE8"/>

@@ -87,6 +87,6 @@ namespace OpenBoardAnim.ViewModels
                 OnPropertyChanged(nameof(SceneGraphics));
             }
         }
-        public BindingList<GraphicModel> SceneGraphics => CurrentScene?.Graphics;
+        public BindingList<GraphicModelBase> SceneGraphics => CurrentScene?.Graphics;
     }
 }

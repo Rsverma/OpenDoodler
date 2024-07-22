@@ -17,9 +17,9 @@ namespace OpenBoardAnim.ViewModels
             _pubSub.Subscribe(SubTopic.GraphicAdded, GraphicAddedHandler);
         }
 
-        private BindingList<GraphicModel> _sceneGraphics;
+        private BindingList<GraphicModelBase> _sceneGraphics;
 
-        public BindingList<GraphicModel> SceneGraphics
+        public BindingList<GraphicModelBase> SceneGraphics
         {
             get { return _sceneGraphics; }
             set
@@ -31,8 +31,7 @@ namespace OpenBoardAnim.ViewModels
 
         private void GraphicAddedHandler(object obj)
         {
-            GraphicModel model = (GraphicModel)obj;
-            if(model != null )
+            if (obj is GraphicModelBase model)
             {
                 SceneGraphics.Add(model);
             }
