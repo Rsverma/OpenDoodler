@@ -38,7 +38,7 @@
                     </MenuItem>
                 </Menu>
             </StackPanel>
-            <TextBlock Grid.ColumnSpan="3" HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource TextBlockSubTitleBold}">abs</TextBlock>
+            <TextBlock Grid.ColumnSpan="3" HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource TextBlockSubTitleBold}">Editor</TextBlock>
             <StackPanel Orientation="Horizontal" Grid.Column="2">
                 <Button Content="{Binding UserName}"/>
 
