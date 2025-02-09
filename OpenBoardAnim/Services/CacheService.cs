@@ -92,7 +92,22 @@ namespace OpenBoardAnim.Services
             }).ToList();
             LoadedGraphics = new BindingList<DrawingModel>(graphics);
         }
+        public async Task SaveNewGraphics(string[] paths)
+        {
+            await _gRepo.AddNewGraphics(paths.Select(file =>
+            {
 
+                string destFileName = Path.Combine("resources", Path.GetFileName(file));
+                File.Copy(file, destFileName);
+                return new GraphicEntity
+                {
+                    Name = Path.GetFileNameWithoutExtension(file),
+                    FilePath = destFileName
+                };
+            }).ToArray());
+        
+            LoadGraphics();
+        }
         private void LoadRecentProjects()
         {
             List<ProjectEntity> projects = _pRepo.GetRecentProjects();

@@ -1,4 +1,5 @@
-﻿using OpenBoardAnim.Core;
+﻿using Microsoft.Win32;
+using OpenBoardAnim.Core;
 using OpenBoardAnim.Models;
 using OpenBoardAnim.Services;
 using OpenBoardAnim.Utilities;
@@ -14,8 +15,9 @@ namespace OpenBoardAnim.ViewModels
     public class EditorLibraryViewModel : ViewModel
     {
         private IPubSubService _pubSub;
-        private readonly CacheService _cache;
+        private readonly CacheService _cache; 
         public ICommand AddTextCommand { get; set; }
+        public ICommand ImportGraphicsCommand { get; set; }
 
 
         public EditorLibraryViewModel(IPubSubService pubSub,CacheService cache)
@@ -34,6 +36,26 @@ namespace OpenBoardAnim.ViewModels
             }
             AddTextCommand = new RelayCommand(AddTextCommandHandler,
                 canExecute: o => { return !string.IsNullOrEmpty(RawText) && SelectedFontFamily is not null && SelectedTypeFace is not null; });
+            ImportGraphicsCommand = new RelayCommand(ImportGraphicsCommandHandler, o=>true);
+        }
+
+        private async void ImportGraphicsCommandHandler(object obj)
+        {
+            OpenFileDialog openFileDialog = new()
+            {
+                Multiselect=true,
+                Filter = "SVG File (*.svg)|*.svg",
+            };
+            if (openFileDialog.ShowDialog() == true)
+            {
+                await _cache.SaveNewGraphics(openFileDialog.FileNames);
+            }
+
+            Graphics = _cache.LoadedGraphics;
+            foreach (var graphic in Graphics)
+            {
+                graphic.AddGraphic = AddGraphicHandler;
+            }
         }
 
         private string _rawText;

@@ -35,7 +35,13 @@
                     </hc:CoverView>
                 </hc:TabItem>
                 <hc:TabItem IsSelected="True" Header="{materialDesign:PackIcon AccountGroup}" ToolTip="Graphics">
-                    <hc:CoverView Background="DarkGray" ItemWidth="120" ItemContentHeight="30" ItemsSource="{Binding Graphics}">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="auto"/>
+                            <RowDefinition Height="20"/>
+                        </Grid.RowDefinitions>
+                    <hc:CoverView ItemWidth="120" ItemContentHeight="30" ItemsSource="{Binding Graphics}">
                         <hc:CoverView.ItemHeaderTemplate>
                             <DataTemplate>
                                 <Image>
@@ -54,6 +60,8 @@
                             </DataTemplate>
                         </hc:CoverView.ItemTemplate>
                     </hc:CoverView>
+                        <Button Grid.Row="1" Margin="5" Style="{StaticResource ButtonPrimary}" Command="{Binding ImportGraphicsCommand}">Import</Button>
+                    </Grid>
                 </hc:TabItem>
                 <hc:TabItem Header="{materialDesign:PackIcon shape}">
                     <WrapPanel Background="#FF3F4EE8"/>

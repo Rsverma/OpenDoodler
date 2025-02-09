@@ -81,7 +81,7 @@ namespace OpenBoardAnim.Views
                             }
                             PathGeometry pathGeometry = geometry.GetFlattenedPathGeometry();
 
-                            List<PathGeometry> pathGeometries = GenrateMultiplePaths(pathGeometry, graphic is DrawingModel);
+                            List<PathGeometry> pathGeometries = GenerateMultiplePaths(pathGeometry, graphic is DrawingModel);
                             foreach (var geo in pathGeometries)
                             {
                                 Path path = new Path
@@ -108,7 +108,7 @@ namespace OpenBoardAnim.Views
             }
         }
 
-        private static List<PathGeometry> GenrateMultiplePaths(PathGeometry pathGeometry, bool v)
+        private static List<PathGeometry> GenerateMultiplePaths(PathGeometry pathGeometry, bool isGraphic)
         {
             List <PathGeometry> paths = new List<PathGeometry>();
             // Iterate through each PathFigure in the PathGeometry
@@ -116,7 +116,7 @@ namespace OpenBoardAnim.Views
             {
                 PathFigure[] arr = [figure.Clone()];
                 PathGeometry geometry = new PathGeometry(arr);
-                if(v)
+                if(isGraphic)
                     geometry.Transform = new TranslateTransform(-pathGeometry.Bounds.Left,-pathGeometry.Bounds.Top);
                 paths.Add(geometry);
             }
