@@ -30,7 +30,6 @@ namespace OpenBoardAnim.Utils
                 // Set up the dash array and offset
                 path.StrokeDashArray = new DoubleCollection(new double[] { item });
                 path.StrokeDashOffset = item;
-
             }
 
             _hand = hand;
@@ -80,11 +79,14 @@ namespace OpenBoardAnim.Utils
             if (i < _paths.Count)
                 AnimatePathOnCanvas();
             else
+            {
+                Canvas.SetTop(_hand, 2000);
                 tcs?.TrySetResult(true);
+            }
         }
 
         // Helper method to calculate total length of the geometry
-        private double GetTotalLength(PathGeometry geometry)
+        private static double GetTotalLength(PathGeometry geometry)
         {
             double length = 0;
             foreach (PathFigure figure in geometry.Figures)

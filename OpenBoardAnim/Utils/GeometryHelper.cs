@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media;
+using System.Windows.Shapes;
 
 namespace OpenBoardAnim.Utils
 {
@@ -54,34 +55,23 @@ namespace OpenBoardAnim.Utils
             return svgFileReader.Read(filePath);
         }
 
-        public static List<GeometryWithFill> ConvertToGeometry(DrawingGroup drawingGroup, TransformGroup group)
+        public static Geometry ConvertToGeometry(DrawingGroup drawingGroup)
         {
-            List<GeometryWithFill> geometrylist = new List<GeometryWithFill>();
-            if (drawingGroup != null)
+            var geometryGroup = new GeometryGroup();
+
+            foreach (var drawing in drawingGroup.Children)
             {
-                foreach (var drawing in drawingGroup.Children)
-                { 
-                    TransformGroup clone = group.Clone();
-                    if (drawing is GeometryDrawing geometryDrawing)
-                    {
-                        Geometry geometry = geometryDrawing.Geometry;
-                        if (geometry.Transform != null)
-                        {
-                            clone.Children.Insert(0,geometry.Transform);
-                        }
-                        geometry.Transform = clone;
-                        geometrylist.Add(new GeometryWithFill(geometry,geometryDrawing.Brush));
-                    }
-                    else if (drawing is DrawingGroup innerGroup)
-                    {
-                        if (innerGroup.Transform != null)
-                            clone.Children.Insert(0, innerGroup.Transform);
-                        geometrylist.AddRange(ConvertToGeometry(innerGroup, clone));
-                    }
+                if (drawing is GeometryDrawing geometryDrawing && geometryDrawing.Geometry != null)
+                {
+                    geometryGroup.Children.Add(geometryDrawing.Geometry);
+                }
+                else if (drawing is DrawingGroup innerGroup)
+                {
+                    geometryGroup.Children.Add(ConvertToGeometry(innerGroup));
                 }
             }
-
-            return geometrylist;
+            geometryGroup.Transform = drawingGroup.Transform;
+            return geometryGroup;
         }
 
     }
