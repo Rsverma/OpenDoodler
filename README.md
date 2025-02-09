@@ -1,8 +1,8 @@
 <h1 align="center">
   <br>
-  <img src="https://raw.githubusercontent.com/Rsverma/OpenDoodler/main/OpenBoardAnim/Resources/App.ico" alt="RSV Animator" width="200">
+  <img src="https://raw.githubusercontent.com/Rsverma/OpenDoodler/main/OpenBoardAnim/Resources/App.ico" alt="Open Doodler" width="200">
   <br>
-  RSV Animator
+  Open Doodler
   <br>
 </h1>
 
@@ -19,15 +19,16 @@
 
 ## Key Features
 
-* Coming Soon
+* Simple launch page to create new projects or select an existing project
+* Project Window to work on an animation
+* Import svg images for animation
+* Add text graphic for animation
+* Preview animation
 
 ## Upcoming Features
-* Simple launch page to create new projects or select an existing project
 * Project creation window with common feature set modification
-* Project Window to work on an animation
 
 ## Wishlist
-* Drag Drop svg images for animation
 * Audio Track integration
 * Video Export
 
