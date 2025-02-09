@@ -2,6 +2,7 @@
 using OpenBoardAnim.Utils;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -52,38 +53,54 @@ namespace OpenBoardAnim.Views
                             GraphicModelBase graphic = scene.Graphics[j];
                             await Task.Delay((int)graphic.Delay * 1000);
                             List<Path> paths = [];
+                            Geometry geometry = null;
                             UIElement element = null;
                             if (graphic is DrawingModel drawing)
                             {
                                 DrawingGroup drawingGroup = drawing.ImgDrawingGroup.Clone();
                                 drawingGroup.Transform = new ScaleTransform(drawing.ResizeRatio, drawing.ResizeRatio);
-                                Geometry geometry = GeometryHelper.ConvertToGeometry(drawingGroup);
-                                PathGeometry pathGeometry = geometry.GetFlattenedPathGeometry();
-
-                                List<PathGeometry> pathGeometries = GenrateMultiplePaths(pathGeometry);
-                                foreach (var geo in pathGeometries)
-                                {
-                                    Path path = new Path
-                                    {
-                                        Data = geo,
-                                        Stroke = Brushes.Black
-                                    };
-                                    paths.Add(path);
-                                }
+                                geometry = GeometryHelper.ConvertToGeometry(drawingGroup);
                                 element = new Image
                                 {
                                     Source = new DrawingImage(drawingGroup)
                                 };
                             }
                             else if (graphic is TextModel text)
-                                paths.Add(GetPathFromGeometry(Brushes.Black, text.TextGeometry));
+                            {
+                                geometry = text.TextGeometry;
+                                element = new TextBlock()
+                                {
+                                    Text = text.RawText,
+                                    Foreground = Brushes.Black,
+                                    FontFamily = text.SelectedFontFamily,
+                                    FontSize = text.SelectedFontSize,
+                                    FontStyle = text.SelectedFontStyle,
+                                    FontWeight = text.SelectedFontWeight
+                                };
+                                //paths.Add(GetPathFromGeometry(Brushes.Black, text.TextGeometry));
+                            }
+                            PathGeometry pathGeometry = geometry.GetFlattenedPathGeometry();
+
+                            List<PathGeometry> pathGeometries = GenrateMultiplePaths(pathGeometry, graphic is DrawingModel);
+                            foreach (var geo in pathGeometries)
+                            {
+                                Path path = new Path
+                                {
+                                    Data = geo,
+                                    Stroke = Brushes.Black
+                                };
+                                paths.Add(path);
+                            }
                             var example = new PathAnimationExample(PreviewCanvas, paths, graphic, hand);
                             example.AnimatePathOnCanvas();
 
                             await example.tcs.Task;
-                            PreviewCanvas.Children.Add(element);
-                            Canvas.SetLeft(element, graphic.X);
-                            Canvas.SetTop(element, graphic.Y);
+                            if (element != null)
+                            {
+                                PreviewCanvas.Children.Add(element);
+                                Canvas.SetLeft(element, graphic.X);
+                                Canvas.SetTop(element, graphic.Y);
+                            }
                         }
                     }
                 }
@@ -91,7 +108,7 @@ namespace OpenBoardAnim.Views
             }
         }
 
-        private static List<PathGeometry> GenrateMultiplePaths(PathGeometry pathGeometry)
+        private static List<PathGeometry> GenrateMultiplePaths(PathGeometry pathGeometry, bool v)
         {
             List <PathGeometry> paths = new List<PathGeometry>();
             // Iterate through each PathFigure in the PathGeometry
@@ -99,7 +116,8 @@ namespace OpenBoardAnim.Views
             {
                 PathFigure[] arr = [figure.Clone()];
                 PathGeometry geometry = new PathGeometry(arr);
-                geometry.Transform = new TranslateTransform(-pathGeometry.Bounds.Left,-pathGeometry.Bounds.Top);
+                if(v)
+                    geometry.Transform = new TranslateTransform(-pathGeometry.Bounds.Left,-pathGeometry.Bounds.Top);
                 paths.Add(geometry);
             }
             return paths;

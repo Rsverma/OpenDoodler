@@ -119,10 +119,16 @@ namespace OpenBoardAnim.ViewModels
 
         private void AddTextCommandHandler(object obj)
         {
-            PathGeometry pathGeometry = GeometryHelper.ConvertTextToGeometry(RawText, SelectedFontFamily, SelectedTypeFace.Style, SelectedTypeFace.Weight, FontSize);
+            PathGeometry pathGeometry = GeometryHelper.ConvertTextToGeometry(RawText, SelectedFontFamily, 
+                SelectedTypeFace.Style, SelectedTypeFace.Weight, FontSize);
             TextModel textModel = new TextModel
             {
-                TextGeometry = pathGeometry
+                TextGeometry = pathGeometry,
+                RawText = RawText,
+                SelectedFontFamily = SelectedFontFamily,
+                SelectedFontStyle = SelectedTypeFace.Style,
+                SelectedFontWeight = SelectedTypeFace.Weight,
+                SelectedFontSize = FontSize
             };
             _pubSub.Publish(SubTopic.GraphicAdded, textModel);
         }
