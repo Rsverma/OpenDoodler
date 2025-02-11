@@ -51,7 +51,6 @@ $ git clone https://github.com/Rsverma/OpenDoodler.git
 
 This software uses the following open source packages:
 
-- [Caliburn Micro](https://caliburnmicro.com/)
 - [Handy Control](https://github.com/HandyOrg/HandyControl)
 
 ## Related
