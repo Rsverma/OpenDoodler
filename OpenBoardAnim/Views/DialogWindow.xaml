@@ -8,11 +8,11 @@
         mc:Ignorable="d"
         WindowStartupLocation="CenterOwner"
         WindowStyle="ToolWindow"
-        Height="650" Width="1150">
+        Height="650" Width="1050">
     <Window.Resources>
         <DataTemplate DataType="{x:Type model:ProjectDetails}">
             <local:ProjectPreviewView/>
         </DataTemplate>
     </Window.Resources>
-    <ContentPresenter x:Name="ContentPresenter" Content="{Binding}"/>
+    <ContentPresenter HorizontalAlignment="Center" x:Name="ContentPresenter" Content="{Binding}"/>
 </Window>

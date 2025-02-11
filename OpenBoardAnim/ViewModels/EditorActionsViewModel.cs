@@ -34,6 +34,15 @@ namespace OpenBoardAnim.ViewModels
             PreviewProjectCommand = new RelayCommand(
                 execute: o => PreviewProject(),
                 canExecute: o => true);
+            DeleteItemCommand = new RelayCommand(
+                execute: o => DeleteItem(),
+                canExecute: o => SelectedGraphic!=null);
+        }
+
+        private void DeleteItem()
+        {
+            if(SelectedGraphic!=null)
+                CurrentScene?.Graphics.Remove(SelectedGraphic);
         }
 
         private void PreviewProject()
@@ -72,6 +81,7 @@ namespace OpenBoardAnim.ViewModels
 
         public ProjectDetails Project { get; set; }
         public ICommand CloseProjectCommand { get; set; }
+        public ICommand DeleteItemCommand { get; set; }
         public ICommand SaveProjectCommand { get; set; }
         public ICommand ExportProjectCommand { get; set; }
         public ICommand PreviewProjectCommand { get; set; }
@@ -88,5 +98,6 @@ namespace OpenBoardAnim.ViewModels
             }
         }
         public BindingList<GraphicModelBase> SceneGraphics => CurrentScene?.Graphics;
+        public GraphicModelBase SelectedGraphic { get; set; }
     }
 }
