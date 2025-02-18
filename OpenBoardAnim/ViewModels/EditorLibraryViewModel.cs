@@ -46,6 +46,7 @@ namespace OpenBoardAnim.ViewModels
 
         private void SearchGraphicsCommandHandler(object obj)
         {
+            Graphics.Clear();
             _oldSearchText = _searchText;
             List<DrawingModel> drawingModels = _cache.GetGraphics(_searchText, 0);
             foreach (var drawingModel in drawingModels)
