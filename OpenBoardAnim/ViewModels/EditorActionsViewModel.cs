@@ -22,21 +22,33 @@ namespace OpenBoardAnim.ViewModels
             _navigation = navigation;
             _cache = Cache;
             _dialog = dialog;
-            CloseProjectCommand = new RelayCommand(
-                execute: o => CloseProject(),
-                canExecute: o => true);
-            SaveProjectCommand = new RelayCommand(
-                execute: o => SaveProject(),
-                canExecute: o => true);
-            ExportProjectCommand = new RelayCommand(
-                execute: o => { },
-                canExecute: o => false);
-            PreviewProjectCommand = new RelayCommand(
-                execute: o => PreviewProject(),
-                canExecute: o => true);
-            DeleteItemCommand = new RelayCommand(
-                execute: o => DeleteItem(),
-                canExecute: o => SelectedGraphic!=null);
+            CloseProjectCommand = new RelayCommand(execute: o => CloseProject(), canExecute: o => true);
+            SaveProjectCommand = new RelayCommand(execute: o => SaveProject(), canExecute: o => true);
+            ExportProjectCommand = new RelayCommand(execute: o => { }, canExecute: o => false);
+            PreviewProjectCommand = new RelayCommand(execute: o => PreviewProject(), canExecute: o => true);
+            DeleteItemCommand = new RelayCommand(execute: o => DeleteItem(), canExecute: o => SelectedGraphic != null);
+            MoveUpCommand = new RelayCommand(execute: o => MoveUp(), canExecute: o => SelectedGraphic != null);
+            MoveDownCommand = new RelayCommand(execute: o => MoveDown(), canExecute: o => SelectedGraphic != null);
+        }
+
+        private void MoveUp()
+        {
+            if (SelectedGraphic == null || CurrentScene == null) return;
+            var model = SelectedGraphic;
+            int index = CurrentScene.Graphics.IndexOf(model);
+            if (index < 1) return;
+            CurrentScene.Graphics.RemoveAt(index);
+            CurrentScene.Graphics.Insert(index - 1, model); SelectedGraphic = model;
+        }
+
+        private void MoveDown()
+        {
+            if (SelectedGraphic == null || CurrentScene == null) return;
+            var model = SelectedGraphic;
+            int index = CurrentScene.Graphics.IndexOf(model);
+            if (index < 0 || index == CurrentScene.Graphics.Count-1) return;
+            CurrentScene.Graphics.RemoveAt(index);
+            CurrentScene.Graphics.Insert(index + 1, model); SelectedGraphic = model;
         }
 
         private void DeleteItem()
@@ -82,6 +94,8 @@ namespace OpenBoardAnim.ViewModels
         public ProjectDetails Project { get; set; }
         public ICommand CloseProjectCommand { get; set; }
         public ICommand DeleteItemCommand { get; set; }
+        public ICommand MoveUpCommand { get; set; }
+        public ICommand MoveDownCommand { get; set; }
         public ICommand SaveProjectCommand { get; set; }
         public ICommand ExportProjectCommand { get; set; }
         public ICommand PreviewProjectCommand { get; set; }

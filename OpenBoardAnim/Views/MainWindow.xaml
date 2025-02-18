@@ -7,6 +7,7 @@
         xmlns:local="clr-namespace:OpenBoardAnim"
         xmlns:views="clr-namespace:OpenBoardAnim.Views"
         xmlns:vm="clr-namespace:OpenBoardAnim.ViewModels"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
         WindowState="Maximized"
         mc:Ignorable="d" MinHeight="650" MinWidth="1200">
     <hc:Window.NonClientAreaContent>
@@ -27,14 +28,14 @@
                 </Button>
                 <Menu FontSize="15" VerticalAlignment="Center">
                     <MenuItem Header="File">
-                        <MenuItem Header="Exit"/>
+                        <MenuItem Header="Exit" Icon="{materialDesign:PackIcon Logout}"/>
                     </MenuItem>
                     <MenuItem Header="Edit">
-                        <MenuItem Header="Undo"/>
-                        <MenuItem Header="Redo"/>
+                        <MenuItem Header="Undo" Icon="{materialDesign:PackIcon Undo}"/>
+                        <MenuItem Header="Redo" Icon="{materialDesign:PackIcon Redo}"/>
                     </MenuItem>
                     <MenuItem Header="Help">
-                        <MenuItem Header="About"/>
+                        <MenuItem Header="About" Icon="{materialDesign:PackIcon Info}"/>
                     </MenuItem>
                 </Menu>
             </StackPanel>
