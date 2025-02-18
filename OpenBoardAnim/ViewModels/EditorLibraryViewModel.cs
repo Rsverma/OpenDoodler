@@ -49,8 +49,11 @@ namespace OpenBoardAnim.ViewModels
             Graphics.Clear();
             _oldSearchText = _searchText;
             List<DrawingModel> drawingModels = _cache.GetGraphics(_searchText, 0);
-            foreach (var drawingModel in drawingModels)
-                Graphics.Add(drawingModel);
+            foreach (var model in drawingModels)
+            {
+                model.AddGraphic = AddGraphicHandler;
+                Graphics.Add(model);
+            }
         }
 
         private void LoadMoreGraphicsCommandHandler(object obj)
@@ -59,8 +62,11 @@ namespace OpenBoardAnim.ViewModels
             if (Graphics?.Count > 0)
                 last = Graphics.Last().ID;
             List<DrawingModel> drawingModels = _cache.GetGraphics(_oldSearchText, last);
-            foreach (var drawingModel in drawingModels)
-                Graphics.Add(drawingModel);
+            foreach (var model in drawingModels)
+            {
+                model.AddGraphic = AddGraphicHandler;
+                Graphics.Add(model);
+            }
         }
 
         private async void ImportGraphicsCommandHandler(object obj)

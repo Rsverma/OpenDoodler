@@ -2,13 +2,35 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:models="clr-namespace:OpenBoardAnim.Models"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:OpenBoardAnim.Views"
+             xmlns:utils="clr-namespace:OpenBoardAnim.Utils"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
-
+    <UserControl.Resources>
+        <ControlTemplate x:Key="DesignerItemTemplate" TargetType="ContentControl">
+            <Grid DataContext="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ContentControl}}}">
+                
+                <ContentPresenter Content="{TemplateBinding ContentControl.Content}"/>
+            </Grid>
+        </ControlTemplate>
+        <DataTemplate DataType="{x:Type models:DrawingModel}">
+            <Image IsHitTestVisible="False">
+                <Image.Source>
+                    <DrawingImage Drawing="{Binding ImgDrawingGroup}"/>
+                </Image.Source>
+            </Image>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type models:TextModel}">
+            <Path Data="{Binding TextGeometry}" Fill="Black" Stroke="Black" StrokeThickness="1"/>
+        </DataTemplate>
+        <utils:ResizeConverter x:Key="ResizeConverter"/>
+    </UserControl.Resources>
     <Border BorderThickness="0 1 0 0" BorderBrush="Black">
-        <ListBox ScrollViewer.HorizontalScrollBarVisibility="Visible" Margin="10 20" BorderThickness="0" ItemsSource="{Binding Scenes}" SelectedItem="{Binding SelectedScene}">
+        <ListBox ScrollViewer.HorizontalScrollBarVisibility="Visible" Margin="10 20" BorderThickness="0"
+                 ItemsSource="{Binding Scenes}" SelectedItem="{Binding SelectedScene}" >
             <ListBox.ItemsPanel>
                 <ItemsPanelTemplate>
                     <StackPanel Orientation="Horizontal"/>
@@ -16,8 +38,39 @@
             </ListBox.ItemsPanel>
             <ListBox.ItemTemplate>
                 <DataTemplate>
-                    <Border Margin="0" BorderBrush="Black" BorderThickness="1" Width="140" Height="80" CornerRadius="10">
-                        <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" Text="{Binding Name}"></TextBlock>    
+                    <Border Margin="0" BorderBrush="Black" BorderThickness="1" Width="160" Height="90" CornerRadius="10">
+                        <Grid>
+                            <ListBox ItemsSource="{Binding Graphics}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <Canvas Background="White"/>
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemContainerStyle>
+                                    <Style TargetType="ListBoxItem">
+                                        <Setter Property="Canvas.Left" Value="{Binding X,Converter={StaticResource ResizeConverter},Mode=OneWay,UpdateSourceTrigger=PropertyChanged}"/>
+                                        <Setter Property="Canvas.Top" Value="{Binding Y,Converter={StaticResource ResizeConverter},Mode=OneWay,UpdateSourceTrigger=PropertyChanged}"/>
+                                        <Setter Property="Width" Value="{Binding Width,Converter={StaticResource ResizeConverter},Mode=OneWay,UpdateSourceTrigger=PropertyChanged}"/>
+                                        <Setter Property="Height" Value="{Binding Height,Converter={StaticResource ResizeConverter},Mode=OneWay,UpdateSourceTrigger=PropertyChanged}"/>
+                                    </Style>
+                                </ItemsControl.ItemContainerStyle>
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <ContentControl Template="{StaticResource DesignerItemTemplate}" Content="{Binding}"/>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                            <TextBlock HorizontalAlignment="Stretch" VerticalAlignment="Stretch"></TextBlock>
+                            <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" Text="{Binding Name}"></TextBlock>
+                        </Grid>
+                        <Border.ContextMenu>
+                            <ContextMenu Width="150">
+                                <MenuItem Header="Move Left" Icon="{materialDesign:PackIcon arrowleft}" Command="{Binding SceneLeftCommand}"/>
+                                <MenuItem Header="Move Right" Icon="{materialDesign:PackIcon arrowright}" Command="{Binding SceneRightCommand}"/>
+                                <Separator />
+                                <MenuItem Header="Delete"  Icon="{materialDesign:PackIcon delete}" Command="{Binding SceneDeleteCommand}"/>
+                            </ContextMenu>
+                        </Border.ContextMenu>
                     </Border>
                     
                 </DataTemplate>

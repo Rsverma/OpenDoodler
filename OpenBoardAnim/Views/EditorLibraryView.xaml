@@ -15,7 +15,6 @@
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
-            <TextBlock Margin="10,0,0,5" Text="Library" Style="{StaticResource TextBlockTitle}" HorizontalAlignment="Left"/>
             <hc:TabControl Grid.Row="1" IsAnimationEnabled="True" IsDraggable="True" IsTabFillEnabled="True" TabItemWidth="20">
                 <hc:TabItem Header="{materialDesign:PackIcon imageFrame}" ToolTip="Scenes" ScrollViewer.VerticalScrollBarVisibility="Visible">
                     <hc:CoverView Background="DarkGray" ItemWidth="100" ItemHeight="100" ItemContentHeight="20"

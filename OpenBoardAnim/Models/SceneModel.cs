@@ -12,10 +12,31 @@ namespace OpenBoardAnim.Models
         public SceneModel()
         {
             Graphics = new BindingList<GraphicModelBase>();
-            ReplaceSceneCommand = new RelayCommand(ReplaceSceneCommandHandler,
-                canExecute: o => true);
+            ReplaceSceneCommand = new RelayCommand(ReplaceSceneCommandHandler, canExecute: o => true);
+            SceneLeftCommand = new RelayCommand(SceneLeftCommandHandler, canExecute: o => true);
+            SceneRightCommand = new RelayCommand(SceneRightCommandHandler, canExecute: o => true);
+            SceneDeleteCommand = new RelayCommand(SceneDeleteCommandHandler, canExecute: o => true);
         }
+
+        private void SceneDeleteCommandHandler(object obj)
+        {
+            SceneDeleteAction?.Invoke(this);
+        }
+
+        private void SceneRightCommandHandler(object obj)
+        {
+            SceneRightAction?.Invoke(this);
+        }
+
+        private void SceneLeftCommandHandler(object obj)
+        {
+            SceneLeftAction?.Invoke(this);
+        }
+
         public Action<SceneModel> ReplaceScene;
+        public Action<SceneModel> SceneLeftAction;
+        public Action<SceneModel> SceneRightAction;
+        public Action<SceneModel> SceneDeleteAction;
         private void ReplaceSceneCommandHandler(object obj)
         {
             ReplaceScene?.Invoke(this);
@@ -54,6 +75,9 @@ namespace OpenBoardAnim.Models
         public int Index { get; set; }
         [JsonIgnore]
         public ICommand ReplaceSceneCommand { get; set; }
+        public ICommand SceneLeftCommand { get; set; }
+        public ICommand SceneRightCommand { get; set; }
+        public ICommand SceneDeleteCommand { get; set; }
 
     }
 }
