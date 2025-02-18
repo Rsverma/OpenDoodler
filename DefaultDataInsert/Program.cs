@@ -17,17 +17,17 @@ List<GraphicEntity> graphicEntities = gr.GetAllGraphics();
 GraphicEntity entity1 = new GraphicEntity
 {
     Name = "peep-43",
-    FilePath = "resources\\peep-43.svg"
+    SVGText = File.ReadAllText("resources\\peep-43.svg")
 };
 GraphicEntity entity2 = new GraphicEntity
 {
     Name = "peep-61",
-    FilePath = "resources\\peep-61.svg"
+    SVGText = File.ReadAllText("resources\\peep-61.svg")
 };
 GraphicEntity entity3 = new GraphicEntity
 {
     Name = "undraw_love_is_in_the_air_4uud",
-    FilePath = "resources\\undraw_love_is_in_the_air_4uud.svg"
+    SVGText = File.ReadAllText("resources\\undraw_love_is_in_the_air_4uud.svg")
 };
 gr.AddNewGraphic(entity1);
 gr.AddNewGraphic(entity2);

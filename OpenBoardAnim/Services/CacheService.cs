@@ -40,7 +40,7 @@ namespace OpenBoardAnim.Services
                 foreach (var g in s.Graphics)
                 {
                     if(g is DrawingModel d)
-                        d.ImgDrawingGroup = GeometryHelper.GetPathGeometryFromSVG(d.SVGPath);
+                        d.ImgDrawingGroup = GeometryHelper.GetPathGeometryFromSVG(d.SVGText);
                 }
             }
             return project;
@@ -80,28 +80,39 @@ namespace OpenBoardAnim.Services
         }
         private void LoadGraphics()
         {
-            string folder = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
-            
             _graphicEntities = _gRepo.GetAllGraphics();
             List<DrawingModel> graphics = _graphicEntities.Select(e =>
             new DrawingModel
             {
+                ID = e.GraphicID,
                 Name = e.Name,
-                SVGPath = Path.Combine(folder, e.FilePath),
-                ImgDrawingGroup = GeometryHelper.GetPathGeometryFromSVG(Path.Combine(folder, e.FilePath))
+                SVGText = e.SVGText,
+                ImgDrawingGroup = GeometryHelper.GetPathGeometryFromSVG(e.SVGText)
             }).ToList();
             LoadedGraphics = new BindingList<DrawingModel>(graphics);
+        }
+        public List<DrawingModel> GetGraphics(string searchText,int offsetID)
+        {
+            _graphicEntities = _gRepo.GetAllGraphics(searchText, offsetID);
+            List<DrawingModel> graphics = _graphicEntities.Select(e =>
+            new DrawingModel
+            {
+                ID = e.GraphicID,
+                Name = e.Name,
+                SVGText = e.SVGText,
+                ImgDrawingGroup = GeometryHelper.GetPathGeometryFromSVG(e.SVGText)
+            }).ToList();
+            return graphics;
         }
         public async Task SaveNewGraphics(string[] paths)
         {
             await _gRepo.AddNewGraphics(paths.Select(file =>
             {
-                string destFileName = Path.Combine("resources", Path.GetFileName(file));
-                File.Copy(file, destFileName,true);
+                string svgText = File.ReadAllText(file);
                 return new GraphicEntity
                 {
                     Name = Path.GetFileNameWithoutExtension(file),
-                    FilePath = destFileName
+                    SVGText = svgText
                 };
             }).ToArray());
         

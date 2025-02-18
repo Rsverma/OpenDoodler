@@ -10,6 +10,6 @@ namespace OpenBoardAnim.Library
         [Required]
         public string Name { get; set; }
         [Required]
-        public string FilePath { get; set; }
+        public string SVGText { get; set; }
     }
 }

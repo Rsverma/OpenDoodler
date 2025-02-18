@@ -8,7 +8,7 @@
              d:DesignHeight="450" d:DesignWidth="800">
 
     <Border BorderThickness="0 1 0 0" BorderBrush="Black">
-        <ListBox Margin="10 20" BorderThickness="0" ItemsSource="{Binding Scenes}" SelectedItem="{Binding SelectedScene}">
+        <ListBox ScrollViewer.HorizontalScrollBarVisibility="Visible" Margin="10 20" BorderThickness="0" ItemsSource="{Binding Scenes}" SelectedItem="{Binding SelectedScene}">
             <ListBox.ItemsPanel>
                 <ItemsPanelTemplate>
                     <StackPanel Orientation="Horizontal"/>

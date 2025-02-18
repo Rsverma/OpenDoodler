@@ -21,7 +21,8 @@ namespace OpenBoardAnim.Models
             AddGraphic?.Invoke(this);
         }
 
-        public string SVGPath { get; set; }
+        public int ID { get; set; }
+        public string SVGText { get; set; }
         [JsonIgnore]
         public DrawingGroup ImgDrawingGroup { get; set; }
         
@@ -35,7 +36,7 @@ namespace OpenBoardAnim.Models
                 Name = Name,
                 X = X,
                 Y = Y,
-                SVGPath = SVGPath,
+                SVGText = SVGText,
                 Delay = Delay,
                 Duration = Duration,
             };

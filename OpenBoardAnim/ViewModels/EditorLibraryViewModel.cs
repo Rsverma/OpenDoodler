@@ -15,12 +15,15 @@ namespace OpenBoardAnim.ViewModels
     public class EditorLibraryViewModel : ViewModel
     {
         private IPubSubService _pubSub;
-        private readonly CacheService _cache; 
+        private readonly CacheService _cache;
+        private string _oldSearchText = string.Empty;
         public ICommand AddTextCommand { get; set; }
         public ICommand ImportGraphicsCommand { get; set; }
+        public ICommand LoadMoreGraphicsCommand { get; set; }
+        public ICommand SearchGraphicsCommand { get; set; }
 
 
-        public EditorLibraryViewModel(IPubSubService pubSub,CacheService cache)
+        public EditorLibraryViewModel(IPubSubService pubSub, CacheService cache)
         {
             _pubSub = pubSub;
             _cache = cache;
@@ -36,7 +39,27 @@ namespace OpenBoardAnim.ViewModels
             }
             AddTextCommand = new RelayCommand(AddTextCommandHandler,
                 canExecute: o => { return !string.IsNullOrEmpty(RawText) && SelectedFontFamily is not null && SelectedTypeFace is not null; });
-            ImportGraphicsCommand = new RelayCommand(ImportGraphicsCommandHandler, o=>true);
+            ImportGraphicsCommand = new RelayCommand(ImportGraphicsCommandHandler, o => true);
+            LoadMoreGraphicsCommand = new RelayCommand(LoadMoreGraphicsCommandHandler, o => true);
+            SearchGraphicsCommand = new RelayCommand(SearchGraphicsCommandHandler, o => true);
+        }
+
+        private void SearchGraphicsCommandHandler(object obj)
+        {
+            _oldSearchText = _searchText;
+            List<DrawingModel> drawingModels = _cache.GetGraphics(_searchText, 0);
+            foreach (var drawingModel in drawingModels)
+                Graphics.Add(drawingModel);
+        }
+
+        private void LoadMoreGraphicsCommandHandler(object obj)
+        {
+            int last = 0;
+            if (Graphics?.Count > 0)
+                last = Graphics.Last().ID;
+            List<DrawingModel> drawingModels = _cache.GetGraphics(_oldSearchText, last);
+            foreach (var drawingModel in drawingModels)
+                Graphics.Add(drawingModel);
         }
 
         private async void ImportGraphicsCommandHandler(object obj)
@@ -55,6 +78,18 @@ namespace OpenBoardAnim.ViewModels
             foreach (var graphic in Graphics)
             {
                 graphic.AddGraphic = AddGraphicHandler;
+            }
+        }
+
+        private string _searchText;
+
+        public string SearchText
+        {
+            get { return _searchText; }
+            set
+            {
+                _searchText = value;
+                OnPropertyChanged();
             }
         }
 

@@ -2,6 +2,7 @@
 using SharpVectors.Renderers.Wpf;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -11,19 +12,6 @@ using System.Windows.Shapes;
 
 namespace OpenBoardAnim.Utils
 {
-    public class GeometryWithFill
-    {
-        public Geometry Geometry { get; set; }
-
-        public GeometryWithFill(Geometry geometry, Brush brush)
-        {
-            Geometry = geometry;
-            Brush = brush;
-        }
-
-        public Brush Brush { get; set; }
-    }
-
     public class GeometryHelper
     {
         public static PathGeometry ConvertTextToGeometry(string text, FontFamily fontFamily, FontStyle fontStyle, FontWeight fontWeight, double fontSize)
@@ -48,11 +36,15 @@ namespace OpenBoardAnim.Utils
             return pathGeometry;
         }
 
-        public static DrawingGroup GetPathGeometryFromSVG(string filePath)
+        public static DrawingGroup GetPathGeometryFromSVG(string svgText)
         {
-            if(string.IsNullOrEmpty(filePath)) return null;
+            if (string.IsNullOrEmpty(svgText)) return null;
             var svgFileReader = new FileSvgReader(new WpfDrawingSettings());
-            return svgFileReader.Read(filePath);
+            using (TextReader sr = new StringReader(svgText))
+            {
+                DrawingGroup drawingGroup = svgFileReader.Read(sr);
+                return drawingGroup;
+            }
         }
 
         public static Geometry ConvertToGeometry(DrawingGroup drawingGroup)
