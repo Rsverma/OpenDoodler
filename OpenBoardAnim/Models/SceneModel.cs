@@ -75,8 +75,11 @@ namespace OpenBoardAnim.Models
         public int Index { get; set; }
         [JsonIgnore]
         public ICommand ReplaceSceneCommand { get; set; }
+        [JsonIgnore]
         public ICommand SceneLeftCommand { get; set; }
+        [JsonIgnore]
         public ICommand SceneRightCommand { get; set; }
+        [JsonIgnore]
         public ICommand SceneDeleteCommand { get; set; }
 
     }

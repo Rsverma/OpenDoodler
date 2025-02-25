@@ -29,6 +29,9 @@ namespace OpenBoardAnim.Services
             switch (dialogType)
             {
                 case DialogType.PreviewProject:
+                case DialogType.ProjectSettings:
+                case DialogType.SceneSettings:
+                case DialogType.AboutUs:
                     {
                         DialogWindow dialog = new DialogWindow
                         {

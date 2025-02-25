@@ -7,6 +7,7 @@ using System.ComponentModel;
 using System.IO;
 using System.Text.Json;
 using System.Windows.Controls;
+using System.Windows.Media;
 
 namespace OpenBoardAnim.Services
 {
@@ -41,6 +42,9 @@ namespace OpenBoardAnim.Services
                 {
                     if(g is DrawingModel d)
                         d.ImgDrawingGroup = GeometryHelper.GetPathGeometryFromSVG(d.SVGText);
+                    else if(g is TextModel t)
+                        t.TextGeometry = GeometryHelper.ConvertTextToGeometry(t.RawText, t.SelectedFontFamily,
+                            t.SelectedFontStyle, t.SelectedFontWeight, t.SelectedFontSize);
                 }
             }
             return project;

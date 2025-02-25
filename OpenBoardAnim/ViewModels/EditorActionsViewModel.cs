@@ -29,6 +29,19 @@ namespace OpenBoardAnim.ViewModels
             DeleteItemCommand = new RelayCommand(execute: o => DeleteItem(), canExecute: o => SelectedGraphic != null);
             MoveUpCommand = new RelayCommand(execute: o => MoveUp(), canExecute: o => SelectedGraphic != null);
             MoveDownCommand = new RelayCommand(execute: o => MoveDown(), canExecute: o => SelectedGraphic != null);
+            LaunchSceneSettingsCommand = new RelayCommand(execute: o => LaunchSceneSettings(), canExecute: o => CurrentScene != null);
+            LaunchProjectSettingsCommand = new RelayCommand(execute: o => LaunchProjectSettings(), canExecute: o => true);
+        }
+
+        private void LaunchSceneSettings()
+        {
+            _ = _dialog.ShowDialog(DialogType.SceneSettings, CurrentScene);
+        }
+
+        private void LaunchProjectSettings()
+        {
+            _ = _dialog.ShowDialog(DialogType.ProjectSettings, Project);
+
         }
 
         private void MoveUp()
@@ -99,6 +112,8 @@ namespace OpenBoardAnim.ViewModels
         public ICommand SaveProjectCommand { get; set; }
         public ICommand ExportProjectCommand { get; set; }
         public ICommand PreviewProjectCommand { get; set; }
+        public ICommand LaunchSceneSettingsCommand { get; set; }
+        public ICommand LaunchProjectSettingsCommand { get; set; }
         private SceneModel _currentScene;
 
         public SceneModel CurrentScene

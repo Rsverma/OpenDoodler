@@ -28,6 +28,38 @@ namespace OpenBoardAnim.Models
         public string Title { get; set; } = "Untitled Project";
         public DateTime CreatedOn { get; set; } = DateTime.Now;
         public string Path { get; set; }
+
+        private ProjectSettings _settings;
+        public ProjectSettings Settings
+        {
+            get { return _settings; }
+            set
+            {
+                _settings = value;
+                OnPropertyChanged();
+            }
+        }
+
         public List<SceneModel> Scenes { get; set; }
+    }
+    public enum BoardType
+    {
+        WhiteBoard,
+        Blackboard,
+        Greenboard
+    }
+    public class ProjectSettings :ObservableObject
+    {
+        private BoardType _boardType;
+        public BoardType BoardType
+        {
+            get { return _boardType; }
+            set
+            {
+                _boardType = value;
+                OnPropertyChanged();
+            }
+        }
+
     }
 }

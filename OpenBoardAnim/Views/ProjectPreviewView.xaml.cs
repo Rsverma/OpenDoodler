@@ -40,11 +40,12 @@ namespace OpenBoardAnim.Views
                 {
                     Source = new BitmapImage(new Uri("pack://application:,,,/Resources/pencil.png"))
                 };
-                PreviewCanvas.Children.Add(hand);
-                Canvas.SetLeft(hand, 0);
-                Canvas.SetTop(hand, 1150);
                 for (int i = 0; i < project.Scenes.Count - 1; i++)
                 {
+                    PreviewCanvas.Children.Clear();
+                    PreviewCanvas.Children.Add(hand);
+                    Canvas.SetLeft(hand, 0);
+                    Canvas.SetTop(hand, 1150);
                     SceneModel scene = project.Scenes[i];
                     if (scene != null)
                     {
@@ -81,7 +82,7 @@ namespace OpenBoardAnim.Views
                             }
                             PathGeometry pathGeometry = geometry.GetFlattenedPathGeometry();
 
-                            List<PathGeometry> pathGeometries = GenerateMultiplePaths(pathGeometry, graphic is DrawingModel);
+                            List<PathGeometry> pathGeometries = GeometryHelper.GenerateMultiplePaths(pathGeometry, graphic is DrawingModel);
                             foreach (var geo in pathGeometries)
                             {
                                 Path path = new Path
@@ -108,31 +109,5 @@ namespace OpenBoardAnim.Views
             }
         }
 
-        private static List<PathGeometry> GenerateMultiplePaths(PathGeometry pathGeometry, bool isGraphic)
-        {
-            List <PathGeometry> paths = new List<PathGeometry>();
-            // Iterate through each PathFigure in the PathGeometry
-            foreach (PathFigure figure in pathGeometry.Figures)
-            {
-                PathFigure[] arr = [figure.Clone()];
-                PathGeometry geometry = new PathGeometry(arr);
-                if(isGraphic)
-                    geometry.Transform = new TranslateTransform(-pathGeometry.Bounds.Left,-pathGeometry.Bounds.Top);
-                paths.Add(geometry);
-            }
-            return paths;
-        }
-        private static Path GetPathFromGeometry(Brush brush, PathGeometry pathGeo)
-        {
-            pathGeo.Freeze();
-            Path path = new Path
-            {
-                Data = pathGeo,
-                Fill = brush,
-                Stroke = Brushes.Black,
-                StrokeThickness = 1
-            };
-            return path;
-        }
     }
 }

@@ -5,8 +5,14 @@ using System.Windows.Media;
 
 namespace OpenBoardAnim.Models
 {
-    public abstract class GraphicModelBase : ObservableObject
+    [JsonDerivedType(typeof(DrawingModel), typeDiscriminator:"drawing")]
+    [JsonDerivedType(typeof(TextModel), typeDiscriminator: "text")]
+    public class GraphicModelBase : ObservableObject
     {
+        public GraphicModelBase()
+        {
+            
+        }
         public string Name { get; set; }
         private double x;
         public double X
@@ -85,6 +91,9 @@ namespace OpenBoardAnim.Models
             }
         }
 
-        public abstract GraphicModelBase Clone();
+        public virtual GraphicModelBase Clone()
+        {
+            return new GraphicModelBase();
+        }
     }
 }

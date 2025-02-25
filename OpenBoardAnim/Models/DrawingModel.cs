@@ -16,10 +16,6 @@ namespace OpenBoardAnim.Models
         public ICommand AddGraphicCommand { get; set; }
 
         public Action<DrawingModel> AddGraphic;
-        protected void AddGraphicCommandHandler(object obj)
-        {
-            AddGraphic?.Invoke(this);
-        }
 
         public int ID { get; set; }
         public string SVGText { get; set; }
@@ -39,7 +35,13 @@ namespace OpenBoardAnim.Models
                 SVGText = SVGText,
                 Delay = Delay,
                 Duration = Duration,
+                ID = ID,
+                ResizeRatio = ResizeRatio
             };
+        }
+        protected void AddGraphicCommandHandler(object obj)
+        {
+            AddGraphic?.Invoke(this);
         }
     }
 }

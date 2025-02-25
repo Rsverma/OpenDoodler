@@ -38,8 +38,8 @@
                 </StackPanel>
                 <TextBlock Margin="0 10" Style="{StaticResource TextBlockSubTitle}" HorizontalAlignment="Left">Settings</TextBlock>
                 <StackPanel Orientation="Horizontal">
-                    <Button HorizontalAlignment="Left">Scene Settings</Button>
-                    <Button Margin="10 0" HorizontalAlignment="Left">Project Settings</Button>
+                    <Button HorizontalAlignment="Left" Command="{Binding LaunchSceneSettingsCommand}">Scene Settings</Button>
+                    <Button Margin="10 0" HorizontalAlignment="Left" Command="{Binding LaunchProjectSettingsCommand}">Project Settings</Button>
                 </StackPanel>
                 <TextBlock Margin="0 10" Style="{StaticResource TextBlockSubTitle}" HorizontalAlignment="Left">Items</TextBlock>
             </StackPanel>

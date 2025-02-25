@@ -47,6 +47,20 @@ namespace OpenBoardAnim.Utils
             }
         }
 
+        public static List<PathGeometry> GenerateMultiplePaths(PathGeometry pathGeometry, bool isGraphic)
+        {
+            List<PathGeometry> paths = new List<PathGeometry>();
+            // Iterate through each PathFigure in the PathGeometry
+            foreach (PathFigure figure in pathGeometry.Figures)
+            {
+                PathFigure[] arr = [figure.Clone()];
+                PathGeometry geometry = new PathGeometry(arr);
+                if (isGraphic)
+                    geometry.Transform = new TranslateTransform(-pathGeometry.Bounds.Left, -pathGeometry.Bounds.Top);
+                paths.Add(geometry);
+            }
+            return paths;
+        }
         public static Geometry ConvertToGeometry(DrawingGroup drawingGroup)
         {
             var geometryGroup = new GeometryGroup();

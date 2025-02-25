@@ -21,10 +21,15 @@ namespace OpenBoardAnim.Controls
             if (designerItem != null)
             {
                 var model = designerItem.DataContext as GraphicModelBase;
-                if (model != null)
+                if (model != null && model.ResizeRatio == 1)
                 {
                     model.Height = designerItem.ActualHeight;
                     model.Width = designerItem.ActualWidth;
+                }
+                else
+                {
+                    designerItem.Height = model.Height;
+                    designerItem.Width = model.Width;
                 }
             }
         }
