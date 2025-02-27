@@ -20,6 +20,7 @@ namespace OpenBoardAnim
         {
             IServiceCollection services = new ServiceCollection();
             services.AddSingleton<DataContext>();
+            services.AddSingleton<ShapeRepository>();
             services.AddSingleton<GraphicRepository>();
             services.AddSingleton<SceneRepository>();
             services.AddSingleton<ProjectRepository>();

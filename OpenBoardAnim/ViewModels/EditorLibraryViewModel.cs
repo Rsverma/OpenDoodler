@@ -28,9 +28,14 @@ namespace OpenBoardAnim.ViewModels
             _pubSub = pubSub;
             _cache = cache;
             Graphics = cache.LoadedGraphics;
+            Shapes = cache.AllShapes;
             foreach (var graphic in Graphics)
             {
                 graphic.AddGraphic = AddGraphicHandler;
+            }
+            foreach (var shape in Shapes)
+            {
+                shape.AddGraphic = AddGraphicHandler;
             }
             Scenes = cache.LoadedScenes;
             foreach (var scene in Scenes)
@@ -173,6 +178,17 @@ namespace OpenBoardAnim.ViewModels
             set
             {
                 _graphics = value;
+                OnPropertyChanged();
+            }
+        }
+        private BindingList<DrawingModel> _shapes;
+
+        public BindingList<DrawingModel> Shapes
+        {
+            get { return _shapes; }
+            set
+            {
+                _shapes = value;
                 OnPropertyChanged();
             }
         }

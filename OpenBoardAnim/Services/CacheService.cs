@@ -16,22 +16,34 @@ namespace OpenBoardAnim.Services
         private readonly GraphicRepository _gRepo;
         private readonly SceneRepository _sRepo;
         private readonly ProjectRepository _pRepo;
+        private readonly ShapeRepository _shRepo;
         private List<GraphicEntity> _graphicEntities;
         private List<SceneEntity> _sceneEntities;
         public BindingList<RecentProjectModel> RecentProjects { get; set; }
         public ProjectDetails CurrentProject { get; set; }
         public BindingList<DrawingModel> LoadedGraphics { get; set; }
+        public BindingList<DrawingModel> AllShapes { get; set; }
         public BindingList<SceneModel> LoadedScenes { get; set; }
 
-        public CacheService(GraphicRepository gRepo, SceneRepository sRepo, ProjectRepository pRepo)
+        public CacheService(GraphicRepository gRepo, SceneRepository sRepo, ProjectRepository pRepo, ShapeRepository shRepo)
         {
             _gRepo = gRepo;
             _sRepo = sRepo;
             _pRepo = pRepo;
+            _shRepo = shRepo;
             LoadRecentProjects();
             LoadGraphics();
             LoadScenes();
+            LoadShapes();
         }
+
+        private void LoadShapes()
+        {
+            List<GraphicEntity> shapeEntities = _shRepo.GetAllShapess();
+            List<DrawingModel> drawingModels = shapeEntities.Select(GetModelFromGrpahicEntity).ToList();
+            AllShapes = new BindingList<DrawingModel>(drawingModels);
+        }
+
         public ProjectDetails LoadProjectFromFile(RecentProjectModel model)
         {
             string json = File.ReadAllText(model.FilePath);
@@ -85,27 +97,25 @@ namespace OpenBoardAnim.Services
         private void LoadGraphics()
         {
             _graphicEntities = _gRepo.GetAllGraphics();
-            List<DrawingModel> graphics = _graphicEntities.Select(e =>
-            new DrawingModel
+            List<DrawingModel> graphics = _graphicEntities.Select(GetModelFromGrpahicEntity).ToList();
+            LoadedGraphics = new BindingList<DrawingModel>(graphics);
+        }
+
+        private static DrawingModel GetModelFromGrpahicEntity(GraphicEntity e)
+        {
+            return new DrawingModel
             {
                 ID = e.GraphicID,
                 Name = e.Name,
                 SVGText = e.SVGText,
                 ImgDrawingGroup = GeometryHelper.GetPathGeometryFromSVG(e.SVGText)
-            }).ToList();
-            LoadedGraphics = new BindingList<DrawingModel>(graphics);
+            };
         }
+
         public List<DrawingModel> GetGraphics(string searchText,int offsetID)
         {
             _graphicEntities = _gRepo.GetAllGraphics(searchText, offsetID);
-            List<DrawingModel> graphics = _graphicEntities.Select(e =>
-            new DrawingModel
-            {
-                ID = e.GraphicID,
-                Name = e.Name,
-                SVGText = e.SVGText,
-                ImgDrawingGroup = GeometryHelper.GetPathGeometryFromSVG(e.SVGText)
-            }).ToList();
+            List<DrawingModel> graphics = _graphicEntities.Select(GetModelFromGrpahicEntity).ToList();
             return graphics;
         }
         public async Task SaveNewGraphics(string[] paths)
