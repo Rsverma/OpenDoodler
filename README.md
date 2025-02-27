@@ -43,7 +43,7 @@ $ git clone https://github.com/Rsverma/OpenDoodler.git
 # Go into the repository
 
 # Open Solution File OpenBoardAnim.sln in Visual Studio
-
+# Set OpenBoardAnim as startup project
 # Launch the application to get started
 ```
 
