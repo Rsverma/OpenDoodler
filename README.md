@@ -24,7 +24,7 @@
 * Import svg images for animation
 * Add text graphic for animation
 * Preview animation
-
+![](https://github.com/Rsverma/OpenDoodler/blob/main/OpenBoardAnim/Resources/Animation.gif)
 ## Upcoming Features
 * Project creation window with common feature set modification
 
