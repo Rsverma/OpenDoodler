@@ -46,6 +46,7 @@ namespace OpenBoardAnim.Views
                     PreviewCanvas.Children.Add(hand);
                     Canvas.SetLeft(hand, 0);
                     Canvas.SetTop(hand, 1150);
+                    Canvas.SetZIndex(hand, 1);
                     SceneModel scene = project.Scenes[i];
                     if (scene != null)
                     {
