@@ -11,8 +11,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenBoardAnim.Library", "Op
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenBoardAnim", "OpenBoardAnim\OpenBoardAnim.csproj", "{5472CFF7-E929-4D81-98E3-B68F39326C95}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DefaultDataInsert", "DefaultDataInsert\DefaultDataInsert.csproj", "{C3FFE920-F209-4983-B991-89B84CA6D481}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -35,10 +33,6 @@ Global
 		{5472CFF7-E929-4D81-98E3-B68F39326C95}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5472CFF7-E929-4D81-98E3-B68F39326C95}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5472CFF7-E929-4D81-98E3-B68F39326C95}.Release|Any CPU.Build.0 = Release|Any CPU
-		{C3FFE920-F209-4983-B991-89B84CA6D481}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{C3FFE920-F209-4983-B991-89B84CA6D481}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{C3FFE920-F209-4983-B991-89B84CA6D481}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{C3FFE920-F209-4983-B991-89B84CA6D481}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
