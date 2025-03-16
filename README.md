@@ -24,7 +24,7 @@
 * Import svg images for animation
 * Add text graphic for animation
 * Preview animation
-
+![](https://github.com/Rsverma/OpenDoodler/blob/main/OpenBoardAnim/Resources/Animation.gif)
 ## Upcoming Features
 * Project creation window with common feature set modification
 
@@ -43,7 +43,7 @@ $ git clone https://github.com/Rsverma/OpenDoodler.git
 # Go into the repository
 
 # Open Solution File OpenBoardAnim.sln in Visual Studio
-
+# Set OpenBoardAnim as startup project
 # Launch the application to get started
 ```
 
