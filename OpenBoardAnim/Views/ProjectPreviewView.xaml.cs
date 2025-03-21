@@ -33,82 +33,9 @@ namespace OpenBoardAnim.Views
         private async void Button_Click(object sender, RoutedEventArgs e)
         {
             ProjectDetails project = this.DataContext as ProjectDetails;
-            NameScope.SetNameScope(this, new NameScope());
-            if (project != null)
-            {
-                Image hand = new Image
-                {
-                    Source = new BitmapImage(new Uri("pack://application:,,,/Resources/pencil.png"))
-                };
-                for (int i = 0; i < project.Scenes.Count - 1; i++)
-                {
-                    PreviewCanvas.Children.Clear();
-                    PreviewCanvas.Children.Add(hand);
-                    Canvas.SetLeft(hand, 0);
-                    Canvas.SetTop(hand, 1150);
-                    Canvas.SetZIndex(hand, 1);
-                    SceneModel scene = project.Scenes[i];
-                    if (scene != null)
-                    {
-                        for (int j = 0; j < scene.Graphics.Count; j++)
-                        {
-                            GraphicModelBase graphic = scene.Graphics[j];
-                            await Task.Delay((int)graphic.Delay * 1000);
-                            List<Path> paths = [];
-                            Geometry geometry = null;
-                            UIElement element = null;
-                            if (graphic is DrawingModel drawing)
-                            {
-                                DrawingGroup drawingGroup = drawing.ImgDrawingGroup.Clone();
-                                drawingGroup.Transform = new ScaleTransform(drawing.ResizeRatio, drawing.ResizeRatio);
-                                geometry = GeometryHelper.ConvertToGeometry(drawingGroup);
-                                element = new Image
-                                {
-                                    Source = new DrawingImage(drawingGroup)
-                                };
-                            }
-                            else if (graphic is TextModel text)
-                            {
-                                geometry = text.TextGeometry;
-                                element = new TextBlock()
-                                {
-                                    Text = text.RawText,
-                                    Foreground = Brushes.Black,
-                                    FontFamily = text.SelectedFontFamily,
-                                    FontSize = text.SelectedFontSize,
-                                    FontStyle = text.SelectedFontStyle,
-                                    FontWeight = text.SelectedFontWeight
-                                };
-                                //paths.Add(GetPathFromGeometry(Brushes.Black, text.TextGeometry));
-                            }
-                            PathGeometry pathGeometry = geometry.GetFlattenedPathGeometry();
-
-                            List<PathGeometry> pathGeometries = GeometryHelper.GenerateMultiplePaths(pathGeometry, graphic is DrawingModel);
-                            foreach (var geo in pathGeometries)
-                            {
-                                Path path = new Path
-                                {
-                                    Data = geo,
-                                    Stroke = Brushes.Black
-                                };
-                                paths.Add(path);
-                            }
-                            var example = new PathAnimationExample(PreviewCanvas, paths, graphic, hand);
-                            example.AnimatePathOnCanvas();
-
-                            await example.tcs.Task;
-                            if (element != null)
-                            {
-                                PreviewCanvas.Children.Add(element);
-                                Canvas.SetLeft(element, graphic.X);
-                                Canvas.SetTop(element, graphic.Y);
-                            }
-                        }
-                    }
-                }
-                PreviewCanvas.Children.Remove(hand);
-            }
+            await PreviewAndExportHandler.RunAnimationsOnCanvas(project, PreviewCanvas, false);
         }
 
+        
     }
 }

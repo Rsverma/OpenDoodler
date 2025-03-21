@@ -2,14 +2,17 @@
 using OpenBoardAnim.Core;
 using OpenBoardAnim.Models;
 using OpenBoardAnim.Services;
+using OpenBoardAnim.Utils;
 using System.ComponentModel;
+using System.Windows;
 using System.Windows.Input;
+using System.Windows.Media;
 
 namespace OpenBoardAnim.ViewModels
 {
     public class EditorActionsViewModel : ViewModel
     {
-        private IPubSubService _pubSub;
+        private readonly IPubSubService _pubSub;
         private readonly INavigationService _navigation;
         private readonly CacheService _cache;
         private readonly IDialogService _dialog;
@@ -24,7 +27,7 @@ namespace OpenBoardAnim.ViewModels
             _dialog = dialog;
             CloseProjectCommand = new RelayCommand(execute: o => CloseProject(), canExecute: o => true);
             SaveProjectCommand = new RelayCommand(execute: o => SaveProject(), canExecute: o => true);
-            ExportProjectCommand = new RelayCommand(execute: o => { }, canExecute: o => false);
+            ExportProjectCommand = new RelayCommand(execute: o => ExportProject(), canExecute: o => true);
             PreviewProjectCommand = new RelayCommand(execute: o => PreviewProject(), canExecute: o => true);
             DeleteItemCommand = new RelayCommand(execute: o => DeleteItem(), canExecute: o => SelectedGraphic != null);
             MoveUpCommand = new RelayCommand(execute: o => MoveUp(), canExecute: o => SelectedGraphic != null);
@@ -73,6 +76,19 @@ namespace OpenBoardAnim.ViewModels
         private void PreviewProject()
         {
             _ = _dialog.ShowDialog(DialogType.PreviewProject, Project);
+        }
+
+        private async void ExportProject()
+        {
+            _pubSub.Publish(SubTopic.ProjectExporting, true);
+            Window window = new Window();
+            System.Windows.Controls.Canvas canvas = new();
+            canvas.Background = Brushes.White;
+            canvas.Height = 1080;
+            canvas.Width = 1920;
+            window.Content = canvas;
+            window.Show();
+            await PreviewAndExportHandler.RunAnimationsOnCanvas(Project, canvas, true);
         }
 
         private void SceneChangedHandler(object obj)
@@ -126,6 +142,7 @@ namespace OpenBoardAnim.ViewModels
                 OnPropertyChanged(nameof(SceneGraphics));
             }
         }
+
         public BindingList<GraphicModelBase> SceneGraphics => CurrentScene?.Graphics;
         public GraphicModelBase SelectedGraphic { get; set; }
     }

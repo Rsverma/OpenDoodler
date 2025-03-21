@@ -42,6 +42,15 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="DLLs\ffmpeg.exe">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="DLLs\ffplay.exe">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="DLLs\ffprobe.exe">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Update="Resources\peep-102.svg">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
