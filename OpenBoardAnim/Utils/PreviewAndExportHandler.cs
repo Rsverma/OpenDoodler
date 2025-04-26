@@ -1,4 +1,5 @@
 ﻿using OpenBoardAnim.Models;
+using OpenBoardAnim.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,92 +17,101 @@ namespace OpenBoardAnim.Utils
     {
         public static async Task RunAnimationsOnCanvas(ProjectDetails project, Canvas canvas, bool isExport)
         {
-            if (project != null)
+            try
             {
-                Image hand = new()
+
+                if (project != null)
                 {
-                    Source = new BitmapImage(new Uri("pack://application:,,,/Resources/pencil.png"))
-                };
-                VideoExporter exporter = null;
-                if (isExport)
-                {
-                    exporter = new(canvas, 30);
-                    exporter.StartCapture();
-                }
-                int index = 1;
-                for (int i = 0; i < project.Scenes.Count - 1; i++)
-                {
-                    canvas.Children.Clear();
-                    canvas.Children.Add(hand);
-                    Canvas.SetLeft(hand, 0);
-                    Canvas.SetTop(hand, 1150);
-                    Canvas.SetZIndex(hand, 1);
-                    SceneModel scene = project.Scenes[i];
-                    if (scene != null)
+                    Image hand = new()
                     {
-                        for (int j = 0; j < scene.Graphics.Count; j++)
+                        Source = new BitmapImage(new Uri("pack://application:,,,/Resources/pencil.png"))
+                    };
+                    VideoExporter exporter = null;
+                    if (isExport)
+                    {
+                        exporter = new(canvas, 30);
+                        exporter.StartCapture();
+                    }
+                    int index = 1;
+                    for (int i = 0; i < project.Scenes.Count - 1; i++)
+                    {
+                        canvas.Children.Clear();
+                        canvas.Children.Add(hand);
+                        Canvas.SetLeft(hand, 0);
+                        Canvas.SetTop(hand, 1150);
+                        Canvas.SetZIndex(hand, 1);
+                        SceneModel scene = project.Scenes[i];
+                        if (scene != null)
                         {
-                            GraphicModelBase graphic = scene.Graphics[j];
-                            await Task.Delay((int)graphic.Delay * 1000);
-                            List<Path> paths = [];
-                            Geometry geometry = null;
-                            UIElement element = null;
-                            if (graphic is DrawingModel drawing)
+                            for (int j = 0; j < scene.Graphics.Count; j++)
                             {
-                                DrawingGroup drawingGroup = drawing.ImgDrawingGroup.Clone();
-                                drawingGroup.Transform = new ScaleTransform(drawing.ResizeRatio, drawing.ResizeRatio);
-                                geometry = GeometryHelper.ConvertToGeometry(drawingGroup);
-                                element = new Image
+                                GraphicModelBase graphic = scene.Graphics[j];
+                                await Task.Delay((int)graphic.Delay * 1000);
+                                List<Path> paths = [];
+                                Geometry geometry = null;
+                                UIElement element = null;
+                                if (graphic is DrawingModel drawing)
                                 {
-                                    Source = new DrawingImage(drawingGroup)
-                                };
-                            }
-                            else if (graphic is TextModel text)
-                            {
-                                geometry = text.TextGeometry;
-                                element = new TextBlock()
+                                    DrawingGroup drawingGroup = drawing.ImgDrawingGroup.Clone();
+                                    drawingGroup.Transform = new ScaleTransform(drawing.ResizeRatio, drawing.ResizeRatio);
+                                    geometry = GeometryHelper.ConvertToGeometry(drawingGroup);
+                                    element = new Image
+                                    {
+                                        Source = new DrawingImage(drawingGroup)
+                                    };
+                                }
+                                else if (graphic is TextModel text)
                                 {
-                                    Text = text.RawText,
-                                    Foreground = Brushes.Black,
-                                    FontFamily = text.SelectedFontFamily,
-                                    FontSize = text.SelectedFontSize,
-                                    FontStyle = text.SelectedFontStyle,
-                                    FontWeight = text.SelectedFontWeight
-                                };
-                                //paths.Add(GetPathFromGeometry(Brushes.Black, text.TextGeometry));
-                            }
-                            PathGeometry pathGeometry = geometry.GetFlattenedPathGeometry();
+                                    geometry = text.TextGeometry;
+                                    element = new TextBlock()
+                                    {
+                                        Text = text.RawText,
+                                        Foreground = Brushes.Black,
+                                        FontFamily = text.SelectedFontFamily,
+                                        FontSize = text.SelectedFontSize,
+                                        FontStyle = text.SelectedFontStyle,
+                                        FontWeight = text.SelectedFontWeight
+                                    };
+                                    //paths.Add(GetPathFromGeometry(Brushes.Black, text.TextGeometry));
+                                }
+                                PathGeometry pathGeometry = geometry.GetFlattenedPathGeometry();
 
-                            List<PathGeometry> pathGeometries = GeometryHelper.GenerateMultiplePaths(pathGeometry, graphic is DrawingModel);
-                            foreach (var geo in pathGeometries)
-                            {
-                                Path path = new Path
+                                List<PathGeometry> pathGeometries = GeometryHelper.GenerateMultiplePaths(pathGeometry, graphic is DrawingModel);
+                                foreach (var geo in pathGeometries)
                                 {
-                                    Data = geo,
-                                    Stroke = Brushes.Black
-                                };
-                                paths.Add(path);
-                            }
-                            var example = new PathAnimationHelper(canvas, paths, graphic, hand);
-                            example.AnimatePathOnCanvas();
+                                    Path path = new Path
+                                    {
+                                        Data = geo,
+                                        Stroke = Brushes.Black
+                                    };
+                                    paths.Add(path);
+                                }
+                                var example = new PathAnimationHelper(canvas, paths, graphic, hand);
+                                example.AnimatePathOnCanvas();
 
-                            await example.tcs.Task;
-                            if (element != null)
-                            {
-                                canvas.Children.Add(element);
-                                Canvas.SetLeft(element, graphic.X);
-                                Canvas.SetTop(element, graphic.Y);
-                                int count = canvas.Children.Count - index - 1;
-                                canvas.Children.RemoveRange(index, count);
-                                index = canvas.Children.Count;
+                                await example.tcs.Task;
+                                if (element != null)
+                                {
+                                    canvas.Children.Add(element);
+                                    Canvas.SetLeft(element, graphic.X);
+                                    Canvas.SetTop(element, graphic.Y);
+                                    int count = canvas.Children.Count - index - 1;
+                                    canvas.Children.RemoveRange(index, count);
+                                    index = canvas.Children.Count;
+                                }
                             }
                         }
                     }
+                    canvas.Children.Remove(hand);
+                    await Task.Delay(500);
+                    if (isExport)
+                        exporter.StopCapture();
                 }
-                canvas.Children.Remove(hand);
-                await Task.Delay(500);
-                if (isExport)
-                    exporter.StopCapture();
+            }
+            catch (Exception ex)
+            {
+                if (Logger.LogError(ex, LogAction.LogAndThrow))
+                    throw;
             }
         }
     }

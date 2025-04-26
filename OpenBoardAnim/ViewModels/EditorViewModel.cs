@@ -1,6 +1,7 @@
 ﻿using OpenBoardAnim.Core;
 using OpenBoardAnim.Models;
 using OpenBoardAnim.Services;
+using OpenBoardAnim.Utilities;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -21,23 +22,51 @@ namespace OpenBoardAnim.ViewModels
                                EditorLibraryViewModel library,
                                EditorTimelineViewModel timeline)
         {
-            _navigation = navigation;
-            _pubSub = pubSub;
-            _pubSub.Subscribe(SubTopic.ProjectLaunched, ProjectLaunchedHandler);
-            SwitchToLaunchCommand = new RelayCommand(
-                execute: o => { Navigation.NavigateTo<LaunchViewModel>(); },
-                canExecute: o => true);
-            Actions = actions;
-            Canvas = canvas;
-            Library = library;
-            Timeline = timeline;
+            try
+            {
+                _navigation = navigation;
+                _pubSub = pubSub;
+                _pubSub.Subscribe(SubTopic.ProjectLaunched, ProjectLaunchedHandler);
+                SwitchToLaunchCommand = new RelayCommand(execute: SwitchToLaunchHandler, canExecute: o => true);
+                Actions = actions;
+                Canvas = canvas;
+                Library = library;
+                Timeline = timeline;
+            }
+            catch (Exception ex)
+            {
+                if (Logger.LogError(ex, LogAction.LogAndShow))
+                    throw;
+            }
+        }
+
+        private void SwitchToLaunchHandler(object obj)
+        {
+            try
+            {
+
+                Navigation.NavigateTo<LaunchViewModel>();
+            }
+            catch (Exception ex)
+            {
+                if (Logger.LogError(ex, LogAction.LogAndShow))
+                    throw;
+            }
         }
 
         private void ProjectLaunchedHandler(object obj)
         {
-            ProjectDetails project = (ProjectDetails)obj;
-            Actions.Project = project;
-            Timeline.Scenes = new BindingList<SceneModel>(project.Scenes);
+            try
+            {
+                ProjectDetails project = (ProjectDetails)obj;
+                Actions.Project = project;
+                Timeline.Scenes = new BindingList<SceneModel>(project.Scenes);
+            }
+            catch (Exception ex)
+            {
+                if (Logger.LogError(ex, LogAction.LogAndShow))
+                    throw;
+            }
         }
 
         public ICommand SwitchToLaunchCommand { get; set; }

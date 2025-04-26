@@ -1,4 +1,5 @@
 ﻿using OpenBoardAnim.Models;
+using OpenBoardAnim.Utilities;
 using OpenBoardAnim.Utils;
 using System;
 using System.Collections.Generic;
@@ -31,53 +32,77 @@ namespace OpenBoardAnim.Controls
         }
         private void Path_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
-            isDragging = true;
-            var draggableControl = (sender as UserControl);
-            mousePosition = e.GetPosition(Parent as UIElement);
-            draggableControl.CaptureMouse();
+            try
+            {
+                isDragging = true;
+                var draggableControl = (sender as UserControl);
+                mousePosition = e.GetPosition(Parent as UIElement);
+                draggableControl.CaptureMouse();
+            }
+            catch (Exception ex)
+            {
+                if (Logger.LogError(ex, LogAction.LogAndShow))
+                    throw;
+            }
         }
 
         private void Path_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
         {
-            isDragging = false;
-            var draggable = (sender as UserControl);
-            var transform = (draggable.RenderTransform as TranslateTransform);
-            if (transform != null)
+            try
             {
-                prevX = transform.X;
-                prevY = transform.Y;
+                isDragging = false;
+                var draggable = (sender as UserControl);
+                var transform = (draggable.RenderTransform as TranslateTransform);
+                if (transform != null)
+                {
+                    prevX = transform.X;
+                    prevY = transform.Y;
+                }
+                DrawingModel model = draggable.DataContext as DrawingModel;
+                if (model != null)
+                {
+                    model.X = prevX;
+                    model.Y = prevY;
+                }
+                draggable.RenderTransform = null;
+                draggable.ReleaseMouseCapture();
             }
-            DrawingModel model = draggable.DataContext as DrawingModel;
-            if (model != null)
+            catch (Exception ex)
             {
-                model.X = prevX;
-                model.Y = prevY;
+                if (Logger.LogError(ex, LogAction.LogAndShow))
+                    throw;
             }
-            draggable.RenderTransform = null;
-            draggable.ReleaseMouseCapture();
         }
 
         private void Path_MouseMove(object sender, MouseEventArgs e)
         {
-            var draggableControl = (sender as UserControl);
-            if (!isDragging) return;
-            if (isDragging && draggableControl != null)
+            try
             {
-                var currentPosition = e.GetPosition(Parent as UIElement);
-                var transform = (draggableControl.RenderTransform as TranslateTransform);
-                if (transform == null)
+                var draggableControl = (sender as UserControl);
+                if (!isDragging) return;
+                if (isDragging && draggableControl != null)
                 {
-                    transform = new TranslateTransform();
-                    draggableControl.RenderTransform = transform;
+                    var currentPosition = e.GetPosition(Parent as UIElement);
+                    var transform = (draggableControl.RenderTransform as TranslateTransform);
+                    if (transform == null)
+                    {
+                        transform = new TranslateTransform();
+                        draggableControl.RenderTransform = transform;
+                    }
+                    transform.X = (currentPosition.X - mousePosition.X);
+                    transform.Y = (currentPosition.Y - mousePosition.Y);
+                    if (prevX > 0)
+                    {
+                        transform.X += prevX;
+                        transform.Y += prevY;
+                    }
+
                 }
-                transform.X = (currentPosition.X - mousePosition.X);
-                transform.Y = (currentPosition.Y - mousePosition.Y);
-                if (prevX > 0)
-                {
-                    transform.X += prevX;
-                    transform.Y += prevY;
-                }
-                
+            }
+            catch (Exception ex)
+            {
+                if (Logger.LogError(ex, LogAction.LogAndShow))
+                    throw;
             }
         }
     }

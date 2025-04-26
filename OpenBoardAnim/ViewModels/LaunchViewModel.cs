@@ -1,6 +1,7 @@
 ﻿using OpenBoardAnim.Core;
 using OpenBoardAnim.Models;
 using OpenBoardAnim.Services;
+using OpenBoardAnim.Utilities;
 using System.ComponentModel;
 using System.Windows.Input;
 
@@ -15,36 +16,68 @@ namespace OpenBoardAnim.ViewModels
 
         public LaunchViewModel(INavigationService navigation, IPubSubService pubSub,CacheService cache)
         {
-            Navigation = navigation;
-            _pubSub = pubSub;
-            _cache = cache;
-            CreateNewWindowCommand = new RelayCommand(
-                execute: o => CreateAndLaunchNewProject(),
-                canExecute: o => true);
-            RecentProjects = cache.RecentProjects;
-            foreach (var proj in RecentProjects)
+            try
             {
-                proj.EditProject = EditProjectHandler;
-                proj.DeleteProject = DeleteProjectHandler;
+                Navigation = navigation;
+                _pubSub = pubSub;
+                _cache = cache;
+                CreateNewWindowCommand = new RelayCommand(
+                    execute: o => CreateAndLaunchNewProject(),
+                    canExecute: o => true);
+                RecentProjects = cache.RecentProjects;
+                foreach (var proj in RecentProjects)
+                {
+                    proj.EditProject = EditProjectHandler;
+                    proj.DeleteProject = DeleteProjectHandler;
+                }
+            }
+            catch (Exception ex)
+            {
+                if (Logger.LogError(ex, LogAction.LogAndShow))
+                    throw;
             }
         }
 
         private void DeleteProjectHandler(RecentProjectModel model)
         {
-            _cache.DeleteProject(model);
+            try
+            {
+                _cache.DeleteProject(model);
+            }
+            catch (Exception ex)
+            {
+                if (Logger.LogError(ex, LogAction.LogAndShow))
+                    throw;
+            }
         }
 
         private void EditProjectHandler(RecentProjectModel model)
         {
-            ProjectDetails project = _cache.LoadProjectFromFile(model);
-            Navigation.NavigateTo<EditorViewModel>();
-            _pubSub.Publish(SubTopic.ProjectLaunched, project);
+            try
+            {
+                ProjectDetails project = _cache.LoadProjectFromFile(model);
+                Navigation.NavigateTo<EditorViewModel>();
+                _pubSub.Publish(SubTopic.ProjectLaunched, project);
+            }
+            catch (Exception ex)
+            {
+                if (Logger.LogError(ex, LogAction.LogAndShow))
+                    throw;
+            }
         }
 
         private void CreateAndLaunchNewProject()
         {
-            Navigation.NavigateTo<EditorViewModel>();
-            _pubSub.Publish(SubTopic.ProjectLaunched, new ProjectDetails());
+            try
+            {
+                Navigation.NavigateTo<EditorViewModel>();
+                _pubSub.Publish(SubTopic.ProjectLaunched, new ProjectDetails());
+            }
+            catch (Exception ex)
+            {
+                if (Logger.LogError(ex, LogAction.LogAndShow))
+                    throw;
+            }
         }
 
         public ICommand CreateNewWindowCommand { get; set; }

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using OpenBoardAnim.Utilities;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -16,27 +17,60 @@ namespace OpenBoardAnim.Library.Repositories
 
         public List<ProjectEntity> GetRecentProjects()
         {
-            return _context.Projects.ToList();
+            try
+            {
+                return _context.Projects.ToList();
+            }
+            catch (Exception ex)
+            {
+                if (Logger.LogError(ex, LogAction.LogAndThrow))
+                    throw;
+            }
+            return new List<ProjectEntity>();
         }
 
         public void SaveNewProject(ProjectEntity entity)
         {
-            _context.Projects.Add(entity);
-            _context.SaveChanges();
+            try
+            {
+                _context.Projects.Add(entity);
+                _context.SaveChanges();
+            }
+            catch (Exception ex)
+            {
+                if(Logger.LogError(ex, LogAction.LogAndThrow))
+                    throw;
+            }
         }
         public void UpdateExistingProject(ProjectEntity entity)
         {
-            _context.Projects.Add(entity);
-            _context.SaveChanges();
+            try
+            {
+                _context.Projects.Add(entity);
+                _context.SaveChanges();
+            }
+            catch (Exception ex)
+            {
+                if (Logger.LogError(ex, LogAction.LogAndThrow))
+                    throw;
+            }
         }
 
         public void DeleteProject(int projectID)
         {
-            ProjectEntity project = _context.Projects.Find(projectID);
-            if (project != null)
+            try
             {
-                _context.Projects.Remove(project);
-                _context.SaveChanges();
+                ProjectEntity project = _context.Projects.Find(projectID);
+                if (project != null)
+                {
+                    _context.Projects.Remove(project);
+                    _context.SaveChanges();
+                }
+            }
+            catch (Exception ex)
+            {
+                if (Logger.LogError(ex, LogAction.LogAndThrow))
+                    throw;
             }
         }
     }

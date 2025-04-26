@@ -1,4 +1,5 @@
-﻿using System;
+﻿using OpenBoardAnim.Utilities;
+using System;
 
 namespace OpenBoardAnim.Services
 {
@@ -23,29 +24,53 @@ namespace OpenBoardAnim.Services
 
         public void Publish(SubTopic subTopic, Object Message)
         {
-            if (_subscribers.TryGetValue(subTopic, out List<Action<object>> value))
+            try
             {
-                value.ForEach(action => action(Message));
+                if (_subscribers.TryGetValue(subTopic, out List<Action<object>> value))
+                {
+                    value.ForEach(action => action(Message));
+                }
+            }
+            catch (Exception ex)
+            {
+                if (Logger.LogError(ex, LogAction.LogAndThrow))
+                    throw;
             }
         }
 
         public void Subscribe(SubTopic subTopic, Action<object> action)
         {
-            if (_subscribers.TryGetValue(subTopic, out List<Action<object>> value))
+            try
             {
-                value.Add(action);
+                if (_subscribers.TryGetValue(subTopic, out List<Action<object>> value))
+                {
+                    value.Add(action);
+                }
+                else
+                {
+                    _subscribers.Add(subTopic, [action]);
+                }
             }
-            else
+            catch (Exception ex)
             {
-                _subscribers.Add(subTopic, [action]);
+                if (Logger.LogError(ex, LogAction.LogAndThrow))
+                    throw;
             }
         }
 
         public void Unsubscribe(SubTopic subTopic, Action<object> action)
         {
-            if (_subscribers.TryGetValue(subTopic, out List<Action<object>> value))
+            try
             {
-                _ = value.Remove(action);
+                if (_subscribers.TryGetValue(subTopic, out List<Action<object>> value))
+                {
+                    _ = value.Remove(action);
+                }
+            }
+            catch (Exception ex)
+            {
+                if (Logger.LogError(ex, LogAction.LogAndThrow))
+                    throw;
             }
         }
     }

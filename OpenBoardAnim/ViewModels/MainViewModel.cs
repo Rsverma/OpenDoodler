@@ -1,5 +1,6 @@
 ﻿using OpenBoardAnim.Core;
 using OpenBoardAnim.Services;
+using OpenBoardAnim.Utilities;
 
 namespace OpenBoardAnim.ViewModels
 {
@@ -11,16 +12,24 @@ namespace OpenBoardAnim.ViewModels
 
         public MainViewModel(INavigationService navService)
         {
-            Title = "Open Board Animator";
-            UserName = "RSV";
-            Navigation = navService;
-            NavigateToLaunchCommand = new RelayCommand(
-                execute: o => { Navigation.NavigateTo<LaunchViewModel>(); },
-                canExecute: o => true);
-            NavigateToEditorCommand = new RelayCommand(
-                execute: o => { Navigation.NavigateTo<EditorViewModel>(); },
-                canExecute: o => true);
-            NavigateToLaunchCommand.Execute(this);
+            try
+            {
+                Title = "Open Board Animator";
+                UserName = "RSV";
+                Navigation = navService;
+                NavigateToLaunchCommand = new RelayCommand(
+                    execute: o => { Navigation.NavigateTo<LaunchViewModel>(); },
+                    canExecute: o => true);
+                NavigateToEditorCommand = new RelayCommand(
+                    execute: o => { Navigation.NavigateTo<EditorViewModel>(); },
+                    canExecute: o => true);
+                NavigateToLaunchCommand.Execute(this);
+            }
+            catch (Exception ex)
+            {
+                if (Logger.LogError(ex, LogAction.LogAndShow))
+                    throw;
+            }
         }
         public RelayCommand NavigateToLaunchCommand { get; set; }
         public RelayCommand NavigateToEditorCommand { get; set; }

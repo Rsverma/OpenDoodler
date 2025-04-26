@@ -25,71 +25,103 @@ namespace OpenBoardAnim.ViewModels
 
         public EditorLibraryViewModel(IPubSubService pubSub, CacheService cache)
         {
-            _pubSub = pubSub;
-            _cache = cache;
-            Graphics = cache.LoadedGraphics;
-            Shapes = cache.AllShapes;
-            foreach (var graphic in Graphics)
+            try
             {
-                graphic.AddGraphic = AddGraphicHandler;
+                _pubSub = pubSub;
+                _cache = cache;
+                Graphics = cache.LoadedGraphics;
+                Shapes = cache.AllShapes;
+                foreach (var graphic in Graphics)
+                {
+                    graphic.AddGraphic = AddGraphicHandler;
+                }
+                foreach (var shape in Shapes)
+                {
+                    shape.AddGraphic = AddGraphicHandler;
+                }
+                Scenes = cache.LoadedScenes;
+                foreach (var scene in Scenes)
+                {
+                    scene.ReplaceScene = ReplaceSceneHandler;
+                }
+                AddTextCommand = new RelayCommand(AddTextCommandHandler,
+                    canExecute: o => { return !string.IsNullOrEmpty(RawText) && SelectedFontFamily is not null && SelectedTypeFace is not null; });
+                ImportGraphicsCommand = new RelayCommand(ImportGraphicsCommandHandler, o => true);
+                LoadMoreGraphicsCommand = new RelayCommand(LoadMoreGraphicsCommandHandler, o => true);
+                SearchGraphicsCommand = new RelayCommand(SearchGraphicsCommandHandler, o => true);
             }
-            foreach (var shape in Shapes)
+            catch (Exception ex)
             {
-                shape.AddGraphic = AddGraphicHandler;
+                if (Logger.LogError(ex, LogAction.LogAndShow))
+                    throw;
             }
-            Scenes = cache.LoadedScenes;
-            foreach (var scene in Scenes)
-            {
-                scene.ReplaceScene = ReplaceSceneHandler;
-            }
-            AddTextCommand = new RelayCommand(AddTextCommandHandler,
-                canExecute: o => { return !string.IsNullOrEmpty(RawText) && SelectedFontFamily is not null && SelectedTypeFace is not null; });
-            ImportGraphicsCommand = new RelayCommand(ImportGraphicsCommandHandler, o => true);
-            LoadMoreGraphicsCommand = new RelayCommand(LoadMoreGraphicsCommandHandler, o => true);
-            SearchGraphicsCommand = new RelayCommand(SearchGraphicsCommandHandler, o => true);
         }
 
         private void SearchGraphicsCommandHandler(object obj)
         {
-            Graphics.Clear();
-            _oldSearchText = _searchText;
-            List<DrawingModel> drawingModels = _cache.GetGraphics(_searchText, 0);
-            foreach (var model in drawingModels)
+            try
             {
-                model.AddGraphic = AddGraphicHandler;
-                Graphics.Add(model);
+                Graphics.Clear();
+                _oldSearchText = _searchText;
+                List<DrawingModel> drawingModels = _cache.GetGraphics(_searchText, 0);
+                foreach (var model in drawingModels)
+                {
+                    model.AddGraphic = AddGraphicHandler;
+                    Graphics.Add(model);
+                }
+            }
+            catch (Exception ex)
+            {
+                if (Logger.LogError(ex, LogAction.LogAndShow))
+                    throw;
             }
         }
 
         private void LoadMoreGraphicsCommandHandler(object obj)
         {
-            int last = 0;
-            if (Graphics?.Count > 0)
-                last = Graphics.Last().ID;
-            List<DrawingModel> drawingModels = _cache.GetGraphics(_oldSearchText, last);
-            foreach (var model in drawingModels)
+            try
             {
-                model.AddGraphic = AddGraphicHandler;
-                Graphics.Add(model);
+                int last = 0;
+                if (Graphics?.Count > 0)
+                    last = Graphics.Last().ID;
+                List<DrawingModel> drawingModels = _cache.GetGraphics(_oldSearchText, last);
+                foreach (var model in drawingModels)
+                {
+                    model.AddGraphic = AddGraphicHandler;
+                    Graphics.Add(model);
+                }
+            }
+            catch (Exception ex)
+            {
+                if (Logger.LogError(ex, LogAction.LogAndShow))
+                    throw;
             }
         }
 
         private async void ImportGraphicsCommandHandler(object obj)
         {
-            OpenFileDialog openFileDialog = new()
+            try
             {
-                Multiselect=true,
-                Filter = "SVG File (*.svg)|*.svg",
-            };
-            if (openFileDialog.ShowDialog() == true)
-            {
-                await _cache.SaveNewGraphics(openFileDialog.FileNames);
-            }
+                OpenFileDialog openFileDialog = new()
+                {
+                    Multiselect = true,
+                    Filter = "SVG File (*.svg)|*.svg",
+                };
+                if (openFileDialog.ShowDialog() == true)
+                {
+                    await _cache.SaveNewGraphics(openFileDialog.FileNames);
+                }
 
-            Graphics = _cache.LoadedGraphics;
-            foreach (var graphic in Graphics)
+                Graphics = _cache.LoadedGraphics;
+                foreach (var graphic in Graphics)
+                {
+                    graphic.AddGraphic = AddGraphicHandler;
+                }
+            }
+            catch (Exception ex)
             {
-                graphic.AddGraphic = AddGraphicHandler;
+                if (Logger.LogError(ex, LogAction.LogAndShow))
+                    throw;
             }
         }
 
@@ -194,23 +226,39 @@ namespace OpenBoardAnim.ViewModels
         }
         private void AddGraphicHandler(DrawingModel model)
         {
-            _pubSub.Publish(SubTopic.GraphicAdded, model.Clone());
+            try
+            {
+                _pubSub.Publish(SubTopic.GraphicAdded, model.Clone());
+            }
+            catch (Exception ex)
+            {
+                if (Logger.LogError(ex, LogAction.LogAndShow))
+                    throw;
+            }
         }
 
         private void AddTextCommandHandler(object obj)
         {
-            PathGeometry pathGeometry = GeometryHelper.ConvertTextToGeometry(RawText, SelectedFontFamily, 
-                SelectedTypeFace.Style, SelectedTypeFace.Weight, FontSize);
-            TextModel textModel = new TextModel
+            try
             {
-                TextGeometry = pathGeometry,
-                RawText = RawText,
-                SelectedFontFamily = SelectedFontFamily,
-                SelectedFontStyle = SelectedTypeFace.Style,
-                SelectedFontWeight = SelectedTypeFace.Weight,
-                SelectedFontSize = FontSize
-            };
-            _pubSub.Publish(SubTopic.GraphicAdded, textModel);
+                PathGeometry pathGeometry = GeometryHelper.ConvertTextToGeometry(RawText, SelectedFontFamily,
+                        SelectedTypeFace.Style, SelectedTypeFace.Weight, FontSize);
+                TextModel textModel = new TextModel
+                {
+                    TextGeometry = pathGeometry,
+                    RawText = RawText,
+                    SelectedFontFamily = SelectedFontFamily,
+                    SelectedFontStyle = SelectedTypeFace.Style,
+                    SelectedFontWeight = SelectedTypeFace.Weight,
+                    SelectedFontSize = FontSize
+                };
+                _pubSub.Publish(SubTopic.GraphicAdded, textModel);
+            }
+            catch (Exception ex)
+            {
+                if (Logger.LogError(ex, LogAction.LogAndShow))
+                    throw;
+            }
         }
     }
 }

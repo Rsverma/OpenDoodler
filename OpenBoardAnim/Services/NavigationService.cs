@@ -1,4 +1,5 @@
 ﻿using OpenBoardAnim.Core;
+using OpenBoardAnim.Utilities;
 
 namespace OpenBoardAnim.Services
 {
@@ -30,8 +31,16 @@ namespace OpenBoardAnim.Services
 
         public void NavigateTo<TViewModel>() where TViewModel : ViewModel
         {
-            ViewModel viewModel = _viewModelFactory.Invoke(typeof(TViewModel));
-            CurrentView = viewModel;
+            try
+            {
+                ViewModel viewModel = _viewModelFactory.Invoke(typeof(TViewModel));
+                CurrentView = viewModel;
+            }
+            catch (Exception ex)
+            {
+                if (Logger.LogError(ex, LogAction.LogAndThrow))
+                    throw;
+            }
         }
     }
 }

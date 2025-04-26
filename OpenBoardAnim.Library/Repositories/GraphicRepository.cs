@@ -1,4 +1,6 @@
-﻿namespace OpenBoardAnim.Library.Repositories
+﻿using OpenBoardAnim.Utilities;
+
+namespace OpenBoardAnim.Library.Repositories
 {
     public class GraphicRepository
     {
@@ -10,32 +12,64 @@
         }
         public List<GraphicEntity> GetAllGraphics(int lastId = 0)
         {
-            var nextPage = _context.Graphics
-                .OrderBy(b => b.GraphicID)
-                .Where(b => b.GraphicID > lastId)
-                .Take(20)
-                .ToList();
+            List<GraphicEntity> nextPage = new List<GraphicEntity>();
+            try
+            {
+                nextPage = [.. _context.Graphics
+                        .OrderBy(b => b.GraphicID)
+                        .Where(b => b.GraphicID > lastId)
+                        .Take(20)];
+            }
+            catch (Exception ex)
+            {
+                if (Logger.LogError(ex, LogAction.LogAndThrow))
+                    throw;
+            }
             return nextPage;
         }
 
         public List<GraphicEntity> GetAllGraphics(string searchText, int lastId)
         {
-            var nextPage = _context.Graphics
-                .OrderBy(b => b.GraphicID)
-                .Where(b => b.GraphicID > lastId && b.Name.Contains(searchText))
-                .Take(20)
-                .ToList();
+            List<GraphicEntity> nextPage = new List<GraphicEntity>();
+            try
+            {
+                nextPage = [.. _context.Graphics
+                        .OrderBy(b => b.GraphicID)
+                        .Where(b => b.GraphicID > lastId && b.Name.Contains(searchText))
+                        .Take(20)];
+            }
+            catch (Exception ex)
+            {
+                if (Logger.LogError(ex, LogAction.LogAndThrow))
+                    throw;
+            }
             return nextPage;
         }
         public async Task AddNewGraphics(GraphicEntity[] entities)
         {
-            await _context.Graphics.AddRangeAsync(entities);
-            await _context.SaveChangesAsync();
+            try
+            {
+                await _context.Graphics.AddRangeAsync(entities);
+                await _context.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                if (Logger.LogError(ex, LogAction.LogAndThrow))
+                    throw;
+            }
         }
         public void AddNewGraphic(GraphicEntity entity)
         {
-            _context.Graphics.Add(entity);
-            _context.SaveChanges();
+            try
+            {
+                _context.Graphics.Add(entity);
+                _context.SaveChanges();
+            }
+            catch (Exception ex)
+            {
+                if (Logger.LogError(ex, LogAction.LogAndThrow))
+                    throw;
+            }
         }
     }
 }

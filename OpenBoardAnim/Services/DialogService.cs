@@ -1,5 +1,6 @@
 ﻿using OpenBoardAnim.Core;
 using OpenBoardAnim.Models;
+using OpenBoardAnim.Utilities;
 using OpenBoardAnim.Views;
 
 namespace OpenBoardAnim.Services
@@ -26,19 +27,27 @@ namespace OpenBoardAnim.Services
 
         public bool? ShowDialog<T>(DialogType dialogType, T model = null) where T : ObservableObject
         {
-            switch (dialogType)
+            try
             {
-                case DialogType.PreviewProject:
-                case DialogType.ProjectSettings:
-                case DialogType.SceneSettings:
-                case DialogType.AboutUs:
-                    {
-                        DialogWindow dialog = new DialogWindow
+                switch (dialogType)
+                {
+                    case DialogType.PreviewProject:
+                    case DialogType.ProjectSettings:
+                    case DialogType.SceneSettings:
+                    case DialogType.AboutUs:
                         {
-                            DataContext = model
-                        };
-                        return dialog.ShowDialog();
-                    }
+                            DialogWindow dialog = new DialogWindow
+                            {
+                                DataContext = model
+                            };
+                            return dialog.ShowDialog();
+                        }
+                }
+            }
+            catch (Exception ex)
+            {
+                if (Logger.LogError(ex, LogAction.LogAndThrow))
+                    throw;
             }
             return null;
         }

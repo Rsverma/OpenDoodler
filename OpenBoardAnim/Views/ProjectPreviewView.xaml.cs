@@ -1,4 +1,5 @@
 ﻿using OpenBoardAnim.Models;
+using OpenBoardAnim.Utilities;
 using OpenBoardAnim.Utils;
 using System;
 using System.Collections.Generic;
@@ -32,8 +33,16 @@ namespace OpenBoardAnim.Views
 
         private async void Button_Click(object sender, RoutedEventArgs e)
         {
-            ProjectDetails project = this.DataContext as ProjectDetails;
-            await PreviewAndExportHandler.RunAnimationsOnCanvas(project, PreviewCanvas, false);
+            try
+            {
+                ProjectDetails project = this.DataContext as ProjectDetails;
+                await PreviewAndExportHandler.RunAnimationsOnCanvas(project, PreviewCanvas, false);
+            }
+            catch (Exception ex)
+            {
+                if (Logger.LogError(ex, LogAction.LogAndShow))
+                    throw;
+            }
         }
 
         
