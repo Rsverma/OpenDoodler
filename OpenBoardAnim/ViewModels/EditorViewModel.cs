@@ -14,9 +14,12 @@ namespace OpenBoardAnim.ViewModels
         private INavigationService _navigation;
         private readonly IPubSubService _pubSub;
         private EditorActionsViewModel actions;
+        private readonly Timer _snapshotTimer;
+        private readonly StateSnapshotService _stateSnapshotService;
 
         public EditorViewModel(INavigationService navigation,
                                IPubSubService pubSub,
+                               StateSnapshotService stateSnapshotService,
                                EditorActionsViewModel actions,
                                EditorCanvasViewModel canvas,
                                EditorLibraryViewModel library,
@@ -32,11 +35,22 @@ namespace OpenBoardAnim.ViewModels
                 Canvas = canvas;
                 Library = library;
                 Timeline = timeline;
+                _stateSnapshotService = stateSnapshotService;
+                _snapshotTimer = new Timer(SaveProjectSnapshot,null,2000,2000);
             }
             catch (Exception ex)
             {
                 if (Logger.LogError(ex, LogAction.LogAndShow))
                     throw;
+            }
+
+        }
+
+        private void SaveProjectSnapshot(object state)
+        {
+            if(actions?.Project != null)
+            {
+                _stateSnapshotService.SaveState(actions.Project);
             }
         }
 
@@ -44,7 +58,6 @@ namespace OpenBoardAnim.ViewModels
         {
             try
             {
-
                 Navigation.NavigateTo<LaunchViewModel>();
             }
             catch (Exception ex)
@@ -60,6 +73,7 @@ namespace OpenBoardAnim.ViewModels
             {
                 ProjectDetails project = (ProjectDetails)obj;
                 Actions.Project = project;
+                _stateSnapshotService.Clear();
                 Timeline.Scenes = new BindingList<SceneModel>(project.Scenes);
             }
             catch (Exception ex)

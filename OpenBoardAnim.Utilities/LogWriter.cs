@@ -8,7 +8,6 @@ namespace OpenBoardAnim.Utilities
 {
     public enum LogAction
     {
-        //None,
         LogOnly,
         LogAndShow,
         LogAndThrow

@@ -31,6 +31,7 @@ namespace OpenBoardAnim
                 services.AddSingleton<IPubSubService, PubSubService>();
                 services.AddSingleton<IDialogService, DialogService>();
                 services.AddSingleton<CacheService>();
+                services.AddSingleton<StateSnapshotService>();
                 services.AddSingleton<MainViewModel>();
                 services.AddTransient<LaunchViewModel>();
                 services.AddSingleton<EditorActionsViewModel>();
