@@ -34,7 +34,7 @@
 
 ## How To Use
 
-To clone and run this application, you'll need [Git](https://git-scm.com) and [Visual Studio](https://visualstudio.microsoft.com/) . From your command line:
+* To clone and run this application, you'll need [Git](https://git-scm.com) and [Visual Studio](https://visualstudio.microsoft.com/) . From your command line:
 
 ```bash
 # Clone this repository
@@ -46,7 +46,11 @@ $ git clone https://github.com/Rsverma/OpenDoodler.git
 # Set OpenBoardAnim as startup project
 # Launch the application to get started
 ```
-
+* Launch application & click "Create new project" to start.
+* Click Library on the left of the screen to access svg and text graphics.
+* Click the import button on the right side of the search bar to import your svg images.
+![](https://github.com/Rsverma/OpenDoodler/blob/main/OpenBoardAnim/Resources/Steps.png)
+  
 ## Credits
 
 This software uses the following open source packages:
