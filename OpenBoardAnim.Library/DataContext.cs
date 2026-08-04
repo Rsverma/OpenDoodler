@@ -13,8 +13,7 @@ namespace OpenBoardAnim.Library
             var folder = Environment.SpecialFolder.LocalApplicationData;
             var path = Environment.GetFolderPath(folder);
             DbPath = Path.Join(path, "OpenBoardAnim.db");
-            if (!File.Exists(DbPath))
-                Database.Migrate();
+            Database.Migrate();
         }
 
         protected override void OnConfiguring(DbContextOptionsBuilder options)
