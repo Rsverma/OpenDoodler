@@ -19,21 +19,22 @@
 
 ## Key Features
 
-* Launch page to create a new project or pick up a recent one, with unsaved-changes protection
-* Editor canvas to compose SVG and text graphics, with drag, resize, and reorder
+* Launch page to create a new project or pick up a recent one, with unsaved-changes protection and automatic crash recovery from a periodic autosave backup
+* Editor canvas to compose SVG and text graphics, with drag, resize, reorder, multi-select with group move/delete, and copy/paste across scenes
 * Stroke-by-stroke hand-drawn animation with configurable stroke color/width, plus Fade In / Pop In as alternate entrance styles
-* Scene timeline: add, reorder, duplicate, and delete scenes, with hard-cut, crossfade, or wipe transitions between them
+* Whole-project timeline: scenes sized proportionally to their duration with a draggable playhead, reorder/duplicate/delete, hard-cut/crossfade/wipe transitions, and per-scene voiceover layered under project-wide background music
 * Undo/redo
 * Project Settings: board type, background music, stroke styling, entrance style, aspect ratio (16:9 / 9:16 / 1:1), and scene transitions
-* In-app preview and MP4 video export (background music mixed in) with progress reporting and cancellation
-* Keyboard shortcuts for undo/redo, save, new/open project, delete, and nudging the selected graphic
+* In-app preview and MP4 video export (background music and per-scene voiceovers mixed in) with progress reporting and cancellation
+* Keyboard shortcuts for undo/redo, save, new/open project, delete, copy/paste, and nudging the selected graphic(s)
 ![](https://github.com/Rsverma/OpenDoodler/blob/main/OpenBoardAnim/Resources/Animation.gif)
 ## Upcoming Features
 * Configurable hand/pen (choose a hand skin, pen color, or turn the hand off entirely)
 * Snapping/alignment guides while dragging graphics on the canvas
 * Camera pan/zoom (Ken Burns-style focus moves)
+* Editor canvas zoom/pan
 * Animated GIF export alongside MP4
-* A proper draggable-playhead timeline spanning the whole project
+* Custom/arbitrary export resolution beyond the built-in aspect-ratio presets
 
 ## How To Use
 
