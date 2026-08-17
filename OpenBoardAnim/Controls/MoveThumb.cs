@@ -29,8 +29,26 @@ namespace OpenBoardAnim.Controls
         {
             try
             {
-                if (FindAncestor<ListBoxItem>(this) is ListBoxItem listBoxItem)
+                if (FindAncestor<ListBoxItem>(this) is not ListBoxItem listBoxItem) return;
+                if (FindAncestor<ListBox>(listBoxItem) is not ListBox listBox) return;
+
+                bool multiSelectModifier = Keyboard.Modifiers.HasFlag(ModifierKeys.Control) || Keyboard.Modifiers.HasFlag(ModifierKeys.Shift);
+                if (multiSelectModifier)
+                {
+                    // Ctrl/Shift toggles this item in or out of the existing selection.
+                    listBoxItem.IsSelected = !listBoxItem.IsSelected;
+                }
+                else if (!listBoxItem.IsSelected)
+                {
+                    // Plain click on an unselected item replaces whatever multi-selection
+                    // existed before, matching standard click-to-select semantics that
+                    // Thumb's own MouseLeftButtonDown handling (see class comment above)
+                    // prevents ListBoxItem from doing itself.
+                    listBox.SelectedItems.Clear();
                     listBoxItem.IsSelected = true;
+                }
+                // else: a plain click on an item that's already part of a multi-selection
+                // leaves the whole selection alone, so dragging it moves the whole group.
             }
             catch (Exception ex)
             {
@@ -54,17 +72,17 @@ namespace OpenBoardAnim.Controls
         {
             try
             {
-                Control designerItem = this.DataContext as Control;
+                // Move every selected graphic together, not just the one this Thumb is
+                // attached to - PreviewMouseLeftButtonDown above guarantees this Thumb's own
+                // item is always part of SelectedItems by the time a drag can start, so a
+                // single-item drag (the common case) still works exactly as before.
+                if (FindAncestor<ListBoxItem>(this) is not ListBoxItem listBoxItem) return;
+                if (FindAncestor<ListBox>(listBoxItem) is not ListBox listBox) return;
 
-                if (designerItem != null)
+                foreach (GraphicModelBase model in listBox.SelectedItems.Cast<GraphicModelBase>())
                 {
-                    var model = designerItem.DataContext as GraphicModelBase;
-                    if (model != null)
-                    {
-
-                        model.X += e.HorizontalChange;
-                        model.Y += e.VerticalChange;
-                    }
+                    model.X += e.HorizontalChange;
+                    model.Y += e.VerticalChange;
                 }
             }
             catch (Exception ex)

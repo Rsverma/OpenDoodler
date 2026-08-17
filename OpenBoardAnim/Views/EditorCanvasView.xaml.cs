@@ -1,4 +1,6 @@
-﻿using OpenBoardAnim.ViewModels;
+﻿using OpenBoardAnim.Models;
+using OpenBoardAnim.Utilities;
+using OpenBoardAnim.ViewModels;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -24,6 +26,37 @@ namespace OpenBoardAnim.Views
         public EditorCanvasView()
         {
             InitializeComponent();
+        }
+
+        // Actions.SelectedGraphic (bound as ListBox.SelectedItem) only ever reflects one
+        // item even in Extended selection mode - the full multi-selection has to be read
+        // from SelectedItems directly and pushed into Actions.SelectedGraphics for group
+        // Delete/Nudge to see it.
+        private void GraphicsListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            try
+            {
+                if (sender is not ListBox listBox) return;
+                if (FindAncestor<EditorView>(listBox) is not EditorView editorView) return;
+                if (editorView.DataContext is not EditorViewModel editorViewModel) return;
+                editorViewModel.Actions.SelectedGraphics = listBox.SelectedItems.Cast<GraphicModelBase>().ToList();
+            }
+            catch (Exception ex)
+            {
+                if (Logger.LogError(ex, LogAction.LogAndShow))
+                    throw;
+            }
+        }
+
+        private static T FindAncestor<T>(DependencyObject current) where T : DependencyObject
+        {
+            while (current != null)
+            {
+                if (current is T match)
+                    return match;
+                current = VisualTreeHelper.GetParent(current);
+            }
+            return null;
         }
     }
 }

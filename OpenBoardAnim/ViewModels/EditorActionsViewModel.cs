@@ -42,10 +42,10 @@ namespace OpenBoardAnim.ViewModels
                 ExportProjectCommand = new RelayCommand(execute: o => ExportProject(), canExecute: o => !IsExporting);
                 CancelExportCommand = new RelayCommand(execute: o => _exportCts?.Cancel(), canExecute: o => IsExporting);
                 PreviewProjectCommand = new RelayCommand(execute: o => PreviewProject(), canExecute: o => true);
-                DeleteItemCommand = new RelayCommand(execute: o => DeleteItem(), canExecute: o => SelectedGraphic != null);
+                DeleteItemCommand = new RelayCommand(execute: o => DeleteItem(), canExecute: o => HasSelection);
                 MoveUpCommand = new RelayCommand(execute: o => MoveUp(), canExecute: o => SelectedGraphic != null);
                 MoveDownCommand = new RelayCommand(execute: o => MoveDown(), canExecute: o => SelectedGraphic != null);
-                NudgeSelectedGraphicCommand = new RelayCommand(execute: o => NudgeSelectedGraphic((string)o), canExecute: o => SelectedGraphic != null);
+                NudgeSelectedGraphicCommand = new RelayCommand(execute: o => NudgeSelectedGraphic((string)o), canExecute: o => HasSelection);
                 CopyGraphicCommand = new RelayCommand(execute: o => CopySelectedGraphic(), canExecute: o => SelectedGraphic != null);
                 PasteGraphicCommand = new RelayCommand(execute: o => PasteGraphic(), canExecute: o => _copiedGraphic != null && CurrentScene != null);
                 LaunchSceneSettingsCommand = new RelayCommand(execute: o => LaunchSceneSettings(), canExecute: o => CurrentScene != null);
@@ -122,12 +122,29 @@ namespace OpenBoardAnim.ViewModels
             }
         }
 
+        // The active selection for group operations (Delete, Nudge) - synced from the
+        // canvas ListBox's SelectedItems by EditorCanvasView's SelectionChanged handler.
+        // Falls back to SelectedGraphic (single-select commands like Copy/MoveUp/MoveDown
+        // stay single-item on purpose) so these still work before any multi-select sync
+        // has happened.
+        public List<GraphicModelBase> SelectedGraphics { get; set; } = new();
+
+        private List<GraphicModelBase> GetSelectedGraphicsOrFallback()
+        {
+            if (SelectedGraphics != null && SelectedGraphics.Count > 0)
+                return SelectedGraphics;
+            return SelectedGraphic != null ? new List<GraphicModelBase> { SelectedGraphic } : new List<GraphicModelBase>();
+        }
+
+        private bool HasSelection => GetSelectedGraphicsOrFallback().Count > 0;
+
         private void DeleteItem()
         {
             try
             {
-                if (SelectedGraphic != null)
-                    CurrentScene?.Graphics.Remove(SelectedGraphic);
+                if (CurrentScene == null) return;
+                foreach (GraphicModelBase graphic in GetSelectedGraphicsOrFallback())
+                    CurrentScene.Graphics.Remove(graphic);
             }
             catch (Exception ex)
             {
@@ -140,14 +157,18 @@ namespace OpenBoardAnim.ViewModels
         {
             try
             {
-                if (SelectedGraphic == null) return;
+                List<GraphicModelBase> targets = GetSelectedGraphicsOrFallback();
+                if (targets.Count == 0) return;
                 double step = Keyboard.Modifiers.HasFlag(ModifierKeys.Shift) ? 10 : 1;
-                switch (direction)
+                foreach (GraphicModelBase graphic in targets)
                 {
-                    case "Left": SelectedGraphic.X -= step; break;
-                    case "Right": SelectedGraphic.X += step; break;
-                    case "Up": SelectedGraphic.Y -= step; break;
-                    case "Down": SelectedGraphic.Y += step; break;
+                    switch (direction)
+                    {
+                        case "Left": graphic.X -= step; break;
+                        case "Right": graphic.X += step; break;
+                        case "Up": graphic.Y -= step; break;
+                        case "Down": graphic.Y += step; break;
+                    }
                 }
             }
             catch (Exception ex)

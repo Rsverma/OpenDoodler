@@ -48,7 +48,9 @@
             </ContentControl>
         </DataTemplate>
     </UserControl.Resources>
-    <ListBox ItemsSource="{Binding SceneGraphics}" SelectedItem="{Binding DataContext.Actions.SelectedGraphic, RelativeSource={RelativeSource AncestorType={x:Type local:EditorView}}, Mode=TwoWay}">
+    <ListBox ItemsSource="{Binding SceneGraphics}" SelectionMode="Extended"
+             SelectedItem="{Binding DataContext.Actions.SelectedGraphic, RelativeSource={RelativeSource AncestorType={x:Type local:EditorView}}, Mode=TwoWay}"
+             SelectionChanged="GraphicsListBox_SelectionChanged">
         <ItemsControl.ItemsPanel>
             <ItemsPanelTemplate>
                 <Canvas Background="White"/>
