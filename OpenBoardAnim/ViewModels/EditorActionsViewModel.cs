@@ -156,6 +156,7 @@ namespace OpenBoardAnim.ViewModels
                     canvas.Background = Brushes.White;
                     canvas.Height = 1080;
                     canvas.Width = 1920;
+                    canvas.LayoutTransform = new ScaleTransform(2, 2);
                     host.RootVisual = canvas;
 
                     // Force layout and render passes
