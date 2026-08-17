@@ -29,20 +29,22 @@ namespace OpenBoardAnim.Services
         {
             try
             {
-                switch (dialogType)
+                // Content is picked by DialogType, not by the model's CLR type - PreviewProject
+                // and ProjectSettings both take a ProjectDetails, so type-based routing (e.g. a
+                // DataTemplate keyed on ProjectDetails) can't tell them apart. Types with no
+                // dedicated view yet (SceneSettings, AboutUs) fall back to showing the raw model.
+                object content = dialogType switch
                 {
-                    case DialogType.PreviewProject:
-                    case DialogType.ProjectSettings:
-                    case DialogType.SceneSettings:
-                    case DialogType.AboutUs:
-                        {
-                            DialogWindow dialog = new DialogWindow
-                            {
-                                DataContext = model
-                            };
-                            return dialog.ShowDialog();
-                        }
-                }
+                    DialogType.PreviewProject => new ProjectPreviewView { DataContext = model },
+                    DialogType.ProjectSettings => new ProjectSettingsView { DataContext = model },
+                    _ => (object)model
+                };
+
+                DialogWindow dialog = new DialogWindow
+                {
+                    DataContext = content
+                };
+                return dialog.ShowDialog();
             }
             catch (Exception ex)
             {

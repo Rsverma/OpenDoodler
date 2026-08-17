@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.IO;
 using System.Threading;
 using System.Windows.Controls;
@@ -14,15 +15,19 @@ namespace OpenBoardAnim.Utils
         private string _tempImageDir;
         private int _frameRate;
         private string _outputVideoPath;
+        private string _audioPath;
+        private double _audioVolumePercent;
         private int _frameCount;
 
-        public VideoExporter(Canvas canvas, int frameRate, string outputVideoPath)
+        public VideoExporter(Canvas canvas, int frameRate, string outputVideoPath, string audioPath = null, double audioVolumePercent = 100)
         {
             try
             {
                 _targetCanvas = canvas;
                 _frameRate = frameRate;
                 _outputVideoPath = outputVideoPath;
+                _audioPath = audioPath;
+                _audioVolumePercent = audioVolumePercent;
                 _tempImageDir = Path.Combine(Path.GetTempPath(), "WpfAnimationFrames");
                 if (Directory.Exists(_tempImageDir)) Directory.Delete(_tempImageDir, true); // Cleanup
                 Directory.CreateDirectory(_tempImageDir);
@@ -104,10 +109,27 @@ namespace OpenBoardAnim.Utils
 
                 string ffmpegPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "DLLs", "ffmpeg.exe");
 
+                bool hasAudio = !string.IsNullOrWhiteSpace(_audioPath) && File.Exists(_audioPath);
+                string arguments;
+                if (hasAudio)
+                {
+                    // -stream_loop -1 on the (usually shorter) music track so it doesn't run
+                    // out before the video does; -shortest then caps the output at the video's
+                    // actual length instead of looping the audio forever.
+                    string volume = (_audioVolumePercent / 100.0).ToString(CultureInfo.InvariantCulture);
+                    arguments = $"-y -framerate {_frameRate} -i \"{_tempImageDir}/frame_%04d.png\" " +
+                        $"-stream_loop -1 -i \"{_audioPath}\" -filter:a \"volume={volume}\" " +
+                        $"-map 0:v:0 -map 1:a:0 -c:v libx264 -pix_fmt yuv420p -c:a aac -shortest \"{_outputVideoPath}\"";
+                }
+                else
+                {
+                    arguments = $"-y -framerate {_frameRate} -i \"{_tempImageDir}/frame_%04d.png\" -c:v libx264 -pix_fmt yuv420p \"{_outputVideoPath}\"";
+                }
+
                 var processStartInfo = new ProcessStartInfo
                 {
                     FileName = ffmpegPath,
-                    Arguments = $"-y -framerate {_frameRate} -i \"{_tempImageDir}/frame_%04d.png\" -c:v libx264 -pix_fmt yuv420p \"{_outputVideoPath}\"",
+                    Arguments = arguments,
                     UseShellExecute = false,
                     CreateNoWindow = true
                 };

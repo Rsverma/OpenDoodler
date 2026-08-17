@@ -4,15 +4,15 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:OpenBoardAnim.Views"
-        xmlns:model="clr-namespace:OpenBoardAnim.Models"
         mc:Ignorable="d"
         WindowStartupLocation="CenterOwner"
         WindowStyle="ToolWindow"
         Height="650" Width="1050">
-    <Window.Resources>
-        <DataTemplate DataType="{x:Type model:ProjectDetails}">
-            <local:ProjectPreviewView/>
-        </DataTemplate>
-    </Window.Resources>
+    <!--
+        Content is set explicitly by DialogService per DialogType rather than routed via
+        DataTemplate-by-model-type: two different dialog types (Preview, ProjectSettings)
+        can pass the same model CLR type (ProjectDetails), which a type-keyed DataTemplate
+        can't tell apart.
+    -->
     <ContentPresenter HorizontalAlignment="Center" x:Name="ContentPresenter" Content="{Binding}"/>
 </Window>

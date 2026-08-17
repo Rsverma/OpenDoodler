@@ -28,7 +28,7 @@ namespace OpenBoardAnim.Utils
                 };
                 if (isExport)
                 {
-                    exporter = new(canvas, 30, outputVideoPath);
+                    exporter = new(canvas, 30, outputVideoPath, project.AudioPath, project.AudioVolume);
                     exporter.StartCapture();
                 }
                 int totalGraphics = project.Scenes.Sum(s => s.Graphics?.Count ?? 0);

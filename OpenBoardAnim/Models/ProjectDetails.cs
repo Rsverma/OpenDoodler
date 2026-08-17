@@ -42,6 +42,28 @@ namespace OpenBoardAnim.Models
 
         public List<SceneModel> Scenes { get; set; }
 
+        private string _audioPath;
+        public string AudioPath
+        {
+            get { return _audioPath; }
+            set
+            {
+                _audioPath = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private double _audioVolume = 100;
+        public double AudioVolume
+        {
+            get { return _audioVolume; }
+            set
+            {
+                _audioVolume = value;
+                OnPropertyChanged();
+            }
+        }
+
         public ProjectDetails Clone()
         {
             return new ProjectDetails
@@ -50,7 +72,9 @@ namespace OpenBoardAnim.Models
                 CreatedOn = CreatedOn,
                 Path = Path,
                 Settings = Settings == null ? null : new ProjectSettings { BoardType = Settings.BoardType },
-                Scenes = Scenes.Select(s => s.Clone()).ToList()
+                Scenes = Scenes.Select(s => s.Clone()).ToList(),
+                AudioPath = AudioPath,
+                AudioVolume = AudioVolume
             };
         }
     }
