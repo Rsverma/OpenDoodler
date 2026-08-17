@@ -5,6 +5,7 @@ using OpenBoardAnim.Utilities;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Linq;
 using System.Windows.Input;
 using System.Windows.Threading;
 
@@ -93,7 +94,14 @@ namespace OpenBoardAnim.ViewModels
             try
             {
                 ProjectDetails project = (ProjectDetails)obj;
+                int previousSceneIndex = Timeline.SelectedScene?.Index ?? 0;
                 LoadProjectIntoEditor(project);
+                // LoadProjectIntoEditor's Timeline.Scenes assignment always resets selection
+                // to the first scene (the right default for a fresh project launch) - for an
+                // undo/redo restore, re-select whatever scene the user was actually viewing.
+                SceneModel sceneToReselect = Timeline.Scenes.FirstOrDefault(s => s.Index == previousSceneIndex);
+                if (sceneToReselect != null)
+                    Timeline.SelectedScene = sceneToReselect;
             }
             catch (Exception ex)
             {

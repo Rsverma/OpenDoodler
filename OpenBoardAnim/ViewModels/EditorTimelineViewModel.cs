@@ -12,15 +12,11 @@ namespace OpenBoardAnim.ViewModels
     {
         private readonly IPubSubService _pubSub;
         private SceneModel _addScene;
-        public ICommand SceneLeftCommand { get; set; }
-        public ICommand SceneRightCommand { get; set; }
         public ICommand SceneDeleteCommand { get; set; }
         public EditorTimelineViewModel(IPubSubService pubSub)
         {
             _pubSub = pubSub;
             _pubSub.Subscribe(SubTopic.SceneReplaced, SceneReplacedHandler);
-            SceneLeftCommand = new RelayCommand(SceneLeftCommandHandler, o => true);
-            SceneRightCommand = new RelayCommand(SceneRightCommandHandler, o => true);
             SceneDeleteCommand = new RelayCommand(SceneDeleteCommandHandler, o => true);
         }
 
@@ -52,41 +48,6 @@ namespace OpenBoardAnim.ViewModels
             }
         }
 
-        private void SceneRightCommandHandler(object obj)
-        {
-            try
-            {
-                try
-                {
-                    if (SelectedScene == null)
-                        return;
-                }
-                catch (Exception ex) { if (Logger.LogError(ex, LogAction.LogAndShow)) throw; }
-            }
-            catch (Exception ex)
-            {
-                if (Logger.LogError(ex, LogAction.LogAndShow))
-                    throw;
-            }
-        }
-
-        private void SceneLeftCommandHandler(object obj)
-        {
-            try
-            {
-                try
-                {
-                    if (SelectedScene == null)
-                        return;
-                }
-                catch (Exception ex) { if (Logger.LogError(ex, LogAction.LogAndShow)) throw; }
-            }
-            catch (Exception ex)
-            {
-                if (Logger.LogError(ex, LogAction.LogAndShow))
-                    throw;
-            }
-        }
 
         private void SceneReplacedHandler(object obj)
         {

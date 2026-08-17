@@ -35,17 +35,19 @@ namespace OpenBoardAnim.Utilities
             try
             {
                 Log.Error(ex, string.Empty);
-                switch (action)
-                {
-                    case LogAction.LogAndShow:
-                        ErrorLogged?.Invoke(null, DateTime.Now + " : " + ex.Message);
-                        break;
-                    case LogAction.LogAndThrow:
-                        return true;
-                }
+                if (action == LogAction.LogAndShow)
+                    ErrorLogged?.Invoke(null, DateTime.Now + " : " + ex.Message);
             }
-            catch { }
-            return false;
+            catch (Exception logEx)
+            {
+                // If Log.Error itself fails (disk full, locked file), fall back to Debug
+                // output rather than discarding the failure entirely. Also: whether the
+                // caller should rethrow (LogAndThrow) must not depend on logging having
+                // succeeded - a logging failure shouldn't be able to silently swallow
+                // what was meant to be a critical, app-crashing exception.
+                System.Diagnostics.Debug.WriteLine($"Logger.LogError failed to write to the log: {logEx}");
+            }
+            return action == LogAction.LogAndThrow;
         }
 
         /// <summary>

@@ -9,7 +9,7 @@ namespace OpenBoardAnim.Core
         public RelayCommand(Action<object> execute, Predicate<object> canExecute)
         {
             _execute = execute;
-            _canExecute = canExecute;
+            _canExecute = canExecute ?? (_ => true);
         }
 
         public event EventHandler CanExecuteChanged

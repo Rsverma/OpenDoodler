@@ -7,7 +7,7 @@ namespace OpenBoardAnim.Models
 {
     [JsonDerivedType(typeof(DrawingModel), typeDiscriminator:"drawing")]
     [JsonDerivedType(typeof(TextModel), typeDiscriminator: "text")]
-    public class GraphicModelBase : ObservableObject
+    public abstract class GraphicModelBase : ObservableObject
     {
         public GraphicModelBase()
         {
@@ -91,9 +91,6 @@ namespace OpenBoardAnim.Models
             }
         }
 
-        public virtual GraphicModelBase Clone()
-        {
-            return new GraphicModelBase();
-        }
+        public abstract GraphicModelBase Clone();
     }
 }

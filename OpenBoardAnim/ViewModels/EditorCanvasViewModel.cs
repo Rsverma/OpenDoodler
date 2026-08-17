@@ -31,7 +31,7 @@ namespace OpenBoardAnim.ViewModels
 
         private void GraphicAddedHandler(object obj)
         {
-            if (obj is GraphicModelBase model)
+            if (obj is GraphicModelBase model && SceneGraphics != null)
             {
                 SceneGraphics.Add(model);
             }

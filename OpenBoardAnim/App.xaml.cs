@@ -59,7 +59,7 @@ namespace OpenBoardAnim
             }
             catch (Exception ex)
             {
-                if (Logger.LogError(ex, LogAction.LogAndShow))
+                if (Logger.LogError(ex, LogAction.LogAndThrow))
                     throw;
             }
         }
@@ -73,7 +73,7 @@ namespace OpenBoardAnim
             }
             catch (Exception ex)
             {
-                if (Logger.LogError(ex, LogAction.LogAndShow))
+                if (Logger.LogError(ex, LogAction.LogAndThrow))
                     throw;
             }
         }

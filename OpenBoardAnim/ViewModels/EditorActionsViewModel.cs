@@ -35,7 +35,7 @@ namespace OpenBoardAnim.ViewModels
                 _cache = Cache;
                 _dialog = dialog;
                 CloseProjectCommand = new RelayCommand(execute: o => CloseProject(), canExecute: o => true);
-                SaveProjectCommand = new RelayCommand(execute: o => SaveProject(), canExecute: o => true);
+                SaveProjectCommand = new RelayCommand(execute: o => SaveProject(), canExecute: o => Project != null);
                 ExportProjectCommand = new RelayCommand(execute: o => ExportProject(), canExecute: o => !IsExporting);
                 CancelExportCommand = new RelayCommand(execute: o => _exportCts?.Cancel(), canExecute: o => IsExporting);
                 PreviewProjectCommand = new RelayCommand(execute: o => PreviewProject(), canExecute: o => true);
@@ -230,6 +230,7 @@ namespace OpenBoardAnim.ViewModels
         {
             try
             {
+                if (Project == null) return;
                 if (string.IsNullOrEmpty(Project.Path))
                 {
                     SaveFileDialog saveFileDialog = new()
