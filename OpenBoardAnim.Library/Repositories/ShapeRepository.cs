@@ -9,7 +9,7 @@ namespace OpenBoardAnim.Library.Repositories
 {
     public class ShapeRepository
     {
-        public List<GraphicEntity> GetAllShapess()
+        public List<GraphicEntity> GetAllShapes()
         {
             List<GraphicEntity> shapes = [];
             shapes.Add(new GraphicEntity

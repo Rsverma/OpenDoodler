@@ -50,7 +50,7 @@ namespace OpenBoardAnim.Services
         {
             try
             {
-                List<GraphicEntity> shapeEntities = _shRepo.GetAllShapess();
+                List<GraphicEntity> shapeEntities = _shRepo.GetAllShapes();
                 List<DrawingModel> drawingModels = shapeEntities.Select(GetModelFromGraphicEntity).ToList();
                 AllShapes = new BindingList<DrawingModel>(drawingModels);
             }

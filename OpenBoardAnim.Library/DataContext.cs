@@ -15,7 +15,10 @@ namespace OpenBoardAnim.Library
             DbPath = Path.Join(path, "OpenBoardAnim.db");
         }
 
+        // Default Timeout is how long ADO.NET retries against SQLITE_BUSY before giving up -
+        // guards against a transient lock (AV scan, OneDrive sync) surfacing as an unhandled
+        // SqliteException instead of just waiting briefly and succeeding.
         protected override void OnConfiguring(DbContextOptionsBuilder options)
-        => options.UseSqlite($"Data Source={DbPath}");
+        => options.UseSqlite($"Data Source={DbPath};Default Timeout=15");
     }
 }

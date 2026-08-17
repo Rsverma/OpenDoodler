@@ -77,6 +77,12 @@ namespace OpenBoardAnim
                     throw;
             }
         }
+
+        protected override void OnExit(ExitEventArgs e)
+        {
+            _serviceProvider?.Dispose();
+            base.OnExit(e);
+        }
     }
 
 }
