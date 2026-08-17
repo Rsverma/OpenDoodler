@@ -12,14 +12,16 @@ namespace OpenBoardAnim.Utils
         private Canvas _targetCanvas;
         private string _tempImageDir;
         private int _frameRate;
+        private string _outputVideoPath;
         private List<BitmapFrame> frames = [];
 
-        public VideoExporter(Canvas canvas, int frameRate)
+        public VideoExporter(Canvas canvas, int frameRate, string outputVideoPath)
         {
             try
             {
                 _targetCanvas = canvas;
                 _frameRate = frameRate;
+                _outputVideoPath = outputVideoPath;
                 _tempImageDir = Path.Combine(Path.GetTempPath(), "WpfAnimationFrames");
                 if (Directory.Exists(_tempImageDir)) Directory.Delete(_tempImageDir, true); // Cleanup
                 Directory.CreateDirectory(_tempImageDir);
@@ -38,12 +40,12 @@ namespace OpenBoardAnim.Utils
         }
 
         // Stop capturing and compile the video
-        public void StopCapture()
+        public async Task StopCapture(IProgress<ExportProgressInfo> progress = null)
         {
             try
             {
                 CompositionTarget.Rendering -= OnRendering;
-                CompileVideo();
+                await Task.Run(() => CompileVideo(progress));
             }
             catch (Exception ex)
             {
@@ -62,7 +64,9 @@ namespace OpenBoardAnim.Utils
                             96, 96, PixelFormats.Pbgra32
                         );
                 rtb.Render(_targetCanvas);
-                frames.Add(BitmapFrame.Create(rtb));
+                BitmapFrame frame = BitmapFrame.Create(rtb);
+                frame.Freeze();
+                frames.Add(frame);
             }
             catch (Exception ex)
             {
@@ -70,7 +74,7 @@ namespace OpenBoardAnim.Utils
                     throw;
             }
         }
-        private void CompileVideo()
+        private void CompileVideo(IProgress<ExportProgressInfo> progress)
         {
             try
             {
@@ -82,15 +86,22 @@ namespace OpenBoardAnim.Utils
                     string framePath = Path.Combine(_tempImageDir, $"frame_{currentFrame:D4}.png");
                     using var stream = new FileStream(framePath, FileMode.Create);
                     encoder.Save(stream);
+
+                    if (frames.Count > 0)
+                    {
+                        double pct = 80 + (currentFrame + 1) / (double)frames.Count * 15;
+                        progress?.Report(new ExportProgressInfo(pct, $"Writing frame {currentFrame + 1} of {frames.Count}..."));
+                    }
                 }
 
+                progress?.Report(new ExportProgressInfo(95, "Encoding video..."));
+
                 string ffmpegPath = "DLLs\\ffmpeg.exe"; // Path to FFmpeg
-                string outputVideoPath = "output.mp4";
 
                 var processStartInfo = new ProcessStartInfo
                 {
                     FileName = ffmpegPath,
-                    Arguments = $"-y -framerate {_frameRate} -i \"{_tempImageDir}/frame_%04d.png\" -c:v libx264 -pix_fmt yuv420p \"{outputVideoPath}\"",
+                    Arguments = $"-y -framerate {_frameRate} -i \"{_tempImageDir}/frame_%04d.png\" -c:v libx264 -pix_fmt yuv420p \"{_outputVideoPath}\"",
                     UseShellExecute = false,
                     CreateNoWindow = true
                 };
@@ -100,6 +111,8 @@ namespace OpenBoardAnim.Utils
                     process.Start();
                     process.WaitForExit();
                 }
+
+                progress?.Report(new ExportProgressInfo(100, "Export complete"));
             }
             catch (Exception ex)
             {

@@ -32,7 +32,7 @@ namespace OpenBoardAnim.ViewModels
                 _dialog = dialog;
                 CloseProjectCommand = new RelayCommand(execute: o => CloseProject(), canExecute: o => true);
                 SaveProjectCommand = new RelayCommand(execute: o => SaveProject(), canExecute: o => true);
-                ExportProjectCommand = new RelayCommand(execute: o => ExportProject(), canExecute: o => true);
+                ExportProjectCommand = new RelayCommand(execute: o => ExportProject(), canExecute: o => !IsExporting);
                 PreviewProjectCommand = new RelayCommand(execute: o => PreviewProject(), canExecute: o => true);
                 DeleteItemCommand = new RelayCommand(execute: o => DeleteItem(), canExecute: o => SelectedGraphic != null);
                 MoveUpCommand = new RelayCommand(execute: o => MoveUp(), canExecute: o => SelectedGraphic != null);
@@ -142,7 +142,26 @@ namespace OpenBoardAnim.ViewModels
         {
             try
             {
+                SaveFileDialog saveFileDialog = new()
+                {
+                    Filter = "MP4 Video (*.mp4)|*.mp4",
+                    DefaultExt = "mp4",
+                    FileName = string.IsNullOrWhiteSpace(Project?.Title) ? "output.mp4" : $"{Project.Title}.mp4"
+                };
+                if (saveFileDialog.ShowDialog() != true)
+                    return;
+
+                IsExporting = true;
+                ExportProgressPercentage = 0;
+                ExportStatusText = "Starting export...";
                 _pubSub.Publish(SubTopic.ProjectExporting, true);
+
+                var progress = new Progress<ExportProgressInfo>(p =>
+                {
+                    ExportProgressPercentage = p.Percentage;
+                    ExportStatusText = p.Status;
+                });
+
                 using (var host = new HwndSource(new HwndSourceParameters
                 {
                     WindowStyle = 0x800000, // WS_POPUP (invisible window)
@@ -164,13 +183,20 @@ namespace OpenBoardAnim.ViewModels
                     canvas.Arrange(new Rect(0, 0, canvas.Width, canvas.Height));
                     canvas.UpdateLayout();
                     //window.Show();
-                    await PreviewAndExportHandler.RunAnimationsOnCanvas(Project, canvas, true);
+                    await PreviewAndExportHandler.RunAnimationsOnCanvas(Project, canvas, true, progress, saveFileDialog.FileName);
                 }
+
+                Logger.LogMessage("Export complete", LogAction.LogAndShow);
             }
             catch (Exception ex)
             {
                 if (Logger.LogError(ex, LogAction.LogAndShow))
                     throw;
+            }
+            finally
+            {
+                IsExporting = false;
+                _pubSub.Publish(SubTopic.ProjectExporting, false);
             }
         }
 
@@ -253,5 +279,38 @@ namespace OpenBoardAnim.ViewModels
 
         public BindingList<GraphicModelBase> SceneGraphics => CurrentScene?.Graphics;
         public GraphicModelBase SelectedGraphic { get; set; }
+
+        private bool _isExporting;
+        public bool IsExporting
+        {
+            get => _isExporting;
+            set
+            {
+                _isExporting = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private double _exportProgressPercentage;
+        public double ExportProgressPercentage
+        {
+            get => _exportProgressPercentage;
+            set
+            {
+                _exportProgressPercentage = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private string _exportStatusText;
+        public string ExportStatusText
+        {
+            get => _exportStatusText;
+            set
+            {
+                _exportStatusText = value;
+                OnPropertyChanged();
+            }
+        }
     }
 }

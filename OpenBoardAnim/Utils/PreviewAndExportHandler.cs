@@ -15,8 +15,9 @@ namespace OpenBoardAnim.Utils
 {
     public class PreviewAndExportHandler
     {
-        public static async Task RunAnimationsOnCanvas(ProjectDetails project, Canvas canvas, bool isExport)
+        public static async Task RunAnimationsOnCanvas(ProjectDetails project, Canvas canvas, bool isExport, IProgress<ExportProgressInfo> progress = null, string outputVideoPath = null)
         {
+            VideoExporter exporter = null;
             try
             {
                 if (project == null) return;
@@ -24,12 +25,13 @@ namespace OpenBoardAnim.Utils
                 {
                     Source = new BitmapImage(new Uri("pack://application:,,,/Resources/pencil.png"))
                 };
-                VideoExporter exporter = null;
                 if (isExport)
                 {
-                    exporter = new(canvas, 30);
+                    exporter = new(canvas, 30, outputVideoPath);
                     exporter.StartCapture();
                 }
+                int totalGraphics = project.Scenes.Sum(s => s.Graphics?.Count ?? 0);
+                int processedGraphics = 0;
                 int index = 1;
                 for (int i = 0; i < project.Scenes.Count - 1; i++)
                 {
@@ -87,6 +89,12 @@ namespace OpenBoardAnim.Utils
                         example.AnimatePathOnCanvas();
 
                         await example.tcs.Task;
+                        processedGraphics++;
+                        if (isExport)
+                        {
+                            double pct = totalGraphics > 0 ? processedGraphics / (double)totalGraphics * 80 : 80;
+                            progress?.Report(new ExportProgressInfo(pct, $"Rendering {processedGraphics} of {totalGraphics}..."));
+                        }
                         if (element != null)
                         {
                             canvas.Children.Add(element);
@@ -100,13 +108,16 @@ namespace OpenBoardAnim.Utils
                 }
                 canvas.Children.Remove(hand);
                 await Task.Delay(500);
-                if (isExport)
-                    exporter.StopCapture();
             }
             catch (Exception ex)
             {
                 if (Logger.LogError(ex, LogAction.LogAndThrow))
                     throw;
+            }
+            finally
+            {
+                if (isExport && exporter != null)
+                    await exporter.StopCapture(progress);
             }
         }
     }
