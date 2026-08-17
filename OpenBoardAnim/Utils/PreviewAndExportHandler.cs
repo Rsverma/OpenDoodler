@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 
@@ -22,6 +23,16 @@ namespace OpenBoardAnim.Utils
             try
             {
                 if (project == null) return;
+                EntranceStyle entranceStyle = project.Settings?.EntranceStyle ?? EntranceStyle.HandDrawn;
+                Brush strokeBrush = Brushes.Black;
+                try
+                {
+                    if (!string.IsNullOrWhiteSpace(project.Settings?.StrokeColorHex))
+                        strokeBrush = (Brush)new BrushConverter().ConvertFromString(project.Settings.StrokeColorHex);
+                }
+                catch (FormatException) { /* keep default black on an unparsable hex value */ }
+                double strokeWidth = project.Settings != null && project.Settings.StrokeWidth > 0 ? project.Settings.StrokeWidth : 1;
+
                 Image hand = new()
                 {
                     Source = new BitmapImage(new Uri("pack://application:,,,/Resources/pencil.png"))
@@ -37,10 +48,14 @@ namespace OpenBoardAnim.Utils
                 for (int i = 0; i < project.Scenes.Count - 1; i++)
                 {
                     canvas.Children.Clear();
-                    canvas.Children.Add(hand);
-                    Canvas.SetLeft(hand, 0);
-                    Canvas.SetTop(hand, 1150);
-                    Canvas.SetZIndex(hand, 1);
+                    if (entranceStyle == EntranceStyle.HandDrawn)
+                    {
+                        canvas.Children.Add(hand);
+                        Canvas.SetLeft(hand, 0);
+                        Canvas.SetTop(hand, 1150);
+                        Canvas.SetZIndex(hand, 1);
+                        index = canvas.Children.Count;
+                    }
                     SceneModel scene = project.Scenes[i];
                     if (scene == null) continue;
                     for (int j = 0; j < scene.Graphics.Count; j++)
@@ -48,22 +63,21 @@ namespace OpenBoardAnim.Utils
                         cancellationToken.ThrowIfCancellationRequested();
                         GraphicModelBase graphic = scene.Graphics[j];
                         await Task.Delay((int)graphic.Delay * 1000, cancellationToken);
-                        List<Path> paths = [];
                         Geometry geometry = null;
                         UIElement element = null;
                         if (graphic is DrawingModel drawing)
                         {
                             DrawingGroup drawingGroup = drawing.ImgDrawingGroup.Clone();
                             drawingGroup.Transform = new ScaleTransform(drawing.ResizeRatio, drawing.ResizeRatio);
-                            geometry = GeometryHelper.ConvertToGeometry(drawingGroup);
                             element = new Image
                             {
                                 Source = new DrawingImage(drawingGroup)
                             };
+                            if (entranceStyle == EntranceStyle.HandDrawn)
+                                geometry = GeometryHelper.ConvertToGeometry(drawingGroup);
                         }
                         else if (graphic is TextModel text)
                         {
-                            geometry = text.TextGeometry;
                             element = new TextBlock()
                             {
                                 Text = text.RawText,
@@ -73,38 +87,49 @@ namespace OpenBoardAnim.Utils
                                 FontStyle = text.SelectedFontStyle,
                                 FontWeight = text.SelectedFontWeight
                             };
-                            //paths.Add(GetPathFromGeometry(Brushes.Black, text.TextGeometry));
+                            if (entranceStyle == EntranceStyle.HandDrawn)
+                                geometry = text.TextGeometry;
                         }
-                        PathGeometry pathGeometry = geometry.GetFlattenedPathGeometry();
 
-                        List<PathGeometry> pathGeometries = GeometryHelper.GenerateMultiplePaths(pathGeometry, graphic is DrawingModel);
-                        foreach (var geo in pathGeometries)
+                        if (entranceStyle == EntranceStyle.HandDrawn && geometry != null)
                         {
-                            Path path = new Path
+                            PathGeometry pathGeometry = geometry.GetFlattenedPathGeometry();
+                            List<PathGeometry> pathGeometries = GeometryHelper.GenerateMultiplePaths(pathGeometry, graphic is DrawingModel);
+                            List<Path> paths = [];
+                            foreach (var geo in pathGeometries)
                             {
-                                Data = geo,
-                                Stroke = Brushes.Black
-                            };
-                            paths.Add(path);
-                        }
-                        var example = new PathAnimationHelper(canvas, paths, graphic, hand);
-                        example.AnimatePathOnCanvas();
+                                paths.Add(new Path
+                                {
+                                    Data = geo,
+                                    Stroke = strokeBrush,
+                                    StrokeThickness = strokeWidth
+                                });
+                            }
+                            var example = new PathAnimationHelper(canvas, paths, graphic, hand);
+                            example.AnimatePathOnCanvas();
+                            await example.tcs.Task;
 
-                        await example.tcs.Task;
+                            if (element != null)
+                            {
+                                canvas.Children.Add(element);
+                                Canvas.SetLeft(element, graphic.X);
+                                Canvas.SetTop(element, graphic.Y);
+                                int count = canvas.Children.Count - index - 1;
+                                canvas.Children.RemoveRange(index, count);
+                                index = canvas.Children.Count;
+                            }
+                        }
+                        else if (element != null)
+                        {
+                            await AnimateElementEntrance(canvas, element, graphic, entranceStyle);
+                            index = canvas.Children.Count;
+                        }
+
                         processedGraphics++;
                         if (isExport)
                         {
                             double pct = totalGraphics > 0 ? processedGraphics / (double)totalGraphics * 80 : 80;
                             progress?.Report(new ExportProgressInfo(pct, $"Rendering {processedGraphics} of {totalGraphics}..."));
-                        }
-                        if (element != null)
-                        {
-                            canvas.Children.Add(element);
-                            Canvas.SetLeft(element, graphic.X);
-                            Canvas.SetTop(element, graphic.Y);
-                            int count = canvas.Children.Count - index - 1;
-                            canvas.Children.RemoveRange(index, count);
-                            index = canvas.Children.Count;
                         }
                     }
                 }
@@ -125,6 +150,52 @@ namespace OpenBoardAnim.Utils
                 if (isExport && exporter != null)
                     await exporter.StopCapture(progress, cancellationToken);
             }
+        }
+
+        // Non-hand-drawn reveals for graphics that don't need the "drawn by hand" look.
+        // Runs in real time (like the hand-drawn path animation) so the frame-capture
+        // loop in VideoExporter, which samples the live canvas, records the motion.
+        private static Task AnimateElementEntrance(Canvas canvas, UIElement element, GraphicModelBase graphic, EntranceStyle style)
+        {
+            var tcs = new TaskCompletionSource<bool>();
+            Canvas.SetLeft(element, graphic.X);
+            Canvas.SetTop(element, graphic.Y);
+            canvas.Children.Add(element);
+
+            TimeSpan duration = TimeSpan.FromSeconds(Math.Max(graphic.Duration, 0.1));
+            Storyboard storyboard = new();
+
+            if (style == EntranceStyle.PopIn && element is FrameworkElement frameworkElement)
+            {
+                frameworkElement.RenderTransformOrigin = new Point(0.5, 0.5);
+                frameworkElement.RenderTransform = new ScaleTransform(0, 0);
+
+                DoubleAnimation scaleXAnimation = new(0, 1, duration) { EasingFunction = new BackEase { EasingMode = EasingMode.EaseOut } };
+                DoubleAnimation scaleYAnimation = new(0, 1, duration) { EasingFunction = new BackEase { EasingMode = EasingMode.EaseOut } };
+                Storyboard.SetTarget(scaleXAnimation, frameworkElement);
+                Storyboard.SetTargetProperty(scaleXAnimation, new PropertyPath("RenderTransform.ScaleX"));
+                Storyboard.SetTarget(scaleYAnimation, frameworkElement);
+                Storyboard.SetTargetProperty(scaleYAnimation, new PropertyPath("RenderTransform.ScaleY"));
+                storyboard.Children.Add(scaleXAnimation);
+                storyboard.Children.Add(scaleYAnimation);
+            }
+            else
+            {
+                element.Opacity = 0;
+                DoubleAnimation opacityAnimation = new(0, 1, duration);
+                Storyboard.SetTarget(opacityAnimation, element);
+                Storyboard.SetTargetProperty(opacityAnimation, new PropertyPath(UIElement.OpacityProperty));
+                storyboard.Children.Add(opacityAnimation);
+            }
+
+            void OnCompleted(object sender, EventArgs e)
+            {
+                storyboard.Completed -= OnCompleted;
+                tcs.TrySetResult(true);
+            }
+            storyboard.Completed += OnCompleted;
+            storyboard.Begin();
+            return tcs.Task;
         }
     }
 }

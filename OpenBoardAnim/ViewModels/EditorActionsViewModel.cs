@@ -201,8 +201,10 @@ namespace OpenBoardAnim.ViewModels
                 {
                     System.Windows.Controls.Canvas canvas = new();
                     canvas.Background = Brushes.White;
-                    canvas.Height = 1080;
-                    canvas.Width = 1920;
+                    canvas.Height = Project.Settings?.ExportHeight ?? 1080;
+                    canvas.Width = Project.Settings?.ExportWidth ?? 1920;
+                    // Export is always 2x the editor's coordinate space, regardless of aspect
+                    // ratio - see ProjectSettings.ExportWidth/Height - so this stays fixed.
                     canvas.LayoutTransform = new ScaleTransform(2, 2);
                     host.RootVisual = canvas;
 

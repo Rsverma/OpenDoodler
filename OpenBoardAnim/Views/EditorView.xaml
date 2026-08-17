@@ -28,7 +28,7 @@
             <RowDefinition Height="auto" />
         </Grid.RowDefinitions>
         <hc:SimplePanel Margin="10 0" Background="Gray">
-            <ContentControl Margin="10" Width="960" Height="540" Content="{Binding Canvas}"/>
+            <ContentControl Margin="10" Width="{Binding Actions.Project.Settings.EditorWidth}" Height="{Binding Actions.Project.Settings.EditorHeight}" Content="{Binding Canvas}"/>
         </hc:SimplePanel>
         <ContentControl Grid.Row="1" Margin="20 0" Height="140" Content="{Binding Timeline}"/>
         <Expander Name="DrawerLeft" Grid.RowSpan="2" IsExpanded="True" Header="Library" ExpandDirection="Right" Background="White"

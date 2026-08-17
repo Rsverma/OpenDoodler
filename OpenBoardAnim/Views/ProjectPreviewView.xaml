@@ -8,16 +8,11 @@
              d:DesignHeight="450" d:DesignWidth="800">
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="auto"/>
-            <RowDefinition Height="auto" />
-            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="auto"/>
-            <ColumnDefinition Width="*"/>
-        </Grid.ColumnDefinitions>
-        <Border BorderBrush="Black" BorderThickness="1">
-            <Canvas Margin="10" Background="White" Width="960" Height="540" x:Name="PreviewCanvas">
+        <Border HorizontalAlignment="Center" BorderBrush="Black" BorderThickness="1">
+            <Canvas Margin="10" Background="White" Width="{Binding Settings.EditorWidth}" Height="{Binding Settings.EditorHeight}" x:Name="PreviewCanvas">
             </Canvas>
         </Border>
         <Button Margin="0 10" Grid.Row="1" HorizontalAlignment="Center" Click="Button_Click">Play</Button>

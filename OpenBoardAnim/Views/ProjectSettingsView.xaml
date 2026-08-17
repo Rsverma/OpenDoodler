@@ -5,19 +5,126 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:hc="https://handyorg.github.io/handycontrol"
              xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:utils="clr-namespace:OpenBoardAnim.Utils"
              mc:Ignorable="d"
              d:DesignHeight="450" d:DesignWidth="600">
-    <StackPanel Margin="30" Width="500" HorizontalAlignment="Center" VerticalAlignment="Top">
-        <TextBlock Text="Project Settings" Style="{StaticResource TextBlockTitle}" Margin="0 0 0 20"/>
-        <TextBlock Text="Background Music" Style="{StaticResource TextBlockSubTitle}" Margin="0 0 0 10"/>
-        <StackPanel Orientation="Horizontal">
-            <Button Click="BrowseAudio_Click">Choose...</Button>
-            <Button Margin="10 0" Style="{StaticResource ButtonDanger}" Click="ClearAudio_Click" ToolTip="Remove Music" Content="{materialDesign:PackIcon Close}"/>
+    <UserControl.Resources>
+        <utils:HexEqualsThicknessConverter x:Key="HexEqualsThicknessConverter"/>
+        <utils:FriendlyEnumConverter x:Key="FriendlyEnumConverter"/>
+        <utils:EnumEqualsVisibilityConverter x:Key="EnumEqualsVisibilityConverter"/>
+
+        <Style x:Key="SettingsCardStyle" TargetType="Border">
+            <Setter Property="Background" Value="{DynamicResource RegionBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Padding" Value="14 10"/>
+            <Setter Property="Margin" Value="0 0 0 8"/>
+        </Style>
+        <Style x:Key="SettingsSectionTitleStyle" TargetType="TextBlock" BasedOn="{StaticResource TextBlockSubTitle}">
+            <Setter Property="Margin" Value="0 0 0 2"/>
+        </Style>
+        <Style x:Key="SettingsHintStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="Opacity" Value="0.65"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+            <Setter Property="Margin" Value="0 0 0 6"/>
+        </Style>
+        <Style x:Key="ColorSwatchButtonStyle" TargetType="Button">
+            <Setter Property="Width" Value="22"/>
+            <Setter Property="Height" Value="22"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="4"/>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="SettingsComboBoxStyle" TargetType="ComboBox">
+            <Setter Property="Width" Value="220"/>
+            <Setter Property="HorizontalAlignment" Value="Left"/>
+            <Setter Property="ItemTemplate">
+                <Setter.Value>
+                    <DataTemplate>
+                        <TextBlock Text="{Binding Converter={StaticResource FriendlyEnumConverter}}"/>
+                    </DataTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="20" Width="440" HorizontalAlignment="Center" VerticalAlignment="Top">
+            <TextBlock Text="Project Settings" Style="{StaticResource TextBlockTitle}" Margin="0 0 0 12"/>
+
+            <Border Style="{StaticResource SettingsCardStyle}">
+                <StackPanel>
+                    <TextBlock Text="Background Music" Style="{StaticResource SettingsSectionTitleStyle}"/>
+                    <TextBlock Text="Play a music track underneath the whole project." Style="{StaticResource SettingsHintStyle}"/>
+                    <StackPanel Orientation="Horizontal">
+                        <Button Click="BrowseAudio_Click">Choose File...</Button>
+                        <Button Margin="10 0 0 0" Style="{StaticResource ButtonDanger}" Click="ClearAudio_Click" ToolTip="Remove Music" Content="{materialDesign:PackIcon Close}"/>
+                    </StackPanel>
+                    <TextBlock Margin="0 6 0 0" Text="{Binding AudioPath, TargetNullValue='No music selected'}" ToolTip="{Binding AudioPath}" TextTrimming="CharacterEllipsis" FontSize="12" FontStyle="Italic"/>
+                    <StackPanel Orientation="Horizontal" Margin="0 8 0 0">
+                        <TextBlock Text="Volume" VerticalAlignment="Center" Width="55"/>
+                        <Slider Width="180" Minimum="0" Maximum="100" VerticalAlignment="Center" Value="{Binding AudioVolume, Mode=TwoWay}"/>
+                        <TextBlock Margin="10 0 0 0" VerticalAlignment="Center" Text="{Binding AudioVolume, StringFormat={}{0:0}%}"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource SettingsCardStyle}">
+                <StackPanel>
+                    <TextBlock Text="Entrance Style" Style="{StaticResource SettingsSectionTitleStyle}"/>
+                    <TextBlock Text="How each graphic appears on screen when it's added to a scene." Style="{StaticResource SettingsHintStyle}"/>
+                    <ComboBox x:Name="EntranceStyleComboBox" Style="{StaticResource SettingsComboBoxStyle}" SelectedItem="{Binding Settings.EntranceStyle, Mode=TwoWay}"/>
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource SettingsCardStyle}" Visibility="{Binding Settings.EntranceStyle, Converter={StaticResource EnumEqualsVisibilityConverter}, ConverterParameter=HandDrawn}">
+                <StackPanel>
+                    <TextBlock Text="Stroke" Style="{StaticResource SettingsSectionTitleStyle}"/>
+                    <TextBlock Text="Pen color and thickness used for the hand-drawn animation." Style="{StaticResource SettingsHintStyle}"/>
+                    <StackPanel Orientation="Horizontal">
+                        <Border BorderBrush="Black" CornerRadius="4" Padding="2" Margin="0 0 6 0" BorderThickness="{Binding Settings.StrokeColorHex, Converter={StaticResource HexEqualsThicknessConverter}, ConverterParameter=#FF000000}">
+                            <Button Style="{StaticResource ColorSwatchButtonStyle}" Background="#FF000000" Tag="#FF000000" Click="StrokeColor_Click"/>
+                        </Border>
+                        <Border BorderBrush="Black" CornerRadius="4" Padding="2" Margin="0 0 6 0" BorderThickness="{Binding Settings.StrokeColorHex, Converter={StaticResource HexEqualsThicknessConverter}, ConverterParameter=#FFE53935}">
+                            <Button Style="{StaticResource ColorSwatchButtonStyle}" Background="#FFE53935" Tag="#FFE53935" Click="StrokeColor_Click"/>
+                        </Border>
+                        <Border BorderBrush="Black" CornerRadius="4" Padding="2" Margin="0 0 6 0" BorderThickness="{Binding Settings.StrokeColorHex, Converter={StaticResource HexEqualsThicknessConverter}, ConverterParameter=#FF1E88E5}">
+                            <Button Style="{StaticResource ColorSwatchButtonStyle}" Background="#FF1E88E5" Tag="#FF1E88E5" Click="StrokeColor_Click"/>
+                        </Border>
+                        <Border BorderBrush="Black" CornerRadius="4" Padding="2" Margin="0 0 6 0" BorderThickness="{Binding Settings.StrokeColorHex, Converter={StaticResource HexEqualsThicknessConverter}, ConverterParameter=#FF43A047}">
+                            <Button Style="{StaticResource ColorSwatchButtonStyle}" Background="#FF43A047" Tag="#FF43A047" Click="StrokeColor_Click"/>
+                        </Border>
+                        <Border BorderBrush="Black" CornerRadius="4" Padding="2" Margin="0 0 6 0" BorderThickness="{Binding Settings.StrokeColorHex, Converter={StaticResource HexEqualsThicknessConverter}, ConverterParameter=#FFFB8C00}">
+                            <Button Style="{StaticResource ColorSwatchButtonStyle}" Background="#FFFB8C00" Tag="#FFFB8C00" Click="StrokeColor_Click"/>
+                        </Border>
+                        <Border BorderBrush="Black" CornerRadius="4" Padding="2" Margin="0 0 6 0" BorderThickness="{Binding Settings.StrokeColorHex, Converter={StaticResource HexEqualsThicknessConverter}, ConverterParameter=#FF8E24AA}">
+                            <Button Style="{StaticResource ColorSwatchButtonStyle}" Background="#FF8E24AA" Tag="#FF8E24AA" Click="StrokeColor_Click"/>
+                        </Border>
+                        <Border BorderBrush="Black" CornerRadius="4" Padding="2" BorderThickness="{Binding Settings.StrokeColorHex, Converter={StaticResource HexEqualsThicknessConverter}, ConverterParameter=#FF6D4C41}">
+                            <Button Style="{StaticResource ColorSwatchButtonStyle}" Background="#FF6D4C41" Tag="#FF6D4C41" Click="StrokeColor_Click"/>
+                        </Border>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0 8 0 0">
+                        <TextBlock Text="Width" VerticalAlignment="Center" Width="55"/>
+                        <hc:NumericUpDown Width="100" Minimum="1" Maximum="20" Style="{StaticResource NumericUpDownPlus}" Value="{Binding Settings.StrokeWidth, Mode=TwoWay}"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource SettingsCardStyle}">
+                <StackPanel>
+                    <TextBlock Text="Aspect Ratio" Style="{StaticResource SettingsSectionTitleStyle}"/>
+                    <TextBlock Text="Canvas shape used by the editor, preview, and exported video." Style="{StaticResource SettingsHintStyle}"/>
+                    <ComboBox x:Name="AspectRatioComboBox" Style="{StaticResource SettingsComboBoxStyle}" SelectedItem="{Binding Settings.AspectRatio, Mode=TwoWay}"/>
+                </StackPanel>
+            </Border>
         </StackPanel>
-        <TextBlock Margin="0 8 0 0" Text="{Binding AudioPath}" ToolTip="{Binding AudioPath}" TextTrimming="CharacterEllipsis" FontSize="12"/>
-        <StackPanel Orientation="Horizontal" Margin="0 12 0 0">
-            <TextBlock Text="Volume" VerticalAlignment="Center" Margin="0 0 8 0"/>
-            <Slider Width="200" Minimum="0" Maximum="100" Value="{Binding AudioVolume, Mode=TwoWay}"/>
-        </StackPanel>
-    </StackPanel>
+    </ScrollViewer>
 </UserControl>

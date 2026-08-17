@@ -2,6 +2,7 @@
 using OpenBoardAnim.Models;
 using OpenBoardAnim.Utilities;
 using OpenBoardAnim.Views;
+using System.Windows;
 
 namespace OpenBoardAnim.Services
 {
@@ -44,6 +45,27 @@ namespace OpenBoardAnim.Services
                 {
                     DataContext = content
                 };
+
+                if (dialogType == DialogType.PreviewProject)
+                {
+                    // The preview canvas resizes to the project's aspect ratio (see
+                    // ProjectSettings.EditorWidth/Height); size the window to match instead
+                    // of leaving it at a fixed size the user could resize independently.
+                    dialog.Width = double.NaN;
+                    dialog.Height = double.NaN;
+                    dialog.SizeToContent = SizeToContent.WidthAndHeight;
+                    dialog.ResizeMode = ResizeMode.NoResize;
+                }
+                else if (dialogType == DialogType.ProjectSettings)
+                {
+                    // Settings content is a fixed-width, compact stack of cards (one of
+                    // which - Stroke - can disappear entirely) - size to it directly
+                    // rather than the dialog's default fixed 650x1050.
+                    dialog.Width = double.NaN;
+                    dialog.Height = double.NaN;
+                    dialog.SizeToContent = SizeToContent.WidthAndHeight;
+                }
+
                 return dialog.ShowDialog();
             }
             catch (Exception ex)

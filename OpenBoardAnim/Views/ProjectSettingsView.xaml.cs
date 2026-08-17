@@ -15,6 +15,23 @@ namespace OpenBoardAnim.Views
         public ProjectSettingsView()
         {
             InitializeComponent();
+            EntranceStyleComboBox.ItemsSource = EnumHelper.EnumerateEnum<EntranceStyle>();
+            AspectRatioComboBox.ItemsSource = EnumHelper.EnumerateEnum<AspectRatioPreset>();
+        }
+
+        private void StrokeColor_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                if (DataContext is not ProjectDetails project) return;
+                if (sender is Button button && button.Tag is string hex)
+                    project.Settings.StrokeColorHex = hex;
+            }
+            catch (Exception ex)
+            {
+                if (Logger.LogError(ex, LogAction.LogAndShow))
+                    throw;
+            }
         }
 
         private void BrowseAudio_Click(object sender, RoutedEventArgs e)
