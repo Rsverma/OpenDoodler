@@ -141,7 +141,7 @@ namespace OpenBoardAnim.Services
             try
             {
                 _graphicEntities = _gRepo.GetAllGraphics();
-                List<DrawingModel> graphics = _graphicEntities.Select(GetModelFromGraphicEntity).ToList();
+                List<DrawingModel> graphics = _graphicEntities.Select(GetModelFromGraphicEntity).Where(x=>x!=null).ToList();
                 LoadedGraphics = new BindingList<DrawingModel>(graphics);
             }
             catch (Exception ex)
@@ -166,7 +166,7 @@ namespace OpenBoardAnim.Services
             }
             catch (Exception ex)
             {
-                if (Logger.LogError(ex, LogAction.LogAndThrow))
+                if (Logger.LogError(ex, LogAction.LogAndShow))
                     throw;
                 return null;
             }
@@ -197,11 +197,12 @@ namespace OpenBoardAnim.Services
                 await _gRepo.AddNewGraphics(paths.Select(file =>
                     {
                         string svgText = File.ReadAllText(file);
-                        return new GraphicEntity
+                        GraphicEntity graphicEntity = new()
                         {
                             Name = Path.GetFileNameWithoutExtension(file),
                             SVGText = svgText
                         };
+                        return GetModelFromGraphicEntity(graphicEntity) == null ? null : graphicEntity;
                     }).ToArray());
 
                 LoadGraphics();

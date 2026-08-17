@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using HandyControl.Controls;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using OpenBoardAnim.Core;
 using OpenBoardAnim.Library;
@@ -19,6 +20,9 @@ namespace OpenBoardAnim
 
         public App()
         {
+            Logger.ErrorLogged += (s, msg) => Dispatcher.Invoke(() => Growl.Error(msg));
+            Logger.WarningLogged += (s, msg) => Dispatcher.Invoke(() => Growl.Warning(msg));
+            Logger.MessageLogged += (s, msg) => Dispatcher.Invoke(() => Growl.Info(msg));
             try
             {
                 IServiceCollection services = new ServiceCollection();

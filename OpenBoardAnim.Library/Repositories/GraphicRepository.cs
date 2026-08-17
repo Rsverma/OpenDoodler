@@ -49,7 +49,7 @@ namespace OpenBoardAnim.Library.Repositories
         {
             try
             {
-                await _context.Graphics.AddRangeAsync(entities);
+                await _context.Graphics.AddRangeAsync(entities.Where(e => e != null));
                 await _context.SaveChangesAsync();
             }
             catch (Exception ex)

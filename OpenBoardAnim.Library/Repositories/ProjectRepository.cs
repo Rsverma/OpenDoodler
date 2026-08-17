@@ -46,7 +46,7 @@ namespace OpenBoardAnim.Library.Repositories
         {
             try
             {
-                _context.Projects.Add(entity);
+                _context.Projects.Update(entity);
                 _context.SaveChanges();
             }
             catch (Exception ex)
