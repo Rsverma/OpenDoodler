@@ -113,6 +113,7 @@ namespace OpenBoardAnim.ViewModels
         private void LoadProjectIntoEditor(ProjectDetails project)
         {
             Actions.Project = project;
+            Timeline.Project = project;
             Timeline.Scenes = new BindingList<SceneModel>(project.Scenes);
         }
 
