@@ -254,6 +254,44 @@ namespace OpenBoardAnim.Services
             }
         }
 
+        // A single rolling autosave slot (sibling to the OpenBoardAnim.db, same
+        // %LocalAppData% convention as DataContext) - distinct from the in-memory undo/redo
+        // snapshot, which is lost on crash or close-without-saving. Never registered as a
+        // recent project or touched via project.Path/Title - a pure background side-channel.
+        private static readonly string BackupFilePath = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "OpenBoardAnim.autosave.obap");
+
+        public void SaveBackup(ProjectDetails project)
+        {
+            try
+            {
+                if (project == null) return;
+                File.WriteAllText(BackupFilePath, JsonSerializer.Serialize(project));
+            }
+            catch (Exception ex)
+            {
+                // Best-effort - a failed background backup shouldn't interrupt editing.
+                Logger.LogWarning($"Failed to write autosave backup: {ex.Message}");
+            }
+        }
+
+        public bool BackupExists() => File.Exists(BackupFilePath);
+
+        public ProjectDetails LoadBackup() => LoadProjectFromFile(BackupFilePath);
+
+        public void ClearBackup()
+        {
+            try
+            {
+                if (File.Exists(BackupFilePath))
+                    File.Delete(BackupFilePath);
+            }
+            catch (Exception ex)
+            {
+                Logger.LogWarning($"Failed to delete autosave backup: {ex.Message}");
+            }
+        }
+
         public void DeleteProject(RecentProjectModel model)
         {
             try

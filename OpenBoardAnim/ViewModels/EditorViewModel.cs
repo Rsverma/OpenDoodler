@@ -15,12 +15,18 @@ namespace OpenBoardAnim.ViewModels
     {
         private INavigationService _navigation;
         private readonly IPubSubService _pubSub;
+        private readonly CacheService _cache;
         private EditorActionsViewModel actions;
         private readonly DispatcherTimer _snapshotTimer;
+        // Periodic disk backup - distinct from _snapshotTimer's in-memory undo/redo stack,
+        // which is lost on crash or close-without-saving. Runs less often than the snapshot
+        // timer since it's real file I/O, not just an in-memory push.
+        private readonly DispatcherTimer _backupTimer;
         private readonly StateSnapshotService _stateSnapshotService;
 
         public EditorViewModel(INavigationService navigation,
                                IPubSubService pubSub,
+                               CacheService cache,
                                StateSnapshotService stateSnapshotService,
                                EditorActionsViewModel actions,
                                EditorCanvasViewModel canvas,
@@ -31,6 +37,7 @@ namespace OpenBoardAnim.ViewModels
             {
                 _navigation = navigation;
                 _pubSub = pubSub;
+                _cache = cache;
                 _pubSub.Subscribe(SubTopic.ProjectLaunched, ProjectLaunchedHandler);
                 _pubSub.Subscribe(SubTopic.ProjectStateRestored, ProjectStateRestoredHandler);
                 SwitchToLaunchCommand = new RelayCommand(execute: SwitchToLaunchHandler, canExecute: o => true);
@@ -41,6 +48,8 @@ namespace OpenBoardAnim.ViewModels
                 _stateSnapshotService = stateSnapshotService;
                 _snapshotTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(2) };
                 _snapshotTimer.Tick += SaveProjectSnapshot;
+                _backupTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(30) };
+                _backupTimer.Tick += SaveProjectBackup;
             }
             catch (Exception ex)
             {
@@ -58,11 +67,20 @@ namespace OpenBoardAnim.ViewModels
             }
         }
 
+        private void SaveProjectBackup(object sender, EventArgs e)
+        {
+            if (actions?.Project != null)
+            {
+                _cache.SaveBackup(actions.Project);
+            }
+        }
+
         private void SwitchToLaunchHandler(object obj)
         {
             try
             {
                 _snapshotTimer.Stop();
+                _backupTimer.Stop();
                 Navigation.NavigateTo<LaunchViewModel>();
             }
             catch (Exception ex)
@@ -81,6 +99,7 @@ namespace OpenBoardAnim.ViewModels
                 LoadProjectIntoEditor(project);
                 Actions.MarkProjectSaved();
                 _snapshotTimer.Start();
+                _backupTimer.Start();
             }
             catch (Exception ex)
             {

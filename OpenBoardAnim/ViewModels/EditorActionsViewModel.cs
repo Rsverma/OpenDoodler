@@ -309,6 +309,7 @@ namespace OpenBoardAnim.ViewModels
                 }
                 _cache.UpdateExistingProject(Project);
                 MarkProjectSaved();
+                _cache.ClearBackup();
             }
             catch (Exception ex)
             {
@@ -340,6 +341,15 @@ namespace OpenBoardAnim.ViewModels
         public void MarkProjectSaved()
         {
             _savedProjectJson = Project == null ? null : JsonSerializer.Serialize(Project);
+        }
+
+        // Used after recovering an autosave backup: the recovered content is newer than
+        // whatever's on disk at Project.Path (or was never saved at all), so it must not be
+        // treated as already "saved" even though it was just loaded, the way a fresh/opened
+        // project normally would be.
+        public void MarkProjectUnsaved()
+        {
+            _savedProjectJson = null;
         }
 
         public bool HasUnsavedChanges => Project != null && JsonSerializer.Serialize(Project) != _savedProjectJson;
