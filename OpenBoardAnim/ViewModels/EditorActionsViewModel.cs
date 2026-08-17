@@ -23,6 +23,9 @@ namespace OpenBoardAnim.ViewModels
         private readonly IDialogService _dialog;
         private CancellationTokenSource _exportCts;
         private string _savedProjectJson;
+        // In-memory clipboard for graphics - survives switching scenes, so pasting can
+        // target a different scene than the one the graphic was copied from.
+        private GraphicModelBase _copiedGraphic;
 
         public EditorActionsViewModel(IPubSubService pubSub, INavigationService navigation, CacheService Cache,
             IDialogService dialog)
@@ -43,6 +46,8 @@ namespace OpenBoardAnim.ViewModels
                 MoveUpCommand = new RelayCommand(execute: o => MoveUp(), canExecute: o => SelectedGraphic != null);
                 MoveDownCommand = new RelayCommand(execute: o => MoveDown(), canExecute: o => SelectedGraphic != null);
                 NudgeSelectedGraphicCommand = new RelayCommand(execute: o => NudgeSelectedGraphic((string)o), canExecute: o => SelectedGraphic != null);
+                CopyGraphicCommand = new RelayCommand(execute: o => CopySelectedGraphic(), canExecute: o => SelectedGraphic != null);
+                PasteGraphicCommand = new RelayCommand(execute: o => PasteGraphic(), canExecute: o => _copiedGraphic != null && CurrentScene != null);
                 LaunchSceneSettingsCommand = new RelayCommand(execute: o => LaunchSceneSettings(), canExecute: o => CurrentScene != null);
                 LaunchProjectSettingsCommand = new RelayCommand(execute: o => LaunchProjectSettings(), canExecute: o => true);
             }
@@ -144,6 +149,40 @@ namespace OpenBoardAnim.ViewModels
                     case "Up": SelectedGraphic.Y -= step; break;
                     case "Down": SelectedGraphic.Y += step; break;
                 }
+            }
+            catch (Exception ex)
+            {
+                if (Logger.LogError(ex, LogAction.LogAndShow))
+                    throw;
+            }
+        }
+
+        private void CopySelectedGraphic()
+        {
+            try
+            {
+                if (SelectedGraphic == null) return;
+                _copiedGraphic = SelectedGraphic.Clone();
+            }
+            catch (Exception ex)
+            {
+                if (Logger.LogError(ex, LogAction.LogAndShow))
+                    throw;
+            }
+        }
+
+        private void PasteGraphic()
+        {
+            try
+            {
+                if (_copiedGraphic == null || CurrentScene == null) return;
+                GraphicModelBase pasted = _copiedGraphic.Clone();
+                // Offset so a paste never lands exactly on top of the source graphic,
+                // whether pasting into the same scene or a different one.
+                pasted.X += 20;
+                pasted.Y += 20;
+                _pubSub.Publish(SubTopic.GraphicAdded, pasted);
+                SelectedGraphic = pasted;
             }
             catch (Exception ex)
             {
@@ -347,6 +386,8 @@ namespace OpenBoardAnim.ViewModels
         public ICommand MoveUpCommand { get; set; }
         public ICommand MoveDownCommand { get; set; }
         public ICommand NudgeSelectedGraphicCommand { get; set; }
+        public ICommand CopyGraphicCommand { get; set; }
+        public ICommand PasteGraphicCommand { get; set; }
         public ICommand SaveProjectCommand { get; set; }
         public ICommand ExportProjectCommand { get; set; }
         public ICommand CancelExportCommand { get; set; }
