@@ -16,11 +16,17 @@ namespace OpenBoardAnim.Models
             SceneLeftCommand = new RelayCommand(SceneLeftCommandHandler, canExecute: o => true);
             SceneRightCommand = new RelayCommand(SceneRightCommandHandler, canExecute: o => true);
             SceneDeleteCommand = new RelayCommand(SceneDeleteCommandHandler, canExecute: o => true);
+            SceneDuplicateCommand = new RelayCommand(SceneDuplicateCommandHandler, canExecute: o => true);
         }
 
         private void SceneDeleteCommandHandler(object obj)
         {
             SceneDeleteAction?.Invoke(this);
+        }
+
+        private void SceneDuplicateCommandHandler(object obj)
+        {
+            SceneDuplicateAction?.Invoke(this);
         }
 
         private void SceneRightCommandHandler(object obj)
@@ -37,6 +43,7 @@ namespace OpenBoardAnim.Models
         public Action<SceneModel> SceneLeftAction;
         public Action<SceneModel> SceneRightAction;
         public Action<SceneModel> SceneDeleteAction;
+        public Action<SceneModel> SceneDuplicateAction;
         private void ReplaceSceneCommandHandler(object obj)
         {
             ReplaceScene?.Invoke(this);
@@ -82,6 +89,8 @@ namespace OpenBoardAnim.Models
         public ICommand SceneRightCommand { get; set; }
         [JsonIgnore]
         public ICommand SceneDeleteCommand { get; set; }
+        [JsonIgnore]
+        public ICommand SceneDuplicateCommand { get; set; }
 
     }
 }

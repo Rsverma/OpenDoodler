@@ -68,6 +68,8 @@
                                 <MenuItem Header="Move Left" Icon="{materialDesign:PackIcon arrowleft}" Command="{Binding SceneLeftCommand}"/>
                                 <MenuItem Header="Move Right" Icon="{materialDesign:PackIcon arrowright}" Command="{Binding SceneRightCommand}"/>
                                 <Separator />
+                                <MenuItem Header="Duplicate" Icon="{materialDesign:PackIcon shape}" Command="{Binding SceneDuplicateCommand}"/>
+                                <Separator />
                                 <MenuItem Header="Delete"  Icon="{materialDesign:PackIcon delete}" Command="{Binding SceneDeleteCommand}"/>
                             </ContextMenu>
                         </Border.ContextMenu>

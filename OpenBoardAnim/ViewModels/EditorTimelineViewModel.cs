@@ -89,6 +89,7 @@ namespace OpenBoardAnim.ViewModels
                     item.SceneLeftAction = SceneLeftHandler;
                     item.SceneRightAction = SceneRightHandler;
                     item.SceneDeleteAction = SceneDeleteHandler;
+                    item.SceneDuplicateAction = SceneDuplicateHandler;
                 }
                 _addScene = _scenes.LastOrDefault();
                 SelectedScene = _scenes.FirstOrDefault();
@@ -132,6 +133,7 @@ namespace OpenBoardAnim.ViewModels
                     SceneDeleteAction = SceneDeleteHandler,
                     SceneLeftAction = SceneLeftHandler,
                     SceneRightAction = SceneRightHandler,
+                    SceneDuplicateAction = SceneDuplicateHandler,
                 };
                 _scenes.Insert(index - 1, newScene);
                 ++_addScene.Index;
@@ -203,6 +205,37 @@ namespace OpenBoardAnim.ViewModels
                     scene.Name = i.ToString();
                     scene.Index = i;
                 }
+            }
+            catch (Exception ex)
+            {
+                if (Logger.LogError(ex, LogAction.LogAndShow))
+                    throw;
+            }
+        }
+
+        private void SceneDuplicateHandler(SceneModel model)
+        {
+            try
+            {
+                if (model == null) return;
+                int position = Scenes.IndexOf(model);
+                if (position < 0) return;
+
+                SceneModel duplicate = model.Clone();
+                duplicate.SceneLeftAction = SceneLeftHandler;
+                duplicate.SceneRightAction = SceneRightHandler;
+                duplicate.SceneDeleteAction = SceneDeleteHandler;
+                duplicate.SceneDuplicateAction = SceneDuplicateHandler;
+
+                Scenes.Insert(position + 1, duplicate);
+                for (int i = 1; i < Scenes.Count; i++)
+                {
+                    SceneModel scene = Scenes[i - 1];
+                    scene.Name = i.ToString();
+                    scene.Index = i;
+                }
+
+                SelectedScene = duplicate;
             }
             catch (Exception ex)
             {
