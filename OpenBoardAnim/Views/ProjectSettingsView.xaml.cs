@@ -17,6 +17,7 @@ namespace OpenBoardAnim.Views
             InitializeComponent();
             EntranceStyleComboBox.ItemsSource = EnumHelper.EnumerateEnum<EntranceStyle>();
             AspectRatioComboBox.ItemsSource = EnumHelper.EnumerateEnum<AspectRatioPreset>();
+            SceneTransitionComboBox.ItemsSource = EnumHelper.EnumerateEnum<SceneTransition>();
         }
 
         private void StrokeColor_Click(object sender, RoutedEventArgs e)

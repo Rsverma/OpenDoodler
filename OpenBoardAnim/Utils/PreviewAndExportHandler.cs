@@ -24,6 +24,7 @@ namespace OpenBoardAnim.Utils
             {
                 if (project == null) return;
                 EntranceStyle entranceStyle = project.Settings?.EntranceStyle ?? EntranceStyle.HandDrawn;
+                SceneTransition sceneTransition = project.Settings?.SceneTransition ?? SceneTransition.None;
                 Brush strokeBrush = Brushes.Black;
                 try
                 {
@@ -47,7 +48,11 @@ namespace OpenBoardAnim.Utils
                 int index = 1;
                 for (int i = 0; i < project.Scenes.Count - 1; i++)
                 {
-                    canvas.Children.Clear();
+                    if (i > 0 && sceneTransition != SceneTransition.None)
+                        await PlaySceneTransition(canvas, sceneTransition);
+                    else
+                        canvas.Children.Clear();
+
                     if (entranceStyle == EntranceStyle.HandDrawn)
                     {
                         canvas.Children.Add(hand);
@@ -152,12 +157,59 @@ namespace OpenBoardAnim.Utils
             }
         }
 
+        // Plays a hard-cut alternative between the outgoing (fully-drawn) scene and the
+        // incoming (blank) one: lays a plain white rectangle over the existing content and
+        // animates it in (fading in, or wiping across) to obscure the old scene, rather than
+        // capturing/animating a bitmap snapshot of it - simpler and avoids relying on
+        // RenderTargetBitmap producing a usable capture of a canvas that isn't backed by an
+        // on-screen HWND during export. Runs in real time so frame-capture records it.
+        private static async Task PlaySceneTransition(Canvas canvas, SceneTransition transition)
+        {
+            if (canvas.Children.Count == 0)
+                return;
+
+            Rectangle overlay = new()
+            {
+                Fill = Brushes.White,
+                Width = canvas.Width,
+                Height = canvas.Height
+            };
+            Canvas.SetLeft(overlay, 0);
+            Canvas.SetTop(overlay, 0);
+            Canvas.SetZIndex(overlay, 1000);
+            canvas.Children.Add(overlay);
+
+            TimeSpan duration = TimeSpan.FromSeconds(0.6);
+            Storyboard storyboard = new();
+
+            if (transition == SceneTransition.Wipe)
+            {
+                overlay.Width = 0;
+                DoubleAnimation widthAnimation = new(0, canvas.Width, duration) { FillBehavior = FillBehavior.HoldEnd };
+                Storyboard.SetTarget(widthAnimation, overlay);
+                Storyboard.SetTargetProperty(widthAnimation, new PropertyPath(FrameworkElement.WidthProperty));
+                storyboard.Children.Add(widthAnimation);
+            }
+            else
+            {
+                overlay.Opacity = 0;
+                DoubleAnimation opacityAnimation = new(0, 1, duration) { FillBehavior = FillBehavior.HoldEnd };
+                Storyboard.SetTarget(opacityAnimation, overlay);
+                Storyboard.SetTargetProperty(opacityAnimation, new PropertyPath(UIElement.OpacityProperty));
+                storyboard.Children.Add(opacityAnimation);
+            }
+
+            storyboard.Begin();
+            await Task.Delay(duration);
+
+            canvas.Children.Clear();
+        }
+
         // Non-hand-drawn reveals for graphics that don't need the "drawn by hand" look.
         // Runs in real time (like the hand-drawn path animation) so the frame-capture
         // loop in VideoExporter, which samples the live canvas, records the motion.
-        private static Task AnimateElementEntrance(Canvas canvas, UIElement element, GraphicModelBase graphic, EntranceStyle style)
+        private static async Task AnimateElementEntrance(Canvas canvas, UIElement element, GraphicModelBase graphic, EntranceStyle style)
         {
-            var tcs = new TaskCompletionSource<bool>();
             Canvas.SetLeft(element, graphic.X);
             Canvas.SetTop(element, graphic.Y);
             canvas.Children.Add(element);
@@ -170,8 +222,8 @@ namespace OpenBoardAnim.Utils
                 frameworkElement.RenderTransformOrigin = new Point(0.5, 0.5);
                 frameworkElement.RenderTransform = new ScaleTransform(0, 0);
 
-                DoubleAnimation scaleXAnimation = new(0, 1, duration) { EasingFunction = new BackEase { EasingMode = EasingMode.EaseOut } };
-                DoubleAnimation scaleYAnimation = new(0, 1, duration) { EasingFunction = new BackEase { EasingMode = EasingMode.EaseOut } };
+                DoubleAnimation scaleXAnimation = new(0, 1, duration) { EasingFunction = new BackEase { EasingMode = EasingMode.EaseOut }, FillBehavior = FillBehavior.HoldEnd };
+                DoubleAnimation scaleYAnimation = new(0, 1, duration) { EasingFunction = new BackEase { EasingMode = EasingMode.EaseOut }, FillBehavior = FillBehavior.HoldEnd };
                 Storyboard.SetTarget(scaleXAnimation, frameworkElement);
                 Storyboard.SetTargetProperty(scaleXAnimation, new PropertyPath("RenderTransform.ScaleX"));
                 Storyboard.SetTarget(scaleYAnimation, frameworkElement);
@@ -182,20 +234,16 @@ namespace OpenBoardAnim.Utils
             else
             {
                 element.Opacity = 0;
-                DoubleAnimation opacityAnimation = new(0, 1, duration);
+                DoubleAnimation opacityAnimation = new(0, 1, duration) { FillBehavior = FillBehavior.HoldEnd };
                 Storyboard.SetTarget(opacityAnimation, element);
                 Storyboard.SetTargetProperty(opacityAnimation, new PropertyPath(UIElement.OpacityProperty));
                 storyboard.Children.Add(opacityAnimation);
             }
 
-            void OnCompleted(object sender, EventArgs e)
-            {
-                storyboard.Completed -= OnCompleted;
-                tcs.TrySetResult(true);
-            }
-            storyboard.Completed += OnCompleted;
+            // Wait out the real duration directly rather than relying on Storyboard.Completed -
+            // see PlaySceneTransition for why that event isn't trustworthy here.
             storyboard.Begin();
-            return tcs.Task;
+            await Task.Delay(duration);
         }
     }
 }

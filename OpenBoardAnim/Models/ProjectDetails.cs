@@ -79,6 +79,7 @@ namespace OpenBoardAnim.Models
                     StrokeColorHex = Settings.StrokeColorHex,
                     StrokeWidth = Settings.StrokeWidth,
                     EntranceStyle = Settings.EntranceStyle,
+                    SceneTransition = Settings.SceneTransition,
                     AspectRatio = Settings.AspectRatio
                 },
                 Scenes = Scenes.Select(s => s.Clone()).ToList(),
@@ -106,6 +107,13 @@ namespace OpenBoardAnim.Models
         Widescreen16x9,
         Vertical9x16,
         Square1x1
+    }
+
+    public enum SceneTransition
+    {
+        None,
+        Crossfade,
+        Wipe
     }
 
     public class ProjectSettings :ObservableObject
@@ -150,6 +158,17 @@ namespace OpenBoardAnim.Models
             set
             {
                 _entranceStyle = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private SceneTransition _sceneTransition = SceneTransition.None;
+        public SceneTransition SceneTransition
+        {
+            get { return _sceneTransition; }
+            set
+            {
+                _sceneTransition = value;
                 OnPropertyChanged();
             }
         }

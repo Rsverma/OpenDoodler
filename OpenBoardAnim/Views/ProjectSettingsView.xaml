@@ -125,6 +125,14 @@
                     <ComboBox x:Name="AspectRatioComboBox" Style="{StaticResource SettingsComboBoxStyle}" SelectedItem="{Binding Settings.AspectRatio, Mode=TwoWay}"/>
                 </StackPanel>
             </Border>
+
+            <Border Style="{StaticResource SettingsCardStyle}">
+                <StackPanel>
+                    <TextBlock Text="Scene Transitions" Style="{StaticResource SettingsSectionTitleStyle}"/>
+                    <TextBlock Text="How the canvas changes when moving from one scene to the next." Style="{StaticResource SettingsHintStyle}"/>
+                    <ComboBox x:Name="SceneTransitionComboBox" Style="{StaticResource SettingsComboBoxStyle}" SelectedItem="{Binding Settings.SceneTransition, Mode=TwoWay}"/>
+                </StackPanel>
+            </Border>
         </StackPanel>
     </ScrollViewer>
 </UserControl>

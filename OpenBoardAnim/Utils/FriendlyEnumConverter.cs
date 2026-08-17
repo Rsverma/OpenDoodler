@@ -18,6 +18,7 @@ namespace OpenBoardAnim.Utils
                 "Widescreen16x9" => "Widescreen (16:9)",
                 "Vertical9x16" => "Vertical (9:16)",
                 "Square1x1" => "Square (1:1)",
+                "None" => "None (Hard Cut)",
                 _ => value?.ToString()
             };
         }
