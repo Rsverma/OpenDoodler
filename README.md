@@ -19,18 +19,21 @@
 
 ## Key Features
 
-* Simple launch page to create new projects or select an existing project
-* Project Window to work on an animation
-* Import svg images for animation
-* Add text graphic for animation
-* Preview animation
+* Launch page to create a new project or pick up a recent one, with unsaved-changes protection
+* Editor canvas to compose SVG and text graphics, with drag, resize, and reorder
+* Stroke-by-stroke hand-drawn animation with configurable stroke color/width, plus Fade In / Pop In as alternate entrance styles
+* Scene timeline: add, reorder, duplicate, and delete scenes, with hard-cut, crossfade, or wipe transitions between them
+* Undo/redo
+* Project Settings: board type, background music, stroke styling, entrance style, aspect ratio (16:9 / 9:16 / 1:1), and scene transitions
+* In-app preview and MP4 video export (background music mixed in) with progress reporting and cancellation
+* Keyboard shortcuts for undo/redo, save, new/open project, delete, and nudging the selected graphic
 ![](https://github.com/Rsverma/OpenDoodler/blob/main/OpenBoardAnim/Resources/Animation.gif)
 ## Upcoming Features
-* Project creation window with common feature set modification
-
-## Wishlist
-* Audio Track integration
-* Video Export
+* Configurable hand/pen (choose a hand skin, pen color, or turn the hand off entirely)
+* Snapping/alignment guides while dragging graphics on the canvas
+* Camera pan/zoom (Ken Burns-style focus moves)
+* Animated GIF export alongside MP4
+* A proper draggable-playhead timeline spanning the whole project
 
 ## How To Use
 
