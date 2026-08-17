@@ -32,7 +32,7 @@
             <StackPanel Orientation="Vertical">
                 <TextBlock Margin="0,20,0,10" Text="Action" Style="{StaticResource TextBlockTitle}" HorizontalAlignment="Center"/>
                 <StackPanel Orientation="Horizontal">
-                    <Button Style="{StaticResource ButtonSuccess}" Command="{Binding SaveProjectCommand}">Save</Button>
+                    <Button Style="{StaticResource ButtonSuccess}" Command="{Binding SaveProjectCommand}" ToolTip="Ctrl+S">Save</Button>
                     <Button Margin="10 10" Style="{StaticResource ButtonPrimary}" Command="{Binding PreviewProjectCommand}">Preview</Button>
                     <Button Command="{Binding ExportProjectCommand}">Export</Button>
                     <Button Margin="10 10" Style="{StaticResource ButtonDanger}" Command="{Binding CloseProjectCommand}">Close</Button>
@@ -84,7 +84,7 @@
             <StackPanel Orientation="Horizontal" Grid.Row="2" Margin="0 10">
                 <Button Command="{Binding MoveUpCommand}">Move Up</Button>
                 <Button Margin="5 0 0 0" Command="{Binding MoveDownCommand}">Move Down</Button>
-                <Button Margin="60 0" Style="{StaticResource ButtonDanger}" Command="{Binding DeleteItemCommand}" ToolTip="Delete Item" Content="{materialDesign:PackIcon Delete}"/>
+                <Button Margin="60 0" Style="{StaticResource ButtonDanger}" Command="{Binding DeleteItemCommand}" ToolTip="Delete Item (Del)" Content="{materialDesign:PackIcon Delete}"/>
             </StackPanel>
         </Grid>
     </Border>

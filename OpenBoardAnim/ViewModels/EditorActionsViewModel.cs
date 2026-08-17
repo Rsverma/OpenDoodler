@@ -42,6 +42,7 @@ namespace OpenBoardAnim.ViewModels
                 DeleteItemCommand = new RelayCommand(execute: o => DeleteItem(), canExecute: o => SelectedGraphic != null);
                 MoveUpCommand = new RelayCommand(execute: o => MoveUp(), canExecute: o => SelectedGraphic != null);
                 MoveDownCommand = new RelayCommand(execute: o => MoveDown(), canExecute: o => SelectedGraphic != null);
+                NudgeSelectedGraphicCommand = new RelayCommand(execute: o => NudgeSelectedGraphic((string)o), canExecute: o => SelectedGraphic != null);
                 LaunchSceneSettingsCommand = new RelayCommand(execute: o => LaunchSceneSettings(), canExecute: o => CurrentScene != null);
                 LaunchProjectSettingsCommand = new RelayCommand(execute: o => LaunchProjectSettings(), canExecute: o => true);
             }
@@ -122,6 +123,27 @@ namespace OpenBoardAnim.ViewModels
             {
                 if (SelectedGraphic != null)
                     CurrentScene?.Graphics.Remove(SelectedGraphic);
+            }
+            catch (Exception ex)
+            {
+                if (Logger.LogError(ex, LogAction.LogAndShow))
+                    throw;
+            }
+        }
+
+        private void NudgeSelectedGraphic(string direction)
+        {
+            try
+            {
+                if (SelectedGraphic == null) return;
+                double step = Keyboard.Modifiers.HasFlag(ModifierKeys.Shift) ? 10 : 1;
+                switch (direction)
+                {
+                    case "Left": SelectedGraphic.X -= step; break;
+                    case "Right": SelectedGraphic.X += step; break;
+                    case "Up": SelectedGraphic.Y -= step; break;
+                    case "Down": SelectedGraphic.Y += step; break;
+                }
             }
             catch (Exception ex)
             {
@@ -322,6 +344,7 @@ namespace OpenBoardAnim.ViewModels
         public ICommand DeleteItemCommand { get; set; }
         public ICommand MoveUpCommand { get; set; }
         public ICommand MoveDownCommand { get; set; }
+        public ICommand NudgeSelectedGraphicCommand { get; set; }
         public ICommand SaveProjectCommand { get; set; }
         public ICommand ExportProjectCommand { get; set; }
         public ICommand CancelExportCommand { get; set; }

@@ -11,6 +11,22 @@
         WindowState="Maximized"
         Closing="Window_Closing"
         mc:Ignorable="d" MinHeight="650" MinWidth="1200">
+    <hc:Window.InputBindings>
+        <KeyBinding Key="Z" Modifiers="Control" Command="{Binding UndoCommand}"/>
+        <KeyBinding Key="Y" Modifiers="Control" Command="{Binding RedoCommand}"/>
+        <KeyBinding Key="N" Modifiers="Control" Command="{Binding NewProjectCommand}"/>
+        <KeyBinding Key="O" Modifiers="Control" Command="{Binding OpenProjectCommand}"/>
+        <KeyBinding Key="S" Modifiers="Control" Command="{Binding Navigation.CurrentView.Actions.SaveProjectCommand}"/>
+        <KeyBinding Key="Delete" Command="{Binding Navigation.CurrentView.Actions.DeleteItemCommand}"/>
+        <KeyBinding Key="Left" Command="{Binding Navigation.CurrentView.Actions.NudgeSelectedGraphicCommand}" CommandParameter="Left"/>
+        <KeyBinding Key="Right" Command="{Binding Navigation.CurrentView.Actions.NudgeSelectedGraphicCommand}" CommandParameter="Right"/>
+        <KeyBinding Key="Up" Command="{Binding Navigation.CurrentView.Actions.NudgeSelectedGraphicCommand}" CommandParameter="Up"/>
+        <KeyBinding Key="Down" Command="{Binding Navigation.CurrentView.Actions.NudgeSelectedGraphicCommand}" CommandParameter="Down"/>
+        <KeyBinding Key="Left" Modifiers="Shift" Command="{Binding Navigation.CurrentView.Actions.NudgeSelectedGraphicCommand}" CommandParameter="Left"/>
+        <KeyBinding Key="Right" Modifiers="Shift" Command="{Binding Navigation.CurrentView.Actions.NudgeSelectedGraphicCommand}" CommandParameter="Right"/>
+        <KeyBinding Key="Up" Modifiers="Shift" Command="{Binding Navigation.CurrentView.Actions.NudgeSelectedGraphicCommand}" CommandParameter="Up"/>
+        <KeyBinding Key="Down" Modifiers="Shift" Command="{Binding Navigation.CurrentView.Actions.NudgeSelectedGraphicCommand}" CommandParameter="Down"/>
+    </hc:Window.InputBindings>
     <hc:Window.NonClientAreaContent>
         <Grid VerticalAlignment="Stretch">
             <Grid.ColumnDefinitions>
@@ -29,14 +45,15 @@
                 </Button>
                 <Menu FontSize="15" VerticalAlignment="Center">
                     <MenuItem Header="File">
-                        <MenuItem Header="New Project" Icon="{materialDesign:PackIcon FilePlus}" Command="{Binding NewProjectCommand}"/>
-                        <MenuItem Header="Open Project" Icon="{materialDesign:PackIcon FolderOpen}" Command="{Binding OpenProjectCommand}"/>
+                        <MenuItem Header="New Project" Icon="{materialDesign:PackIcon FilePlus}" Command="{Binding NewProjectCommand}" InputGestureText="Ctrl+N"/>
+                        <MenuItem Header="Open Project" Icon="{materialDesign:PackIcon FolderOpen}" Command="{Binding OpenProjectCommand}" InputGestureText="Ctrl+O"/>
+                        <MenuItem Header="Save Project" Icon="{materialDesign:PackIcon ContentSave}" Command="{Binding Navigation.CurrentView.Actions.SaveProjectCommand}" InputGestureText="Ctrl+S"/>
                         <Separator/>
                         <MenuItem Header="Exit" Icon="{materialDesign:PackIcon Logout}" Command="{Binding ExitCommand}"/>
                     </MenuItem>
                     <MenuItem Header="Edit">
-                        <MenuItem Header="Undo" Icon="{materialDesign:PackIcon Undo}" Command="{Binding UndoCommand}"/>
-                        <MenuItem Header="Redo" Icon="{materialDesign:PackIcon Redo}" Command="{Binding RedoCommand}"/>
+                        <MenuItem Header="Undo" Icon="{materialDesign:PackIcon Undo}" Command="{Binding UndoCommand}" InputGestureText="Ctrl+Z"/>
+                        <MenuItem Header="Redo" Icon="{materialDesign:PackIcon Redo}" Command="{Binding RedoCommand}" InputGestureText="Ctrl+Y"/>
                     </MenuItem>
                     <MenuItem Header="Help">
                         <MenuItem Header="About" Icon="{materialDesign:PackIcon Info}"/>
