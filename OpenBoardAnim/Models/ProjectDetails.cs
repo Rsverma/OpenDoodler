@@ -41,6 +41,18 @@ namespace OpenBoardAnim.Models
         }
 
         public List<SceneModel> Scenes { get; set; }
+
+        public ProjectDetails Clone()
+        {
+            return new ProjectDetails
+            {
+                Title = Title,
+                CreatedOn = CreatedOn,
+                Path = Path,
+                Settings = Settings == null ? null : new ProjectSettings { BoardType = Settings.BoardType },
+                Scenes = Scenes.Select(s => s.Clone()).ToList()
+            };
+        }
     }
     public enum BoardType
     {

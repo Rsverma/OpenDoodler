@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Windows.Input;
+using System.Windows.Threading;
 
 namespace OpenBoardAnim.ViewModels
 {
@@ -14,7 +15,7 @@ namespace OpenBoardAnim.ViewModels
         private INavigationService _navigation;
         private readonly IPubSubService _pubSub;
         private EditorActionsViewModel actions;
-        private readonly Timer _snapshotTimer;
+        private readonly DispatcherTimer _snapshotTimer;
         private readonly StateSnapshotService _stateSnapshotService;
 
         public EditorViewModel(INavigationService navigation,
@@ -30,13 +31,15 @@ namespace OpenBoardAnim.ViewModels
                 _navigation = navigation;
                 _pubSub = pubSub;
                 _pubSub.Subscribe(SubTopic.ProjectLaunched, ProjectLaunchedHandler);
+                _pubSub.Subscribe(SubTopic.ProjectStateRestored, ProjectStateRestoredHandler);
                 SwitchToLaunchCommand = new RelayCommand(execute: SwitchToLaunchHandler, canExecute: o => true);
                 Actions = actions;
                 Canvas = canvas;
                 Library = library;
                 Timeline = timeline;
                 _stateSnapshotService = stateSnapshotService;
-                _snapshotTimer = new Timer(SaveProjectSnapshot,null,2000,2000);
+                _snapshotTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(2) };
+                _snapshotTimer.Tick += SaveProjectSnapshot;
             }
             catch (Exception ex)
             {
@@ -46,7 +49,7 @@ namespace OpenBoardAnim.ViewModels
 
         }
 
-        private void SaveProjectSnapshot(object state)
+        private void SaveProjectSnapshot(object sender, EventArgs e)
         {
             if(actions?.Project != null)
             {
@@ -58,6 +61,7 @@ namespace OpenBoardAnim.ViewModels
         {
             try
             {
+                _snapshotTimer.Stop();
                 Navigation.NavigateTo<LaunchViewModel>();
             }
             catch (Exception ex)
@@ -72,15 +76,35 @@ namespace OpenBoardAnim.ViewModels
             try
             {
                 ProjectDetails project = (ProjectDetails)obj;
-                Actions.Project = project;
                 _stateSnapshotService.Clear();
-                Timeline.Scenes = new BindingList<SceneModel>(project.Scenes);
+                LoadProjectIntoEditor(project);
+                _snapshotTimer.Start();
             }
             catch (Exception ex)
             {
                 if (Logger.LogError(ex, LogAction.LogAndShow))
                     throw;
             }
+        }
+
+        private void ProjectStateRestoredHandler(object obj)
+        {
+            try
+            {
+                ProjectDetails project = (ProjectDetails)obj;
+                LoadProjectIntoEditor(project);
+            }
+            catch (Exception ex)
+            {
+                if (Logger.LogError(ex, LogAction.LogAndShow))
+                    throw;
+            }
+        }
+
+        private void LoadProjectIntoEditor(ProjectDetails project)
+        {
+            Actions.Project = project;
+            Timeline.Scenes = new BindingList<SceneModel>(project.Scenes);
         }
 
         public ICommand SwitchToLaunchCommand { get; set; }

@@ -31,8 +31,8 @@
                         <MenuItem Header="Exit" Icon="{materialDesign:PackIcon Logout}"/>
                     </MenuItem>
                     <MenuItem Header="Edit">
-                        <MenuItem Header="Undo" Icon="{materialDesign:PackIcon Undo}"/>
-                        <MenuItem Header="Redo" Icon="{materialDesign:PackIcon Redo}"/>
+                        <MenuItem Header="Undo" Icon="{materialDesign:PackIcon Undo}" Command="{Binding UndoCommand}"/>
+                        <MenuItem Header="Redo" Icon="{materialDesign:PackIcon Redo}" Command="{Binding RedoCommand}"/>
                     </MenuItem>
                     <MenuItem Header="Help">
                         <MenuItem Header="About" Icon="{materialDesign:PackIcon Info}"/>

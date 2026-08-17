@@ -6,14 +6,18 @@ namespace OpenBoardAnim.ViewModels
 {
     public class MainViewModel : ViewModel
     {
+        private readonly IPubSubService _pubSub;
+        private readonly StateSnapshotService _stateSnapshotService;
         private INavigationService _navigation;
         private string _title;
         private string _userName;
 
-        public MainViewModel(INavigationService navService)
+        public MainViewModel(INavigationService navService, IPubSubService pubSub, StateSnapshotService stateSnapshotService)
         {
             try
             {
+                _pubSub = pubSub;
+                _stateSnapshotService = stateSnapshotService;
                 Title = "Open Board Animator";
                 UserName = "RSV";
                 Navigation = navService;
@@ -23,6 +27,12 @@ namespace OpenBoardAnim.ViewModels
                 NavigateToEditorCommand = new RelayCommand(
                     execute: o => { Navigation.NavigateTo<EditorViewModel>(); },
                     canExecute: o => true);
+                UndoCommand = new RelayCommand(
+                    execute: o => RestoreState(_stateSnapshotService.Undo()),
+                    canExecute: o => _stateSnapshotService.CanUndo);
+                RedoCommand = new RelayCommand(
+                    execute: o => RestoreState(_stateSnapshotService.Redo()),
+                    canExecute: o => _stateSnapshotService.CanRedo);
                 NavigateToLaunchCommand.Execute(this);
             }
             catch (Exception ex)
@@ -31,8 +41,17 @@ namespace OpenBoardAnim.ViewModels
                     throw;
             }
         }
+
+        private void RestoreState(Models.ProjectDetails project)
+        {
+            if (project != null)
+                _pubSub.Publish(SubTopic.ProjectStateRestored, project);
+        }
+
         public RelayCommand NavigateToLaunchCommand { get; set; }
         public RelayCommand NavigateToEditorCommand { get; set; }
+        public RelayCommand UndoCommand { get; set; }
+        public RelayCommand RedoCommand { get; set; }
         public INavigationService Navigation
         {
             get => _navigation;

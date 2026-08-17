@@ -1,4 +1,5 @@
-﻿using OpenBoardAnim.Models;
+using OpenBoardAnim.Models;
+using System.Text.Json;
 
 namespace OpenBoardAnim.Services
 {
@@ -6,46 +7,58 @@ namespace OpenBoardAnim.Services
     {
         private readonly Stack<ProjectDetails> undoStack;
         private readonly Stack<ProjectDetails> redoStack;
+        private ProjectDetails current;
+        private string currentJson;
+
         public StateSnapshotService()
         {
             undoStack = new Stack<ProjectDetails>();
             redoStack = new Stack<ProjectDetails>();
         }
+
+        public bool CanUndo => undoStack.Count > 0;
+        public bool CanRedo => redoStack.Count > 0;
+
         public void SaveState(ProjectDetails project)
         {
-            if(undoStack.Count > 0)
-            {
-                var lastState = undoStack.Peek();
-                if (lastState.Equals(project))
-                    return;
-            }
-            undoStack.Push(project);
+            if (project == null) return;
+
+            string json = JsonSerializer.Serialize(project);
+            if (json == currentJson) return;
+
+            if (current != null)
+                undoStack.Push(current);
+            current = project.Clone();
+            currentJson = json;
             redoStack.Clear();
         }
+
         public ProjectDetails Undo()
         {
-            if (undoStack.Count > 0)
-            {
-                var state = undoStack.Pop();
-                redoStack.Push(state);
-                return state;
-            }
-            return null;
+            if (!CanUndo) return null;
+
+            redoStack.Push(current);
+            current = undoStack.Pop();
+            currentJson = JsonSerializer.Serialize(current);
+            return current.Clone();
         }
+
         public ProjectDetails Redo()
         {
-            if (redoStack.Count > 0)
-            {
-                var state = redoStack.Pop();
-                undoStack.Push(state);
-                return state;
-            }
-            return null;
+            if (!CanRedo) return null;
+
+            undoStack.Push(current);
+            current = redoStack.Pop();
+            currentJson = JsonSerializer.Serialize(current);
+            return current.Clone();
         }
+
         public void Clear()
         {
             undoStack.Clear();
             redoStack.Clear();
+            current = null;
+            currentJson = null;
         }
     }
 }

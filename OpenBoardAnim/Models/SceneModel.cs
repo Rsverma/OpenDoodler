@@ -47,6 +47,7 @@ namespace OpenBoardAnim.Models
             return new SceneModel
             {
                 Name = Name,
+                Index = Index,
                 Graphics = new BindingList<GraphicModelBase>(Graphics.Select(x=>x.Clone()).ToList()),
             };
         }
