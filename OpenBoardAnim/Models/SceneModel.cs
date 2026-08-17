@@ -56,7 +56,19 @@ namespace OpenBoardAnim.Models
                 Name = Name,
                 Index = Index,
                 Graphics = new BindingList<GraphicModelBase>(Graphics.Select(x=>x.Clone()).ToList()),
+                VoiceoverPath = VoiceoverPath,
             };
+        }
+
+        private string _voiceoverPath;
+        public string VoiceoverPath
+        {
+            get { return _voiceoverPath; }
+            set
+            {
+                _voiceoverPath = value;
+                OnPropertyChanged();
+            }
         }
 
         private string _name;

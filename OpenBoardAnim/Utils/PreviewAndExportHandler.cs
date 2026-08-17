@@ -2,6 +2,7 @@
 using OpenBoardAnim.Utilities;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -20,6 +21,7 @@ namespace OpenBoardAnim.Utils
         public static async Task RunAnimationsOnCanvas(ProjectDetails project, Canvas canvas, bool isExport, IProgress<ExportProgressInfo> progress = null, string outputVideoPath = null, CancellationToken cancellationToken = default)
         {
             VideoExporter exporter = null;
+            MediaPlayer voiceoverPlayer = null;
             try
             {
                 if (project == null) return;
@@ -38,10 +40,16 @@ namespace OpenBoardAnim.Utils
                 {
                     Source = new BitmapImage(new Uri("pack://application:,,,/Resources/pencil.png"))
                 };
+                // Cues collected as scenes start, in real (wall-clock) time - handed to the
+                // exporter so it can delay each voiceover clip into place when muxing, since
+                // export doesn't play audio live (frame capture is visual-only).
+                List<SceneAudioCue> sceneAudioCues = new();
+                Stopwatch sceneClock = Stopwatch.StartNew();
                 if (isExport)
                 {
-                    exporter = new(canvas, 30, outputVideoPath, project.AudioPath, project.AudioVolume);
+                    exporter = new(canvas, 30, outputVideoPath, project.AudioPath, project.AudioVolume, sceneAudioCues);
                     exporter.StartCapture();
+                    sceneClock.Restart();
                 }
                 int totalGraphics = project.Scenes.Sum(s => s.Graphics?.Count ?? 0);
                 int processedGraphics = 0;
@@ -63,6 +71,25 @@ namespace OpenBoardAnim.Utils
                     }
                     SceneModel scene = project.Scenes[i];
                     if (scene == null) continue;
+
+                    bool hasVoiceover = !string.IsNullOrWhiteSpace(scene.VoiceoverPath) && System.IO.File.Exists(scene.VoiceoverPath);
+                    if (isExport)
+                    {
+                        if (hasVoiceover)
+                            sceneAudioCues.Add(new SceneAudioCue(scene.VoiceoverPath, sceneClock.Elapsed.TotalSeconds));
+                    }
+                    else
+                    {
+                        voiceoverPlayer?.Close();
+                        voiceoverPlayer = null;
+                        if (hasVoiceover)
+                        {
+                            voiceoverPlayer = new MediaPlayer();
+                            voiceoverPlayer.Open(new Uri(scene.VoiceoverPath));
+                            voiceoverPlayer.Play();
+                        }
+                    }
+
                     for (int j = 0; j < scene.Graphics.Count; j++)
                     {
                         cancellationToken.ThrowIfCancellationRequested();
@@ -154,6 +181,7 @@ namespace OpenBoardAnim.Utils
             {
                 if (isExport && exporter != null)
                     await exporter.StopCapture(progress, cancellationToken);
+                voiceoverPlayer?.Close();
             }
         }
 

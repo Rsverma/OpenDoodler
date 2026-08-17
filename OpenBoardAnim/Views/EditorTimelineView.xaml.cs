@@ -1,4 +1,7 @@
-﻿using System;
+﻿using Microsoft.Win32;
+using OpenBoardAnim.Models;
+using OpenBoardAnim.Utilities;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -23,6 +26,39 @@ namespace OpenBoardAnim.Views
         public EditorTimelineView()
         {
             InitializeComponent();
+        }
+
+        private void SetVoiceover_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                if (sender is not MenuItem menuItem || menuItem.DataContext is not SceneModel scene) return;
+                OpenFileDialog openFileDialog = new()
+                {
+                    Filter = "Audio files (*.mp3;*.wav;*.wma;*.m4a;*.aac)|*.mp3;*.wav;*.wma;*.m4a;*.aac"
+                };
+                if (openFileDialog.ShowDialog() == true)
+                    scene.VoiceoverPath = openFileDialog.FileName;
+            }
+            catch (Exception ex)
+            {
+                if (Logger.LogError(ex, LogAction.LogAndShow))
+                    throw;
+            }
+        }
+
+        private void ClearVoiceover_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                if (sender is not MenuItem menuItem || menuItem.DataContext is not SceneModel scene) return;
+                scene.VoiceoverPath = null;
+            }
+            catch (Exception ex)
+            {
+                if (Logger.LogError(ex, LogAction.LogAndShow))
+                    throw;
+            }
         }
     }
 }

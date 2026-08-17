@@ -27,6 +27,7 @@
             <Path Data="{Binding TextGeometry}" Fill="Black" Stroke="Black" StrokeThickness="1"/>
         </DataTemplate>
         <utils:ResizeConverter x:Key="ResizeConverter"/>
+        <utils:NullToVisibilityConverter x:Key="NullToVisibilityConverter"/>
     </UserControl.Resources>
     <Border BorderThickness="0 1 0 0" BorderBrush="Black">
         <ListBox ScrollViewer.HorizontalScrollBarVisibility="Visible" Margin="10 20" BorderThickness="0"
@@ -62,13 +63,21 @@
                             </ListBox>
                             <TextBlock HorizontalAlignment="Stretch" VerticalAlignment="Stretch"></TextBlock>
                             <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" Text="{Binding Name}"></TextBlock>
+                            <materialDesign:PackIcon Kind="Microphone" Width="14" Height="14" Margin="0 0 4 4"
+                                                      HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                                                      Foreground="Black"
+                                                      ToolTip="This scene has a voiceover"
+                                                      Visibility="{Binding VoiceoverPath, Converter={StaticResource NullToVisibilityConverter}}"/>
                         </Grid>
                         <Border.ContextMenu>
-                            <ContextMenu Width="150">
+                            <ContextMenu Width="170">
                                 <MenuItem Header="Move Left" Icon="{materialDesign:PackIcon arrowleft}" Command="{Binding SceneLeftCommand}"/>
                                 <MenuItem Header="Move Right" Icon="{materialDesign:PackIcon arrowright}" Command="{Binding SceneRightCommand}"/>
                                 <Separator />
                                 <MenuItem Header="Duplicate" Icon="{materialDesign:PackIcon shape}" Command="{Binding SceneDuplicateCommand}"/>
+                                <Separator />
+                                <MenuItem Header="Set Voiceover..." Icon="{materialDesign:PackIcon microphone}" Click="SetVoiceover_Click"/>
+                                <MenuItem Header="Clear Voiceover" Icon="{materialDesign:PackIcon microphoneOff}" Click="ClearVoiceover_Click"/>
                                 <Separator />
                                 <MenuItem Header="Delete"  Icon="{materialDesign:PackIcon delete}" Command="{Binding SceneDeleteCommand}"/>
                             </ContextMenu>

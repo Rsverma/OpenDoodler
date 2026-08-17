@@ -1,5 +1,7 @@
+using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Text;
 using System.Threading;
 using System.Windows.Controls;
 using System.Windows.Media.Imaging;
@@ -9,6 +11,11 @@ using OpenBoardAnim.Utilities;
 
 namespace OpenBoardAnim.Utils
 {
+    // A per-scene voiceover clip and the real-time offset (seconds from the start of the
+    // export capture) at which its scene began - used to delay the clip into place when
+    // mixing it against the looped background music.
+    public record SceneAudioCue(string Path, double StartSeconds);
+
     public class VideoExporter
     {
         private Canvas _targetCanvas;
@@ -17,9 +24,10 @@ namespace OpenBoardAnim.Utils
         private string _outputVideoPath;
         private string _audioPath;
         private double _audioVolumePercent;
+        private List<SceneAudioCue> _sceneAudioCues;
         private int _frameCount;
 
-        public VideoExporter(Canvas canvas, int frameRate, string outputVideoPath, string audioPath = null, double audioVolumePercent = 100)
+        public VideoExporter(Canvas canvas, int frameRate, string outputVideoPath, string audioPath = null, double audioVolumePercent = 100, List<SceneAudioCue> sceneAudioCues = null)
         {
             try
             {
@@ -28,6 +36,7 @@ namespace OpenBoardAnim.Utils
                 _outputVideoPath = outputVideoPath;
                 _audioPath = audioPath;
                 _audioVolumePercent = audioVolumePercent;
+                _sceneAudioCues = sceneAudioCues ?? new List<SceneAudioCue>();
                 _tempImageDir = Path.Combine(Path.GetTempPath(), "WpfAnimationFrames");
                 if (Directory.Exists(_tempImageDir)) Directory.Delete(_tempImageDir, true); // Cleanup
                 Directory.CreateDirectory(_tempImageDir);
@@ -110,8 +119,13 @@ namespace OpenBoardAnim.Utils
                 string ffmpegPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "DLLs", "ffmpeg.exe");
 
                 bool hasAudio = !string.IsNullOrWhiteSpace(_audioPath) && File.Exists(_audioPath);
+                List<SceneAudioCue> voiceovers = _sceneAudioCues.Where(c => !string.IsNullOrWhiteSpace(c.Path) && File.Exists(c.Path)).ToList();
                 string arguments;
-                if (hasAudio)
+                if (!hasAudio && voiceovers.Count == 0)
+                {
+                    arguments = $"-y -framerate {_frameRate} -i \"{_tempImageDir}/frame_%04d.png\" -c:v libx264 -pix_fmt yuv420p \"{_outputVideoPath}\"";
+                }
+                else if (hasAudio && voiceovers.Count == 0)
                 {
                     // -stream_loop -1 on the (usually shorter) music track so it doesn't run
                     // out before the video does; -shortest then caps the output at the video's
@@ -123,7 +137,55 @@ namespace OpenBoardAnim.Utils
                 }
                 else
                 {
-                    arguments = $"-y -framerate {_frameRate} -i \"{_tempImageDir}/frame_%04d.png\" -c:v libx264 -pix_fmt yuv420p \"{_outputVideoPath}\"";
+                    // Mix the (optional) looped background music with one or more voiceover
+                    // clips, each delayed to the real-time offset its scene started at.
+                    StringBuilder inputs = new();
+                    inputs.Append($"-y -framerate {_frameRate} -i \"{_tempImageDir}/frame_%04d.png\" ");
+
+                    List<string> filterParts = new();
+                    List<string> mixLabels = new();
+                    int nextInputIndex = 1;
+
+                    if (hasAudio)
+                    {
+                        inputs.Append($"-stream_loop -1 -i \"{_audioPath}\" ");
+                        string volume = (_audioVolumePercent / 100.0).ToString(CultureInfo.InvariantCulture);
+                        filterParts.Add($"[{nextInputIndex}:a]volume={volume}[bg]");
+                        mixLabels.Add("[bg]");
+                        nextInputIndex++;
+                    }
+
+                    for (int i = 0; i < voiceovers.Count; i++)
+                    {
+                        inputs.Append($"-i \"{voiceovers[i].Path}\" ");
+                        int delayMs = Math.Max(0, (int)Math.Round(voiceovers[i].StartSeconds * 1000));
+                        filterParts.Add($"[{nextInputIndex}:a]adelay={delayMs}:all=1[vo{i}]");
+                        mixLabels.Add($"[vo{i}]");
+                        nextInputIndex++;
+                    }
+
+                    string finalAudioLabel;
+                    if (mixLabels.Count == 1)
+                    {
+                        finalAudioLabel = mixLabels[0];
+                    }
+                    else
+                    {
+                        filterParts.Add($"{string.Join("", mixLabels)}amix=inputs={mixLabels.Count}:duration=longest:dropout_transition=0[aout]");
+                        finalAudioLabel = "[aout]";
+                    }
+
+                    string filterComplex = string.Join(";", filterParts);
+
+                    // A background track loops forever, so it's always at least as long as the
+                    // video and -shortest safely caps the output at the video's length. Without
+                    // one, voiceover clips are typically shorter than the whole video, so
+                    // -shortest is skipped - ffmpeg then just lets the video continue silently
+                    // once the mixed audio runs out, instead of truncating the video early.
+                    string shortestFlag = hasAudio ? "-shortest " : "";
+                    arguments = inputs.ToString() +
+                        $"-filter_complex \"{filterComplex}\" -map 0:v:0 -map \"{finalAudioLabel}\" " +
+                        $"-c:v libx264 -pix_fmt yuv420p -c:a aac {shortestFlag}\"{_outputVideoPath}\"";
                 }
 
                 var processStartInfo = new ProcessStartInfo
