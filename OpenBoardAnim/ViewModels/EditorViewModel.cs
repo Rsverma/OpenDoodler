@@ -78,6 +78,7 @@ namespace OpenBoardAnim.ViewModels
                 ProjectDetails project = (ProjectDetails)obj;
                 _stateSnapshotService.Clear();
                 LoadProjectIntoEditor(project);
+                Actions.MarkProjectSaved();
                 _snapshotTimer.Start();
             }
             catch (Exception ex)

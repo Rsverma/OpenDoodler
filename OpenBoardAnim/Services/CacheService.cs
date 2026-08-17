@@ -63,10 +63,15 @@ namespace OpenBoardAnim.Services
 
         public ProjectDetails LoadProjectFromFile(RecentProjectModel model)
         {
+            return LoadProjectFromFile(model.FilePath);
+        }
+
+        public ProjectDetails LoadProjectFromFile(string filePath)
+        {
             ProjectDetails project = null;
             try
             {
-                string json = File.ReadAllText(model.FilePath);
+                string json = File.ReadAllText(filePath);
                 project = JsonSerializer.Deserialize<ProjectDetails>(json);
                 foreach (var s in project.Scenes)
                 {

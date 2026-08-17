@@ -5,6 +5,7 @@ using OpenBoardAnim.Services;
 using OpenBoardAnim.Utilities;
 using OpenBoardAnim.Utils;
 using System.ComponentModel;
+using System.Text.Json;
 using System.Threading;
 using System.Windows;
 using System.Windows.Input;
@@ -21,6 +22,7 @@ namespace OpenBoardAnim.ViewModels
         private readonly CacheService _cache;
         private readonly IDialogService _dialog;
         private CancellationTokenSource _exportCts;
+        private string _savedProjectJson;
 
         public EditorActionsViewModel(IPubSubService pubSub, INavigationService navigation, CacheService Cache,
             IDialogService dialog)
@@ -242,6 +244,7 @@ namespace OpenBoardAnim.ViewModels
                         return;
                 }
                 _cache.UpdateExistingProject(Project);
+                MarkProjectSaved();
             }
             catch (Exception ex)
             {
@@ -254,7 +257,10 @@ namespace OpenBoardAnim.ViewModels
         {
             try
             {
+                if (!ConfirmDiscardUnsavedChanges())
+                    return;
 
+                Project = null;
                 _navigation.NavigateTo<LaunchViewModel>();
             }
             catch (Exception ex)
@@ -264,7 +270,53 @@ namespace OpenBoardAnim.ViewModels
             }
         }
 
-        public ProjectDetails Project { get; set; }
+        // Baseline used to detect unsaved changes: set whenever a project is freshly
+        // loaded/created or successfully saved, left untouched across undo/redo so a
+        // restored state is only considered "clean" if it actually matches disk again.
+        public void MarkProjectSaved()
+        {
+            _savedProjectJson = Project == null ? null : JsonSerializer.Serialize(Project);
+        }
+
+        public bool HasUnsavedChanges => Project != null && JsonSerializer.Serialize(Project) != _savedProjectJson;
+
+        // Prompts to save/discard/cancel if there are unsaved changes. Returns true if
+        // it's safe to proceed (nothing to lose, changes were saved, or the user chose
+        // to discard), false if the caller should abort (user canceled, or chose to
+        // save but the save didn't actually complete, e.g. they canceled the file picker).
+        public bool ConfirmDiscardUnsavedChanges()
+        {
+            if (!HasUnsavedChanges)
+                return true;
+
+            MessageBoxResult result = MessageBox.Show(
+                "This project has unsaved changes. Save before continuing?",
+                "Unsaved Changes",
+                MessageBoxButton.YesNoCancel,
+                MessageBoxImage.Warning);
+
+            switch (result)
+            {
+                case MessageBoxResult.Yes:
+                    SaveProject();
+                    return !HasUnsavedChanges;
+                case MessageBoxResult.No:
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
+        private ProjectDetails _project;
+        public ProjectDetails Project
+        {
+            get => _project;
+            set
+            {
+                _project = value;
+                OnPropertyChanged();
+            }
+        }
         public ICommand CloseProjectCommand { get; set; }
         public ICommand DeleteItemCommand { get; set; }
         public ICommand MoveUpCommand { get; set; }

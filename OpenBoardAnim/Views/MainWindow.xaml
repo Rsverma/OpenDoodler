@@ -9,6 +9,7 @@
         xmlns:vm="clr-namespace:OpenBoardAnim.ViewModels"
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
         WindowState="Maximized"
+        Closing="Window_Closing"
         mc:Ignorable="d" MinHeight="650" MinWidth="1200">
     <hc:Window.NonClientAreaContent>
         <Grid VerticalAlignment="Stretch">
@@ -28,7 +29,10 @@
                 </Button>
                 <Menu FontSize="15" VerticalAlignment="Center">
                     <MenuItem Header="File">
-                        <MenuItem Header="Exit" Icon="{materialDesign:PackIcon Logout}"/>
+                        <MenuItem Header="New Project" Icon="{materialDesign:PackIcon FilePlus}" Command="{Binding NewProjectCommand}"/>
+                        <MenuItem Header="Open Project" Icon="{materialDesign:PackIcon FolderOpen}" Command="{Binding OpenProjectCommand}"/>
+                        <Separator/>
+                        <MenuItem Header="Exit" Icon="{materialDesign:PackIcon Logout}" Command="{Binding ExitCommand}"/>
                     </MenuItem>
                     <MenuItem Header="Edit">
                         <MenuItem Header="Undo" Icon="{materialDesign:PackIcon Undo}" Command="{Binding UndoCommand}"/>

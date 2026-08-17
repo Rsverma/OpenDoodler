@@ -1,4 +1,6 @@
 ﻿using HandyControl.Controls;
+using OpenBoardAnim.ViewModels;
+using System.ComponentModel;
 
 namespace OpenBoardAnim
 {
@@ -10,6 +12,12 @@ namespace OpenBoardAnim
         public MainWindow()
         {
             InitializeComponent();
+        }
+
+        private void Window_Closing(object sender, CancelEventArgs e)
+        {
+            if (DataContext is MainViewModel vm && !vm.ConfirmExit())
+                e.Cancel = true;
         }
     }
 }
