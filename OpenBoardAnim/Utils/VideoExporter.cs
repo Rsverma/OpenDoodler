@@ -1,4 +1,5 @@
-﻿using System.IO;
+using System.IO;
+using System.Threading;
 using System.Windows.Controls;
 using System.Windows.Media.Imaging;
 using System.Windows.Media;
@@ -13,7 +14,7 @@ namespace OpenBoardAnim.Utils
         private string _tempImageDir;
         private int _frameRate;
         private string _outputVideoPath;
-        private List<BitmapFrame> frames = [];
+        private int _frameCount;
 
         public VideoExporter(Canvas canvas, int frameRate, string outputVideoPath)
         {
@@ -40,12 +41,23 @@ namespace OpenBoardAnim.Utils
         }
 
         // Stop capturing and compile the video
-        public async Task StopCapture(IProgress<ExportProgressInfo> progress = null)
+        public async Task StopCapture(IProgress<ExportProgressInfo> progress = null, CancellationToken cancellationToken = default)
         {
             try
             {
                 CompositionTarget.Rendering -= OnRendering;
-                await Task.Run(() => CompileVideo(progress));
+
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    CleanupTempFrames();
+                    return;
+                }
+
+                await CompileVideo(progress, cancellationToken);
+            }
+            catch (OperationCanceledException)
+            {
+                CleanupTempFrames();
             }
             catch (Exception ex)
             {
@@ -54,6 +66,8 @@ namespace OpenBoardAnim.Utils
             }
         }
 
+        // Captures a single frame and writes it straight to disk instead of buffering
+        // every frame in memory - a long export can be thousands of ~8MB frames.
         private void OnRendering(object sender, EventArgs e)
         {
             try
@@ -64,9 +78,15 @@ namespace OpenBoardAnim.Utils
                             96, 96, PixelFormats.Pbgra32
                         );
                 rtb.Render(_targetCanvas);
-                BitmapFrame frame = BitmapFrame.Create(rtb);
-                frame.Freeze();
-                frames.Add(frame);
+
+                var encoder = new PngBitmapEncoder();
+                encoder.Frames.Add(BitmapFrame.Create(rtb));
+                string framePath = Path.Combine(_tempImageDir, $"frame_{_frameCount:D4}.png");
+                using (var stream = new FileStream(framePath, FileMode.Create))
+                {
+                    encoder.Save(stream);
+                }
+                _frameCount++;
             }
             catch (Exception ex)
             {
@@ -74,29 +94,15 @@ namespace OpenBoardAnim.Utils
                     throw;
             }
         }
-        private void CompileVideo(IProgress<ExportProgressInfo> progress)
+
+        private async Task CompileVideo(IProgress<ExportProgressInfo> progress, CancellationToken cancellationToken)
         {
+            Process process = null;
             try
             {
-                // Save as PNG
-                for (int currentFrame = 0; currentFrame < frames.Count; currentFrame++)
-                {
-                    var encoder = new PngBitmapEncoder();
-                    encoder.Frames.Add(frames[currentFrame]);
-                    string framePath = Path.Combine(_tempImageDir, $"frame_{currentFrame:D4}.png");
-                    using var stream = new FileStream(framePath, FileMode.Create);
-                    encoder.Save(stream);
+                progress?.Report(new ExportProgressInfo(85, "Encoding video..."));
 
-                    if (frames.Count > 0)
-                    {
-                        double pct = 80 + (currentFrame + 1) / (double)frames.Count * 15;
-                        progress?.Report(new ExportProgressInfo(pct, $"Writing frame {currentFrame + 1} of {frames.Count}..."));
-                    }
-                }
-
-                progress?.Report(new ExportProgressInfo(95, "Encoding video..."));
-
-                string ffmpegPath = "DLLs\\ffmpeg.exe"; // Path to FFmpeg
+                string ffmpegPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "DLLs", "ffmpeg.exe");
 
                 var processStartInfo = new ProcessStartInfo
                 {
@@ -106,18 +112,51 @@ namespace OpenBoardAnim.Utils
                     CreateNoWindow = true
                 };
 
-                using (var process = new Process { StartInfo = processStartInfo })
+                process = new Process { StartInfo = processStartInfo };
+                process.Start();
+
+                try
                 {
-                    process.Start();
-                    process.WaitForExit();
+                    await process.WaitForExitAsync(cancellationToken);
+                }
+                catch (OperationCanceledException)
+                {
+                    if (!process.HasExited)
+                        process.Kill();
+                    throw;
                 }
 
+                if (process.ExitCode != 0)
+                    throw new InvalidOperationException($"ffmpeg exited with code {process.ExitCode} while encoding \"{_outputVideoPath}\".");
+
+                CleanupTempFrames();
                 progress?.Report(new ExportProgressInfo(100, "Export complete"));
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
             }
             catch (Exception ex)
             {
                 if (Logger.LogError(ex, LogAction.LogAndThrow))
                     throw;
+            }
+            finally
+            {
+                process?.Dispose();
+            }
+        }
+
+        private void CleanupTempFrames()
+        {
+            try
+            {
+                if (Directory.Exists(_tempImageDir))
+                    Directory.Delete(_tempImageDir, true);
+            }
+            catch (Exception ex)
+            {
+                Logger.LogWarning($"Failed to clean up temp export frames at {_tempImageDir}: {ex.Message}");
             }
         }
     }

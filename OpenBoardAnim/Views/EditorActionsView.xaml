@@ -38,8 +38,9 @@
                     <Button Margin="10 10" Style="{StaticResource ButtonDanger}" Command="{Binding CloseProjectCommand}">Close</Button>
                 </StackPanel>
                 <StackPanel Orientation="Vertical" Margin="0 0 0 10" Visibility="{Binding IsExporting, Converter={StaticResource BoolToVisConverter}}">
-                    <ProgressBar Minimum="0" Maximum="100" Value="{Binding ExportProgressPercentage, Mode=OneWay}" Height="8"/>
+                    <ProgressBar Minimum="0" Maximum="100" Value="{Binding ExportProgressPercentage, Mode=OneWay}" Height="22"/>
                     <TextBlock Margin="0 4 0 0" Text="{Binding ExportStatusText}" HorizontalAlignment="Center" FontSize="11"/>
+                    <Button Margin="0 6 0 0" HorizontalAlignment="Center" Style="{StaticResource ButtonDanger}" Command="{Binding CancelExportCommand}">Cancel Export</Button>
                 </StackPanel>
                 <TextBlock Margin="0 10" Style="{StaticResource TextBlockSubTitle}" HorizontalAlignment="Left">Settings</TextBlock>
                 <StackPanel Orientation="Horizontal">

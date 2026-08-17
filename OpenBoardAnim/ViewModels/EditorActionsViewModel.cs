@@ -5,6 +5,7 @@ using OpenBoardAnim.Services;
 using OpenBoardAnim.Utilities;
 using OpenBoardAnim.Utils;
 using System.ComponentModel;
+using System.Threading;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Interop;
@@ -19,6 +20,7 @@ namespace OpenBoardAnim.ViewModels
         private readonly INavigationService _navigation;
         private readonly CacheService _cache;
         private readonly IDialogService _dialog;
+        private CancellationTokenSource _exportCts;
 
         public EditorActionsViewModel(IPubSubService pubSub, INavigationService navigation, CacheService Cache,
             IDialogService dialog)
@@ -33,6 +35,7 @@ namespace OpenBoardAnim.ViewModels
                 CloseProjectCommand = new RelayCommand(execute: o => CloseProject(), canExecute: o => true);
                 SaveProjectCommand = new RelayCommand(execute: o => SaveProject(), canExecute: o => true);
                 ExportProjectCommand = new RelayCommand(execute: o => ExportProject(), canExecute: o => !IsExporting);
+                CancelExportCommand = new RelayCommand(execute: o => _exportCts?.Cancel(), canExecute: o => IsExporting);
                 PreviewProjectCommand = new RelayCommand(execute: o => PreviewProject(), canExecute: o => true);
                 DeleteItemCommand = new RelayCommand(execute: o => DeleteItem(), canExecute: o => SelectedGraphic != null);
                 MoveUpCommand = new RelayCommand(execute: o => MoveUp(), canExecute: o => SelectedGraphic != null);
@@ -155,6 +158,7 @@ namespace OpenBoardAnim.ViewModels
                 ExportProgressPercentage = 0;
                 ExportStatusText = "Starting export...";
                 _pubSub.Publish(SubTopic.ProjectExporting, true);
+                _exportCts = new CancellationTokenSource();
 
                 var progress = new Progress<ExportProgressInfo>(p =>
                 {
@@ -183,10 +187,14 @@ namespace OpenBoardAnim.ViewModels
                     canvas.Arrange(new Rect(0, 0, canvas.Width, canvas.Height));
                     canvas.UpdateLayout();
                     //window.Show();
-                    await PreviewAndExportHandler.RunAnimationsOnCanvas(Project, canvas, true, progress, saveFileDialog.FileName);
+                    await PreviewAndExportHandler.RunAnimationsOnCanvas(Project, canvas, true, progress, saveFileDialog.FileName, _exportCts.Token);
                 }
 
                 Logger.LogMessage("Export complete", LogAction.LogAndShow);
+            }
+            catch (OperationCanceledException)
+            {
+                Logger.LogMessage("Export canceled", LogAction.LogAndShow);
             }
             catch (Exception ex)
             {
@@ -197,6 +205,8 @@ namespace OpenBoardAnim.ViewModels
             {
                 IsExporting = false;
                 _pubSub.Publish(SubTopic.ProjectExporting, false);
+                _exportCts?.Dispose();
+                _exportCts = null;
             }
         }
 
@@ -261,6 +271,7 @@ namespace OpenBoardAnim.ViewModels
         public ICommand MoveDownCommand { get; set; }
         public ICommand SaveProjectCommand { get; set; }
         public ICommand ExportProjectCommand { get; set; }
+        public ICommand CancelExportCommand { get; set; }
         public ICommand PreviewProjectCommand { get; set; }
         public ICommand LaunchSceneSettingsCommand { get; set; }
         public ICommand LaunchProjectSettingsCommand { get; set; }

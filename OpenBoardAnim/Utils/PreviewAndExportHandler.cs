@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -15,7 +16,7 @@ namespace OpenBoardAnim.Utils
 {
     public class PreviewAndExportHandler
     {
-        public static async Task RunAnimationsOnCanvas(ProjectDetails project, Canvas canvas, bool isExport, IProgress<ExportProgressInfo> progress = null, string outputVideoPath = null)
+        public static async Task RunAnimationsOnCanvas(ProjectDetails project, Canvas canvas, bool isExport, IProgress<ExportProgressInfo> progress = null, string outputVideoPath = null, CancellationToken cancellationToken = default)
         {
             VideoExporter exporter = null;
             try
@@ -44,8 +45,9 @@ namespace OpenBoardAnim.Utils
                     if (scene == null) continue;
                     for (int j = 0; j < scene.Graphics.Count; j++)
                     {
+                        cancellationToken.ThrowIfCancellationRequested();
                         GraphicModelBase graphic = scene.Graphics[j];
-                        await Task.Delay((int)graphic.Delay * 1000);
+                        await Task.Delay((int)graphic.Delay * 1000, cancellationToken);
                         List<Path> paths = [];
                         Geometry geometry = null;
                         UIElement element = null;
@@ -109,6 +111,10 @@ namespace OpenBoardAnim.Utils
                 canvas.Children.Remove(hand);
                 await Task.Delay(500);
             }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
             catch (Exception ex)
             {
                 if (Logger.LogError(ex, LogAction.LogAndThrow))
@@ -117,7 +123,7 @@ namespace OpenBoardAnim.Utils
             finally
             {
                 if (isExport && exporter != null)
-                    await exporter.StopCapture(progress);
+                    await exporter.StopCapture(progress, cancellationToken);
             }
         }
     }
