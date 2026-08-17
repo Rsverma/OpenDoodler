@@ -25,8 +25,13 @@ namespace OpenBoardAnim
             Logger.MessageLogged += (s, msg) => Dispatcher.Invoke(() => Growl.Info(msg));
             try
             {
+                using (var migrationContext = new DataContext())
+                {
+                    migrationContext.Database.Migrate();
+                }
+
                 IServiceCollection services = new ServiceCollection();
-                services.AddSingleton<DataContext>();
+                services.AddSingleton<Func<DataContext>>(_ => () => new DataContext());
                 services.AddSingleton<ShapeRepository>();
                 services.AddSingleton<GraphicRepository>();
                 services.AddSingleton<SceneRepository>();

@@ -1,4 +1,4 @@
-﻿using OpenBoardAnim.Utilities;
+using OpenBoardAnim.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,17 +9,18 @@ namespace OpenBoardAnim.Library.Repositories
 {
     public class ProjectRepository
     {
-        private readonly DataContext _context;
-        public ProjectRepository(DataContext context)
+        private readonly Func<DataContext> _contextFactory;
+        public ProjectRepository(Func<DataContext> contextFactory)
         {
-            _context = context;
+            _contextFactory = contextFactory;
         }
 
         public List<ProjectEntity> GetRecentProjects()
         {
             try
             {
-                return _context.Projects.ToList();
+                using var context = _contextFactory();
+                return context.Projects.ToList();
             }
             catch (Exception ex)
             {
@@ -33,8 +34,9 @@ namespace OpenBoardAnim.Library.Repositories
         {
             try
             {
-                _context.Projects.Add(entity);
-                _context.SaveChanges();
+                using var context = _contextFactory();
+                context.Projects.Add(entity);
+                context.SaveChanges();
             }
             catch (Exception ex)
             {
@@ -46,8 +48,9 @@ namespace OpenBoardAnim.Library.Repositories
         {
             try
             {
-                _context.Projects.Update(entity);
-                _context.SaveChanges();
+                using var context = _contextFactory();
+                context.Projects.Update(entity);
+                context.SaveChanges();
             }
             catch (Exception ex)
             {
@@ -60,11 +63,12 @@ namespace OpenBoardAnim.Library.Repositories
         {
             try
             {
-                ProjectEntity project = _context.Projects.Find(projectID);
+                using var context = _contextFactory();
+                ProjectEntity project = context.Projects.Find(projectID);
                 if (project != null)
                 {
-                    _context.Projects.Remove(project);
-                    _context.SaveChanges();
+                    context.Projects.Remove(project);
+                    context.SaveChanges();
                 }
             }
             catch (Exception ex)

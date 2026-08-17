@@ -1,21 +1,22 @@
-﻿using OpenBoardAnim.Utilities;
+using OpenBoardAnim.Utilities;
 
 namespace OpenBoardAnim.Library.Repositories
 {
     public class GraphicRepository
     {
-        private readonly DataContext _context;
+        private readonly Func<DataContext> _contextFactory;
 
-        public GraphicRepository(DataContext context)
+        public GraphicRepository(Func<DataContext> contextFactory)
         {
-            _context = context;
+            _contextFactory = contextFactory;
         }
         public List<GraphicEntity> GetAllGraphics(int lastId = 0)
         {
             List<GraphicEntity> nextPage = new List<GraphicEntity>();
             try
             {
-                nextPage = [.. _context.Graphics
+                using var context = _contextFactory();
+                nextPage = [.. context.Graphics
                         .OrderBy(b => b.GraphicID)
                         .Where(b => b.GraphicID > lastId)
                         .Take(20)];
@@ -33,7 +34,8 @@ namespace OpenBoardAnim.Library.Repositories
             List<GraphicEntity> nextPage = new List<GraphicEntity>();
             try
             {
-                nextPage = [.. _context.Graphics
+                using var context = _contextFactory();
+                nextPage = [.. context.Graphics
                         .OrderBy(b => b.GraphicID)
                         .Where(b => b.GraphicID > lastId && b.Name.Contains(searchText))
                         .Take(20)];
@@ -49,8 +51,9 @@ namespace OpenBoardAnim.Library.Repositories
         {
             try
             {
-                await _context.Graphics.AddRangeAsync(entities.Where(e => e != null));
-                await _context.SaveChangesAsync();
+                using var context = _contextFactory();
+                await context.Graphics.AddRangeAsync(entities.Where(e => e != null));
+                await context.SaveChangesAsync();
             }
             catch (Exception ex)
             {
@@ -62,8 +65,9 @@ namespace OpenBoardAnim.Library.Repositories
         {
             try
             {
-                _context.Graphics.Add(entity);
-                _context.SaveChanges();
+                using var context = _contextFactory();
+                context.Graphics.Add(entity);
+                context.SaveChanges();
             }
             catch (Exception ex)
             {
