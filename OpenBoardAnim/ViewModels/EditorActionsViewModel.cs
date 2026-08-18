@@ -54,6 +54,12 @@ namespace OpenBoardAnim.ViewModels
                 HideGraphicCommand = new RelayCommand(execute: o => HideSelectedGraphics(), canExecute: o => HasSelection);
                 GroupGraphicsCommand = new RelayCommand(execute: o => GroupSelectedGraphics(), canExecute: o => GetSelectedGraphicsOrFallback().Count >= 2);
                 UngroupGraphicsCommand = new RelayCommand(execute: o => UngroupSelectedGraphics(), canExecute: o => GetSelectedGraphicsOrFallback().Any(g => g.GroupId.HasValue));
+                AlignLeftCommand = new RelayCommand(execute: o => AlignLeft(), canExecute: o => GetSelectedGraphicsOrFallback().Count >= 2);
+                AlignRightCommand = new RelayCommand(execute: o => AlignRight(), canExecute: o => GetSelectedGraphicsOrFallback().Count >= 2);
+                AlignCenterCommand = new RelayCommand(execute: o => AlignCenter(), canExecute: o => GetSelectedGraphicsOrFallback().Count >= 2);
+                AlignTopCommand = new RelayCommand(execute: o => AlignTop(), canExecute: o => GetSelectedGraphicsOrFallback().Count >= 2);
+                AlignBottomCommand = new RelayCommand(execute: o => AlignBottom(), canExecute: o => GetSelectedGraphicsOrFallback().Count >= 2);
+                AlignMiddleCommand = new RelayCommand(execute: o => AlignMiddle(), canExecute: o => GetSelectedGraphicsOrFallback().Count >= 2);
                 LaunchSceneSettingsCommand = new RelayCommand(execute: o => LaunchSceneSettings(), canExecute: o => CurrentScene != null);
                 LaunchProjectSettingsCommand = new RelayCommand(execute: o => LaunchProjectSettings(), canExecute: o => true);
             }
@@ -329,6 +335,116 @@ namespace OpenBoardAnim.ViewModels
             }
         }
 
+        // Align commands below all read the full selection (including any locked members) to
+        // compute the shared reference line/bounds, but skip writing X/Y back onto a locked
+        // graphic - same "locked blocks repositioning, not the operation itself" rule Nudge
+        // already follows, so a locked item can still anchor where the others land.
+        private void AlignLeft()
+        {
+            try
+            {
+                List<GraphicModelBase> targets = GetSelectedGraphicsOrFallback();
+                if (targets.Count < 2) return;
+                double left = targets.Min(g => g.X);
+                foreach (GraphicModelBase graphic in targets)
+                    if (!graphic.IsLocked) graphic.X = left;
+            }
+            catch (Exception ex)
+            {
+                if (Logger.LogError(ex, LogAction.LogAndShow))
+                    throw;
+            }
+        }
+
+        private void AlignRight()
+        {
+            try
+            {
+                List<GraphicModelBase> targets = GetSelectedGraphicsOrFallback();
+                if (targets.Count < 2) return;
+                double right = targets.Max(g => g.X + g.Width);
+                foreach (GraphicModelBase graphic in targets)
+                    if (!graphic.IsLocked) graphic.X = right - graphic.Width;
+            }
+            catch (Exception ex)
+            {
+                if (Logger.LogError(ex, LogAction.LogAndShow))
+                    throw;
+            }
+        }
+
+        private void AlignCenter()
+        {
+            try
+            {
+                List<GraphicModelBase> targets = GetSelectedGraphicsOrFallback();
+                if (targets.Count < 2) return;
+                double left = targets.Min(g => g.X);
+                double right = targets.Max(g => g.X + g.Width);
+                double centerX = (left + right) / 2;
+                foreach (GraphicModelBase graphic in targets)
+                    if (!graphic.IsLocked) graphic.X = centerX - graphic.Width / 2;
+            }
+            catch (Exception ex)
+            {
+                if (Logger.LogError(ex, LogAction.LogAndShow))
+                    throw;
+            }
+        }
+
+        private void AlignTop()
+        {
+            try
+            {
+                List<GraphicModelBase> targets = GetSelectedGraphicsOrFallback();
+                if (targets.Count < 2) return;
+                double top = targets.Min(g => g.Y);
+                foreach (GraphicModelBase graphic in targets)
+                    if (!graphic.IsLocked) graphic.Y = top;
+            }
+            catch (Exception ex)
+            {
+                if (Logger.LogError(ex, LogAction.LogAndShow))
+                    throw;
+            }
+        }
+
+        private void AlignBottom()
+        {
+            try
+            {
+                List<GraphicModelBase> targets = GetSelectedGraphicsOrFallback();
+                if (targets.Count < 2) return;
+                double bottom = targets.Max(g => g.Y + g.Height);
+                foreach (GraphicModelBase graphic in targets)
+                    if (!graphic.IsLocked) graphic.Y = bottom - graphic.Height;
+            }
+            catch (Exception ex)
+            {
+                if (Logger.LogError(ex, LogAction.LogAndShow))
+                    throw;
+            }
+        }
+
+        private void AlignMiddle()
+        {
+            try
+            {
+                List<GraphicModelBase> targets = GetSelectedGraphicsOrFallback();
+                if (targets.Count < 2) return;
+                double top = targets.Min(g => g.Y);
+                double bottom = targets.Max(g => g.Y + g.Height);
+                double centerY = (top + bottom) / 2;
+                foreach (GraphicModelBase graphic in targets)
+                    if (!graphic.IsLocked) graphic.Y = centerY - graphic.Height / 2;
+            }
+            catch (Exception ex)
+            {
+                if (Logger.LogError(ex, LogAction.LogAndShow))
+                    throw;
+            }
+        }
+
         private void PreviewProject()
         {
             try
@@ -548,6 +664,12 @@ namespace OpenBoardAnim.ViewModels
         public ICommand HideGraphicCommand { get; set; }
         public ICommand GroupGraphicsCommand { get; set; }
         public ICommand UngroupGraphicsCommand { get; set; }
+        public ICommand AlignLeftCommand { get; set; }
+        public ICommand AlignRightCommand { get; set; }
+        public ICommand AlignCenterCommand { get; set; }
+        public ICommand AlignTopCommand { get; set; }
+        public ICommand AlignBottomCommand { get; set; }
+        public ICommand AlignMiddleCommand { get; set; }
         public ICommand SaveProjectCommand { get; set; }
         public ICommand ExportProjectCommand { get; set; }
         public ICommand CancelExportCommand { get; set; }

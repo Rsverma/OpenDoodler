@@ -82,7 +82,12 @@
                                 PreviewMouseRightButtonDown="GraphicItem_PreviewMouseRightButtonDown"
                                 Tag="{Binding DataContext.Actions, RelativeSource={RelativeSource AncestorType={x:Type local:EditorView}}}">
                     <ContentControl.ContextMenu>
-                        <ContextMenu Width="170">
+                        <!-- No explicit Width here (was 170) - letting the menu size to its own
+                             content avoids a mismatch between a narrower-than-content constrained
+                             width and the natural/measured width, which is the leading suspect for
+                             why the Align submenu below was opening with a large gap instead of
+                             flush against the main menu. -->
+                        <ContextMenu>
                             <MenuItem Header="Copy" Icon="{materialDesign:PackIcon ContentCopy}"
                                       Command="{Binding PlacementTarget.Tag.CopyGraphicCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
                             <MenuItem Header="Cut" Icon="{materialDesign:PackIcon ContentCut}"
@@ -99,6 +104,22 @@
                                       Command="{Binding PlacementTarget.Tag.GroupGraphicsCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
                             <MenuItem Header="Ungroup" Icon="{materialDesign:PackIcon Ungroup}"
                                       Command="{Binding PlacementTarget.Tag.UngroupGraphicsCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                            <Separator/>
+                            <MenuItem Header="Align">
+                                <MenuItem Header="Align Left" Icon="{materialDesign:PackIcon AlignHorizontalLeft}"
+                                          Command="{Binding PlacementTarget.Tag.AlignLeftCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                                <MenuItem Header="Align Center" Icon="{materialDesign:PackIcon AlignHorizontalCenter}"
+                                          Command="{Binding PlacementTarget.Tag.AlignCenterCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                                <MenuItem Header="Align Right" Icon="{materialDesign:PackIcon AlignHorizontalRight}"
+                                          Command="{Binding PlacementTarget.Tag.AlignRightCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                                <Separator/>
+                                <MenuItem Header="Align Top" Icon="{materialDesign:PackIcon AlignVerticalTop}"
+                                          Command="{Binding PlacementTarget.Tag.AlignTopCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                                <MenuItem Header="Align Middle" Icon="{materialDesign:PackIcon AlignVerticalCenter}"
+                                          Command="{Binding PlacementTarget.Tag.AlignMiddleCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                                <MenuItem Header="Align Bottom" Icon="{materialDesign:PackIcon AlignVerticalBottom}"
+                                          Command="{Binding PlacementTarget.Tag.AlignBottomCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                            </MenuItem>
                             <Separator/>
                             <MenuItem Header="Locked" IsCheckable="True" IsChecked="{Binding IsLocked, Mode=OneWay}"
                                       Command="{Binding PlacementTarget.Tag.ToggleLockCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
