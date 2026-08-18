@@ -1,8 +1,10 @@
-﻿using OpenBoardAnim.Models;
+﻿using OpenBoardAnim.Controls;
+using OpenBoardAnim.Models;
 using OpenBoardAnim.Utilities;
 using OpenBoardAnim.ViewModels;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -23,9 +25,86 @@ namespace OpenBoardAnim.Views
     /// </summary>
     public partial class EditorCanvasView : UserControl
     {
+        // Snap guides are drawn via an Adorner on the item-hosting Canvas rather than a second,
+        // independently-sized overlay element - an Adorner's OnRender coordinate space is
+        // guaranteed by WPF to exactly match AdornedElement's own local coordinate space (the
+        // same one graphics' X/Y already live in), which a hand-tracked sibling Canvas could
+        // only approximate and drifted out of alignment away from the top-left origin under
+        // WPF's per-element layout rounding.
+        private Canvas _itemsCanvas;
+        private SnapGuideAdorner _snapGuideAdorner;
+        private bool _isSubscribedToCanvasViewModel;
+
         public EditorCanvasView()
         {
             InitializeComponent();
+            Loaded += EditorCanvasView_Loaded;
+        }
+
+        private void EditorCanvasView_Loaded(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                if (_itemsCanvas == null)
+                {
+                    _itemsCanvas = FindDescendant<Canvas>(GraphicsListBox);
+                    AdornerLayer adornerLayer = _itemsCanvas == null ? null : AdornerLayer.GetAdornerLayer(_itemsCanvas);
+                    if (adornerLayer != null)
+                    {
+                        _snapGuideAdorner = new SnapGuideAdorner(_itemsCanvas);
+                        adornerLayer.Add(_snapGuideAdorner);
+                    }
+                }
+
+                if (!_isSubscribedToCanvasViewModel && DataContext is EditorCanvasViewModel canvasViewModel)
+                {
+                    canvasViewModel.PropertyChanged += CanvasViewModel_PropertyChanged;
+                    _isSubscribedToCanvasViewModel = true;
+                    UpdateSnapGuideAdorner(canvasViewModel);
+                }
+            }
+            catch (Exception ex)
+            {
+                if (Logger.LogError(ex, LogAction.LogAndShow))
+                    throw;
+            }
+        }
+
+        private void CanvasViewModel_PropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            try
+            {
+                bool isGuideProperty = e.PropertyName is nameof(EditorCanvasViewModel.IsSnapGuideXVisible)
+                    or nameof(EditorCanvasViewModel.SnapGuideX)
+                    or nameof(EditorCanvasViewModel.IsSnapGuideYVisible)
+                    or nameof(EditorCanvasViewModel.SnapGuideY);
+                if (isGuideProperty && sender is EditorCanvasViewModel canvasViewModel)
+                    UpdateSnapGuideAdorner(canvasViewModel);
+            }
+            catch (Exception ex)
+            {
+                if (Logger.LogError(ex, LogAction.LogAndShow))
+                    throw;
+            }
+        }
+
+        private void UpdateSnapGuideAdorner(EditorCanvasViewModel canvasViewModel)
+        {
+            _snapGuideAdorner?.UpdateGuides(canvasViewModel.IsSnapGuideXVisible, canvasViewModel.SnapGuideX,
+                canvasViewModel.IsSnapGuideYVisible, canvasViewModel.SnapGuideY);
+        }
+
+        private static T FindDescendant<T>(DependencyObject root) where T : DependencyObject
+        {
+            int count = VisualTreeHelper.GetChildrenCount(root);
+            for (int i = 0; i < count; i++)
+            {
+                DependencyObject child = VisualTreeHelper.GetChild(root, i);
+                if (child is T match) return match;
+                T found = FindDescendant<T>(child);
+                if (found != null) return found;
+            }
+            return null;
         }
 
         // Actions.SelectedGraphic (bound as ListBox.SelectedItem) only ever reflects one

@@ -45,6 +45,37 @@ namespace OpenBoardAnim.ViewModels
 
         public string ZoomPercentageText => $"{_zoomLevel * 100:0}%";
 
+        // Snap-guide line state, driven by MoveThumb while dragging a graphic - set/cleared
+        // per-axis rather than a single "is snapping" flag, since a drag can snap on X and Y
+        // independently (e.g. aligned horizontally with one graphic, not yet vertically with any).
+        private bool _isSnapGuideXVisible;
+        public bool IsSnapGuideXVisible
+        {
+            get { return _isSnapGuideXVisible; }
+            set { _isSnapGuideXVisible = value; OnPropertyChanged(); }
+        }
+
+        private double _snapGuideX;
+        public double SnapGuideX
+        {
+            get { return _snapGuideX; }
+            set { _snapGuideX = value; OnPropertyChanged(); }
+        }
+
+        private bool _isSnapGuideYVisible;
+        public bool IsSnapGuideYVisible
+        {
+            get { return _isSnapGuideYVisible; }
+            set { _isSnapGuideYVisible = value; OnPropertyChanged(); }
+        }
+
+        private double _snapGuideY;
+        public double SnapGuideY
+        {
+            get { return _snapGuideY; }
+            set { _snapGuideY = value; OnPropertyChanged(); }
+        }
+
         private BindingList<GraphicModelBase> _sceneGraphics;
 
         public BindingList<GraphicModelBase> SceneGraphics

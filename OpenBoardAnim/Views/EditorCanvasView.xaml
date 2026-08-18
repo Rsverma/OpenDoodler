@@ -50,7 +50,11 @@
          a plain ListBox otherwise picks up the dark skin's own background in Dark theme,
          which paints over (it's a child, so it renders after/on top of) the White canvas
          area behind it whenever the ItemsPanel Canvas itself doesn't fully cover it. -->
-    <ListBox ItemsSource="{Binding SceneGraphics}" SelectionMode="Extended" Background="White"
+    <!-- BorderThickness/Padding explicitly zeroed - HandyControl's themed ListBox style
+         otherwise adds a border/padding around the ItemsPresenter, shifting the item-hosting
+         Canvas below a few pixels down/right from the ListBox's own outer bounds. -->
+    <ListBox x:Name="GraphicsListBox" ItemsSource="{Binding SceneGraphics}" SelectionMode="Extended" Background="White"
+             BorderThickness="0" Padding="0"
              SelectedItem="{Binding DataContext.Actions.SelectedGraphic, RelativeSource={RelativeSource AncestorType={x:Type local:EditorView}}, Mode=TwoWay}"
              SelectionChanged="GraphicsListBox_SelectionChanged">
         <ItemsControl.ItemsPanel>
@@ -133,5 +137,5 @@
                 </ContentControl>
             </DataTemplate>
         </ListBox.ItemTemplate>
-    </ListBox>    
+    </ListBox>
 </UserControl>
