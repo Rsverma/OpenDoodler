@@ -1,13 +1,17 @@
 ﻿
 using OpenBoardAnim.Models;
 using OpenBoardAnim.Utilities;
+using OpenBoardAnim.Utils;
 using OpenBoardAnim.ViewModels;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
 
 namespace OpenBoardAnim.Views
 {
@@ -31,9 +35,57 @@ namespace OpenBoardAnim.Views
         // viewport is always exactly half of that padding, regardless of viewport size.
         private bool _hasCenteredCanvas;
 
+        private bool _isSubscribedToActions;
+
         public EditorView()
         {
             InitializeComponent();
+            Loaded += EditorView_Loaded;
+        }
+
+        private void EditorView_Loaded(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                if (_isSubscribedToActions) return;
+                if (DataContext is not EditorViewModel viewModel) return;
+
+                viewModel.Actions.ThumbnailCaptureRequested += Actions_ThumbnailCaptureRequested;
+                _isSubscribedToActions = true;
+            }
+            catch (Exception ex)
+            {
+                if (Logger.LogError(ex, LogAction.LogAndShow))
+                    throw;
+            }
+        }
+
+        // Best-effort - a failed thumbnail capture shouldn't block or interrupt a save. Always
+        // scene 1 (PreviewAndExportHandler.RenderSceneSnapshot's sceneIndex: 0) regardless of
+        // whichever scene is actually open in the editor right now - an off-screen render
+        // rather than a capture of the live canvas, so switching scenes to build it wouldn't
+        // even be visible anyway, but this also means it doesn't need CanvasContentHost at all.
+        private void Actions_ThumbnailCaptureRequested(ProjectDetails project)
+        {
+            try
+            {
+                if (project == null) return;
+                string thumbnailPath = ThumbnailHelper.GetThumbnailPath(project.Path);
+                if (thumbnailPath == null) return;
+
+                RenderTargetBitmap bitmap = PreviewAndExportHandler.RenderSceneSnapshot(project, 0);
+                if (bitmap == null) return;
+
+                Directory.CreateDirectory(Path.GetDirectoryName(thumbnailPath));
+                using FileStream stream = new(thumbnailPath, FileMode.Create);
+                PngBitmapEncoder encoder = new();
+                encoder.Frames.Add(BitmapFrame.Create(bitmap));
+                encoder.Save(stream);
+            }
+            catch (Exception ex)
+            {
+                Logger.LogWarning($"Failed to capture project thumbnail: {ex.Message}");
+            }
         }
 
         private void CanvasScrollViewer_SizeChanged(object sender, SizeChangedEventArgs e)

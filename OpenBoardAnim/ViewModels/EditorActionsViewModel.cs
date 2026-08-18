@@ -564,6 +564,9 @@ namespace OpenBoardAnim.ViewModels
                 _cache.UpdateExistingProject(Project);
                 MarkProjectSaved();
                 _cache.ClearBackup();
+                // The canvas itself is a View concern (EditorView owns it), so it's captured
+                // over there in response to this event rather than reached into from here.
+                ThumbnailCaptureRequested?.Invoke(Project);
             }
             catch (Exception ex)
             {
@@ -571,6 +574,12 @@ namespace OpenBoardAnim.ViewModels
                     throw;
             }
         }
+
+        // Raised after a successful save so EditorView can capture a fresh Launch-screen
+        // thumbnail from the live canvas - a plain event rather than IPubSubService since
+        // Views aren't DI-resolved in this app and so have no way to reach IPubSubService
+        // themselves; they only ever get it indirectly through a bound ViewModel like this one.
+        public event Action<ProjectDetails> ThumbnailCaptureRequested;
 
         private void CloseProject()
         {

@@ -355,6 +355,13 @@ namespace OpenBoardAnim.Services
             {
                 _pRepo.DeleteProject(model.ProjectID);
                 _ = RecentProjects.Remove(model);
+
+                string thumbnailPath = model.ThumbnailPath;
+                if (thumbnailPath != null && File.Exists(thumbnailPath))
+                {
+                    try { File.Delete(thumbnailPath); }
+                    catch (Exception ex) { Logger.LogWarning($"Failed to delete project thumbnail: {ex.Message}"); }
+                }
             }
             catch (Exception ex)
             {

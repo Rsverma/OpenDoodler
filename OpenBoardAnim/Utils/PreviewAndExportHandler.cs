@@ -268,6 +268,83 @@ namespace OpenBoardAnim.Utils
             }
         }
 
+        // Renders a single scene's graphics in their final (fully-drawn) state onto an
+        // off-screen Canvas and returns a snapshot bitmap - used for the Launch screen's
+        // project thumbnails, which always show scene 1 regardless of whichever scene happens
+        // to be open in the editor at save time. Deliberately an off-screen render rather than
+        // capturing the live editor canvas: it has zero visible impact (no flicker to a
+        // different scene) and works no matter which scene is currently open.
+        public static RenderTargetBitmap RenderSceneSnapshot(ProjectDetails project, int sceneIndex)
+        {
+            if (project?.Scenes == null || sceneIndex < 0 || sceneIndex >= project.Scenes.Count) return null;
+            SceneModel scene = project.Scenes[sceneIndex];
+            if (scene?.Graphics == null) return null;
+
+            double width = project.Settings?.EditorWidth ?? 0;
+            double height = project.Settings?.EditorHeight ?? 0;
+            if (width <= 0 || height <= 0) return null;
+
+            Canvas canvas = new() { Width = width, Height = height, Background = Brushes.White };
+            foreach (GraphicModelBase graphic in scene.Graphics)
+            {
+                if (!graphic.IsVisible) continue;
+                UIElement element = BuildStaticElement(graphic);
+                if (element == null) continue;
+                canvas.Children.Add(element);
+                Canvas.SetLeft(element, graphic.X);
+                Canvas.SetTop(element, graphic.Y);
+            }
+
+            canvas.Measure(new Size(width, height));
+            canvas.Arrange(new Rect(0, 0, width, height));
+            canvas.UpdateLayout();
+
+            RenderTargetBitmap bitmap = new((int)width, (int)height, 96, 96, PixelFormats.Pbgra32);
+            bitmap.Render(canvas);
+            bitmap.Freeze();
+            return bitmap;
+        }
+
+        // The same final-state (non-hand-drawn) visual construction as the entrance-animation
+        // branch above, factored out separately rather than shared - that branch is also
+        // responsible for building the hand-drawn stroke geometry and driving the entrance
+        // Storyboard, neither of which a static snapshot needs at all.
+        private static UIElement BuildStaticElement(GraphicModelBase graphic)
+        {
+            if (graphic is DrawingModel drawing)
+            {
+                DrawingGroup drawingGroup = drawing.ImgDrawingGroup?.Clone();
+                if (drawingGroup == null) return null;
+                Rect drawingBounds = drawingGroup.Bounds;
+                double drawingScale = drawingBounds.Width > 0 && drawingBounds.Height > 0
+                    ? Math.Min(drawing.Width / drawingBounds.Width, drawing.Height / drawingBounds.Height)
+                    : 1;
+                drawingGroup.Transform = new ScaleTransform(drawingScale, drawingScale);
+                return new Image { Source = new DrawingImage(drawingGroup) };
+            }
+            if (graphic is TextModel text)
+            {
+                TextBlock element = new()
+                {
+                    Text = text.RawText,
+                    Foreground = text.SelectedColor,
+                    FontFamily = text.SelectedFontFamily,
+                    FontSize = text.SelectedFontSize,
+                    FontStyle = text.SelectedFontStyle,
+                    FontWeight = text.SelectedFontWeight,
+                    TextDecorations = text.IsUnderline ? TextDecorations.Underline : null
+                };
+                Rect textBounds = text.TextGeometry?.Bounds ?? Rect.Empty;
+                double textScale = !textBounds.IsEmpty && textBounds.Width > 0 && textBounds.Height > 0
+                    ? Math.Min(text.Width / textBounds.Width, text.Height / textBounds.Height)
+                    : 1;
+                if (textScale != 1)
+                    element.RenderTransform = new ScaleTransform(textScale, textScale);
+                return element;
+            }
+            return null;
+        }
+
         // Rough per-scene duration estimate (sum of each visible graphic's Delay + Duration) -
         // the same approximation EditorTimelineViewModel already uses for the timeline's
         // proportional layout (hand-drawn stroke timing isn't known ahead of time, so this is

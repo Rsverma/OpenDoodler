@@ -1,4 +1,5 @@
 ﻿using OpenBoardAnim.Core;
+using OpenBoardAnim.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -34,6 +35,10 @@ namespace OpenBoardAnim.Models
         }
         public int ProjectID { get; set; }
         public string FilePath { get; set; }
+
+        // Computed rather than stored - see ThumbnailHelper for why the thumbnail cache is
+        // keyed off the project's own file path instead of ProjectID or a new DB column.
+        public string ThumbnailPath => ThumbnailHelper.GetThumbnailPath(FilePath);
         private string _title;
 
         public string Title

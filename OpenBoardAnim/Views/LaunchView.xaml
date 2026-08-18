@@ -1,11 +1,15 @@
-﻿<UserControl x:Class="OpenBoardAnim.Views.LaunchView"
+<UserControl x:Class="OpenBoardAnim.Views.LaunchView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
-             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:local="clr-namespace:OpenBoardAnim.Views"
-             mc:Ignorable="d" 
+             xmlns:utils="clr-namespace:OpenBoardAnim.Utils"
+             mc:Ignorable="d"
              d:DesignHeight="450" d:DesignWidth="800">
+    <UserControl.Resources>
+        <utils:ThumbnailPathToImageSourceConverter x:Key="ThumbnailConverter"/>
+    </UserControl.Resources>
     <StackPanel Orientation="Vertical">
         <Border Background="DarkSlateGray">
             <Grid Margin="80 10">
@@ -14,31 +18,44 @@
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
                 <TextBlock Foreground="White" Margin="2 0" FontWeight="Bold">Recent Projects</TextBlock>
-                <DataGrid ItemsSource="{Binding RecentProjects}" Grid.Row="1" Margin="2 5" AutoGenerateColumns="False" CanUserResizeColumns="False">
-                    
-                    <DataGrid.Columns>
-                        <DataGridTextColumn Header="Title" Binding="{Binding Title}" Width="*"/>
-                        <DataGridTextColumn Header="Created On" Binding="{Binding CreatedOn}" Width="SizeToCells" MinWidth="150"/>
-                        <DataGridTextColumn Header="Modified On" Binding="{Binding ModifiedOn}" Width="SizeToCells" MinWidth="150"/>
-                        <DataGridTextColumn Header="Length" Binding="{Binding Length}" Width="SizeToHeader"/>
-                        <DataGridTextColumn Header="Scenes" Binding="{Binding Scenes}" Width="SizeToHeader"/>
-                        <DataGridTemplateColumn Header="Edit" Width="auto">
-                            <DataGridTemplateColumn.CellTemplate>
-                                <DataTemplate>
-                                    <Button Style="{StaticResource ButtonSuccess}" Command="{Binding EditProjectCommand}">Edit</Button>
-                                </DataTemplate>
-                            </DataGridTemplateColumn.CellTemplate>
-                        </DataGridTemplateColumn>
-
-                        <DataGridTemplateColumn Header="Delete" Width="auto">
-                            <DataGridTemplateColumn.CellTemplate>
-                                <DataTemplate>
-                                    <Button Style="{StaticResource ButtonDanger}" Command="{Binding DeleteProjectCommand}">Delete</Button>
-                                </DataTemplate>
-                            </DataGridTemplateColumn.CellTemplate>
-                        </DataGridTemplateColumn>
-                    </DataGrid.Columns>
-                </DataGrid>
+                <!-- MaxHeight so a large recent-projects list scrolls internally instead of
+                     pushing "Create New Project" below down out of view - the DataGrid this
+                     replaced handled its own overflow the same way, just implicitly. -->
+                <ScrollViewer Grid.Row="1" Margin="2 5" VerticalScrollBarVisibility="Auto" MaxHeight="500">
+                    <ItemsControl ItemsSource="{Binding RecentProjects}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel Orientation="Horizontal"/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Width="220" Margin="0 0 12 12" Background="{DynamicResource RegionBrush}"
+                                        BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="4">
+                                    <StackPanel>
+                                        <!-- ThumbnailConverter returns null (leaving the Image
+                                             blank against this White backing) for a project
+                                             that predates this feature or whose capture
+                                             failed - captured fresh on every successful save,
+                                             see EditorView.xaml.cs's ThumbnailCaptureRequested
+                                             handler. -->
+                                        <Border Height="124" Background="White" CornerRadius="4 4 0 0" ClipToBounds="True">
+                                            <Image Source="{Binding ThumbnailPath, Converter={StaticResource ThumbnailConverter}}" Stretch="Uniform"/>
+                                        </Border>
+                                        <TextBlock Text="{Binding Title}" FontWeight="Bold" Margin="8 6 8 0" TextTrimming="CharacterEllipsis"/>
+                                        <TextBlock Margin="8 0 8 6" FontSize="11" Opacity="0.7">
+                                            <Run Text="{Binding Scenes, Mode=OneWay}"/><Run Text=" scenes · Created "/><Run Text="{Binding CreatedOn, Mode=OneWay, StringFormat=d}"/>
+                                        </TextBlock>
+                                        <StackPanel Orientation="Horizontal" Margin="8 0 8 8" HorizontalAlignment="Right">
+                                            <Button Style="{StaticResource ButtonSuccess}" Command="{Binding EditProjectCommand}" Margin="0 0 6 0" Padding="10 2">Edit</Button>
+                                            <Button Style="{StaticResource ButtonDanger}" Command="{Binding DeleteProjectCommand}" Padding="10 2">Delete</Button>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
             </Grid>
         </Border>
         <Border BorderThickness="1" BorderBrush="Black" Margin="80 10">
