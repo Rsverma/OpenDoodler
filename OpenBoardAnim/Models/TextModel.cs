@@ -85,6 +85,7 @@ namespace OpenBoardAnim.Models
                 SelectedFontStyle = SelectedFontStyle,
                 SelectedFontWeight = SelectedFontWeight,
                 IsLocked = IsLocked,
+                IsVisible = IsVisible,
                 IsUnderline = IsUnderline,
                 SelectedColorHex = SelectedColorHex
             };

@@ -61,7 +61,7 @@ namespace OpenBoardAnim.Utils
                     exporter.StartCapture();
                     sceneClock.Restart();
                 }
-                int totalGraphics = project.Scenes.Sum(s => s.Graphics?.Count ?? 0);
+                int totalGraphics = project.Scenes.Sum(s => s.Graphics?.Count(g => g.IsVisible) ?? 0);
                 int processedGraphics = 0;
                 int index = 1;
                 for (int i = 0; i < project.Scenes.Count - 1; i++)
@@ -111,6 +111,10 @@ namespace OpenBoardAnim.Utils
                     {
                         cancellationToken.ThrowIfCancellationRequested();
                         GraphicModelBase graphic = scene.Graphics[j];
+                        // A hidden layer contributes nothing to the animation sequence - not
+                        // even its own Delay - so the next visible graphic just waits for its
+                        // own configured delay as normal, as if the hidden one weren't there.
+                        if (!graphic.IsVisible) continue;
                         await Task.Delay((int)graphic.Delay * 1000, cancellationToken);
                         Geometry geometry = null;
                         UIElement element = null;

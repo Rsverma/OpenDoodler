@@ -30,6 +30,7 @@
         <utils:ResizeConverter x:Key="ResizeConverter"/>
         <utils:NullToVisibilityConverter x:Key="NullToVisibilityConverter"/>
         <utils:SubtractHalfConverter x:Key="SubtractHalfConverter"/>
+        <BooleanToVisibilityConverter x:Key="BoolToVisConverter"/>
 
         <Style x:Key="SceneCardBorderStyle" TargetType="Border">
             <Setter Property="BorderBrush" Value="Black"/>
@@ -135,6 +136,7 @@
                                                     <Setter Property="Canvas.Top" Value="{Binding Y,Converter={StaticResource ResizeConverter},Mode=OneWay,UpdateSourceTrigger=PropertyChanged}"/>
                                                     <Setter Property="Width" Value="{Binding Width,Converter={StaticResource ResizeConverter},Mode=OneWay,UpdateSourceTrigger=PropertyChanged}"/>
                                                     <Setter Property="Height" Value="{Binding Height,Converter={StaticResource ResizeConverter},Mode=OneWay,UpdateSourceTrigger=PropertyChanged}"/>
+                                                    <Setter Property="Visibility" Value="{Binding IsVisible, Converter={StaticResource BoolToVisConverter}}"/>
                                                 </Style>
                                             </ItemsControl.ItemContainerStyle>
                                             <ListBox.ItemTemplate>

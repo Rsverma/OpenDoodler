@@ -37,7 +37,8 @@ namespace OpenBoardAnim.Models
                 Duration = Duration,
                 ID = ID,
                 ResizeRatio = ResizeRatio,
-                IsLocked = IsLocked
+                IsLocked = IsLocked,
+                IsVisible = IsVisible
             };
         }
         protected void AddGraphicCommandHandler(object obj)

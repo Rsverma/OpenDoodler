@@ -11,6 +11,7 @@
              mc:Ignorable="d"
              d:DesignHeight="450" d:DesignWidth="800">
     <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisConverter"/>
 
         <!-- MoveThumb Template -->
         <ControlTemplate x:Key="MoveThumbTemplate" TargetType="{x:Type s:MoveThumb}">
@@ -70,6 +71,9 @@
             <Style TargetType="ListBoxItem">
                 <Setter Property="Canvas.Left" Value="{Binding X,Mode=TwoWay}"/>
                 <Setter Property="Canvas.Top" Value="{Binding Y,Mode=TwoWay}"/>
+                <!-- Collapsed (not just hidden) so a layer-panel visibility toggle removes it
+                     from hit-testing too, not just from view. -->
+                <Setter Property="Visibility" Value="{Binding IsVisible, Converter={StaticResource BoolToVisConverter}}"/>
             </Style>
         </ItemsControl.ItemContainerStyle>
         <ListBox.ItemTemplate>
@@ -98,6 +102,8 @@
                             <Separator/>
                             <MenuItem Header="Locked" IsCheckable="True" IsChecked="{Binding IsLocked, Mode=OneWay}"
                                       Command="{Binding PlacementTarget.Tag.ToggleLockCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                            <MenuItem Header="Hide" Icon="{materialDesign:PackIcon EyeOff}"
+                                      Command="{Binding PlacementTarget.Tag.HideGraphicCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
                             <Separator/>
                             <MenuItem Header="Delete" Icon="{materialDesign:PackIcon Delete}"
                                       Command="{Binding PlacementTarget.Tag.DeleteItemCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>

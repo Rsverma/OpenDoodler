@@ -47,33 +47,107 @@
                     <Button HorizontalAlignment="Left" Command="{Binding LaunchSceneSettingsCommand}">Scene Settings</Button>
                     <Button Margin="10 0" HorizontalAlignment="Left" Command="{Binding LaunchProjectSettingsCommand}">Project Settings</Button>
                 </StackPanel>
-                <TextBlock Margin="0 10" Style="{StaticResource TextBlockSubTitle}" HorizontalAlignment="Left">Items</TextBlock>
+                <TextBlock Margin="0 10" Style="{StaticResource TextBlockSubTitle}" HorizontalAlignment="Left">Layers</TextBlock>
             </StackPanel>
+            <!-- A layers panel for the current scene: every graphic in one list, each with its
+                 own lock/visibility toggle and a drag handle to reorder (which is also z-order -
+                 same list EditorCanvasView renders from) - instead of only being able to see or
+                 change one item's stacking/lock state at a time via Move Up/Down and the context
+                 menu. -->
             <ListBox Grid.Row="1" ScrollViewer.VerticalScrollBarVisibility="Visible" ItemsSource="{Binding SceneGraphics}"
-                     SelectedItem="{Binding SelectedGraphic}">
+                     SelectedItem="{Binding SelectedGraphic}" AllowDrop="True" HorizontalContentAlignment="Stretch"
+                     DragOver="LayersListBox_DragOver" Drop="LayersListBox_Drop">
+                <!-- Purely a visual flip - the underlying Graphics list (and its z-order meaning:
+                     later index paints on top on the canvas) is untouched, and so is the
+                     DataContext-based drag/drop reorder logic below, which never relied on visual
+                     position. This just makes the list SHOW the frontmost (highest-index) graphic
+                     at the top, matching the usual layers-panel convention, instead of at the
+                     bottom. Flipping the items panel specifically (not the whole ListBox) keeps
+                     the scrollbar/chrome the right way up. -->
+                <ListBox.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <!-- VerticalAlignment="Top" keeps the panel sized to its actual content
+                             instead of stretching to fill the ListBox's full viewport height -
+                             without it, the flip below mirrors around the center of that
+                             stretched (mostly empty) area instead of around the content itself,
+                             pinning a short list to the bottom instead of the top. -->
+                        <StackPanel VerticalAlignment="Top">
+                            <StackPanel.LayoutTransform>
+                                <ScaleTransform ScaleY="-1"/>
+                            </StackPanel.LayoutTransform>
+                        </StackPanel>
+                    </ItemsPanelTemplate>
+                </ListBox.ItemsPanel>
+                <ListBox.ItemContainerStyle>
+                    <Style TargetType="ListBoxItem">
+                        <!-- Counter-flips the panel-level flip above so each row's own content
+                             still renders upright. -->
+                        <Setter Property="LayoutTransform">
+                            <Setter.Value>
+                                <ScaleTransform ScaleY="-1"/>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </ListBox.ItemContainerStyle>
 
                 <ListBox.ItemTemplate>
                     <DataTemplate>
-                        <Border BorderBrush="Black" BorderThickness="1" Margin="0" Width="232" HorizontalAlignment="Stretch" Height="80" CornerRadius="10">
+                        <Border BorderBrush="Black" BorderThickness="1" Margin="0" HorizontalAlignment="Stretch" Height="80" CornerRadius="10">
                             <Grid Margin="5">
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="75"/>
+                                    <ColumnDefinition Width="20"/>
+                                    <ColumnDefinition Width="65"/>
                                     <ColumnDefinition Width="50"/>
                                     <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="24"/>
                                 </Grid.ColumnDefinitions>
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="*"/>
                                     <RowDefinition Height="*"/>
                                 </Grid.RowDefinitions>
-                                <ContentControl  Grid.RowSpan="2" Content="{Binding}"/>
-                                
-                                <TextBlock Grid.Column="1" VerticalAlignment="Center">Delay:</TextBlock>
-                                <hc:NumericUpDown Grid.Column="2" Height="30" HorizontalAlignment="Stretch" Style="{StaticResource NumericUpDownPlus}"
+
+                                <materialDesign:PackIcon Grid.RowSpan="2" Kind="DragVertical" VerticalAlignment="Center" Cursor="SizeAll"
+                                                          ToolTip="Drag to reorder (also changes stacking order on the canvas)"
+                                                          PreviewMouseLeftButtonDown="DragHandle_PreviewMouseLeftButtonDown"
+                                                          PreviewMouseMove="DragHandle_PreviewMouseMove"/>
+                                <ContentControl Grid.Column="1" Grid.RowSpan="2" Content="{Binding}"/>
+
+                                <TextBlock Grid.Column="2" VerticalAlignment="Center">Delay:</TextBlock>
+                                <hc:NumericUpDown Grid.Column="3" Height="30" HorizontalAlignment="Stretch" Style="{StaticResource NumericUpDownPlus}"
                                       Value="{Binding Delay,Mode=TwoWay}" Minimum="0" ValueFormat="0s"/>
 
-                                <TextBlock Grid.Column="1" Grid.Row="1" VerticalAlignment="Center">Duration:</TextBlock>
-                                <hc:NumericUpDown Grid.Column="2" Grid.Row="1" Height="30" HorizontalAlignment="Stretch" Style="{StaticResource NumericUpDownPlus}"
+                                <TextBlock Grid.Column="2" Grid.Row="1" VerticalAlignment="Center">Duration:</TextBlock>
+                                <hc:NumericUpDown Grid.Column="3" Grid.Row="1" Height="30" HorizontalAlignment="Stretch" Style="{StaticResource NumericUpDownPlus}"
                                         Value="{Binding Duration,Mode=TwoWay}" Minimum="1" ValueFormat="0s"/>
+
+                                <Button Grid.Column="4" Padding="2" Click="ToggleLock_Click" ToolTip="Lock/unlock this graphic">
+                                    <materialDesign:PackIcon Width="16" Height="16">
+                                        <materialDesign:PackIcon.Style>
+                                            <Style TargetType="materialDesign:PackIcon">
+                                                <Setter Property="Kind" Value="LockOpenVariant"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsLocked}" Value="True">
+                                                        <Setter Property="Kind" Value="Lock"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </materialDesign:PackIcon.Style>
+                                    </materialDesign:PackIcon>
+                                </Button>
+                                <Button Grid.Column="4" Grid.Row="1" Padding="2" Click="ToggleVisibility_Click" ToolTip="Show/hide this graphic">
+                                    <materialDesign:PackIcon Width="16" Height="16">
+                                        <materialDesign:PackIcon.Style>
+                                            <Style TargetType="materialDesign:PackIcon">
+                                                <Setter Property="Kind" Value="Eye"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsVisible}" Value="False">
+                                                        <Setter Property="Kind" Value="EyeOff"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </materialDesign:PackIcon.Style>
+                                    </materialDesign:PackIcon>
+                                </Button>
                             </Grid>
                         </Border>
 

@@ -51,6 +51,7 @@ namespace OpenBoardAnim.ViewModels
                 CutGraphicCommand = new RelayCommand(execute: o => CutSelectedGraphic(), canExecute: o => SelectedGraphic != null);
                 DuplicateGraphicCommand = new RelayCommand(execute: o => DuplicateSelectedGraphic(), canExecute: o => SelectedGraphic != null);
                 ToggleLockCommand = new RelayCommand(execute: o => ToggleLock(), canExecute: o => HasSelection);
+                HideGraphicCommand = new RelayCommand(execute: o => HideSelectedGraphics(), canExecute: o => HasSelection);
                 GroupGraphicsCommand = new RelayCommand(execute: o => GroupSelectedGraphics(), canExecute: o => GetSelectedGraphicsOrFallback().Count >= 2);
                 UngroupGraphicsCommand = new RelayCommand(execute: o => UngroupSelectedGraphics(), canExecute: o => GetSelectedGraphicsOrFallback().Any(g => g.GroupId.HasValue));
                 LaunchSceneSettingsCommand = new RelayCommand(execute: o => LaunchSceneSettings(), canExecute: o => CurrentScene != null);
@@ -91,6 +92,13 @@ namespace OpenBoardAnim.ViewModels
 
         }
 
+        // Canvas z-order is unchanged: later index still paints on top (WPF's natural
+        // last-in-list-renders-in-front rule). What changed is which direction "Move Up"/"Move
+        // Down" walk that index in - see the layers panel's LayoutTransform flip in
+        // EditorActionsView.xaml, which now shows the highest index (frontmost on canvas) at
+        // the top of the list, matching the usual layers-panel convention. So "Move Up" (toward
+        // the front, toward the top of the panel) now increases the index, and "Move Down" now
+        // decreases it - the reverse of before.
         private void MoveUp()
         {
             try
@@ -98,9 +106,9 @@ namespace OpenBoardAnim.ViewModels
                 if (SelectedGraphic == null || CurrentScene == null) return;
                 var model = SelectedGraphic;
                 int index = CurrentScene.Graphics.IndexOf(model);
-                if (index < 1) return;
+                if (index < 0 || index == CurrentScene.Graphics.Count - 1) return;
                 CurrentScene.Graphics.RemoveAt(index);
-                CurrentScene.Graphics.Insert(index - 1, model); SelectedGraphic = model;
+                CurrentScene.Graphics.Insert(index + 1, model); SelectedGraphic = model;
             }
             catch (Exception ex)
             {
@@ -116,9 +124,9 @@ namespace OpenBoardAnim.ViewModels
                 if (SelectedGraphic == null || CurrentScene == null) return;
                 var model = SelectedGraphic;
                 int index = CurrentScene.Graphics.IndexOf(model);
-                if (index < 0 || index == CurrentScene.Graphics.Count - 1) return;
+                if (index < 1) return;
                 CurrentScene.Graphics.RemoveAt(index);
-                CurrentScene.Graphics.Insert(index + 1, model); SelectedGraphic = model;
+                CurrentScene.Graphics.Insert(index - 1, model); SelectedGraphic = model;
             }
             catch (Exception ex)
             {
@@ -264,6 +272,24 @@ namespace OpenBoardAnim.ViewModels
                 bool lockAll = targets.Any(g => !g.IsLocked);
                 foreach (GraphicModelBase graphic in targets)
                     graphic.IsLocked = lockAll;
+            }
+            catch (Exception ex)
+            {
+                if (Logger.LogError(ex, LogAction.LogAndShow))
+                    throw;
+            }
+        }
+
+        // One-way hide, not a toggle - a hidden graphic is Collapsed on the canvas (see
+        // EditorCanvasView), so it can never be the thing right-clicked to re-show it there;
+        // re-showing only happens from the layers panel, which toggles each row individually.
+        private void HideSelectedGraphics()
+        {
+            try
+            {
+                List<GraphicModelBase> targets = GetSelectedGraphicsOrFallback();
+                foreach (GraphicModelBase graphic in targets)
+                    graphic.IsVisible = false;
             }
             catch (Exception ex)
             {
@@ -519,6 +545,7 @@ namespace OpenBoardAnim.ViewModels
         public ICommand CutGraphicCommand { get; set; }
         public ICommand DuplicateGraphicCommand { get; set; }
         public ICommand ToggleLockCommand { get; set; }
+        public ICommand HideGraphicCommand { get; set; }
         public ICommand GroupGraphicsCommand { get; set; }
         public ICommand UngroupGraphicsCommand { get; set; }
         public ICommand SaveProjectCommand { get; set; }
@@ -541,7 +568,23 @@ namespace OpenBoardAnim.ViewModels
         }
 
         public BindingList<GraphicModelBase> SceneGraphics => CurrentScene?.Graphics;
-        public GraphicModelBase SelectedGraphic { get; set; }
+
+        // Both EditorCanvasView's canvas ListBox and EditorActionsView's layers panel ListBox
+        // bind SelectedItem (TwoWay) to this same property, so selecting in either one is
+        // supposed to select in the other - but a plain auto-property never raises
+        // PropertyChanged, so writes from one binding's Target->Source direction never notify
+        // the other binding's Source->Target direction. A full property fixes that; this was
+        // the actual bug behind "select graphic from scene and from layer should be bound".
+        private GraphicModelBase _selectedGraphic;
+        public GraphicModelBase SelectedGraphic
+        {
+            get { return _selectedGraphic; }
+            set
+            {
+                _selectedGraphic = value;
+                OnPropertyChanged();
+            }
+        }
 
         private bool _isExporting;
         public bool IsExporting

@@ -102,6 +102,21 @@ namespace OpenBoardAnim.Models
             }
         }
 
+        // Hidden graphics are excluded from canvas rendering/hit-testing (Collapsed) and from
+        // preview/export entirely (PreviewAndExportHandler skips them outright, including their
+        // own Delay contribution to the scene's animation sequence) - matches a real "hide layer"
+        // rather than just an editor-only visual aid.
+        private bool _isVisible = true;
+        public bool IsVisible
+        {
+            get { return _isVisible; }
+            set
+            {
+                _isVisible = value;
+                OnPropertyChanged();
+            }
+        }
+
         // Graphics sharing the same GroupId are treated as one unit for selection/move/delete -
         // see EditorCanvasView's click handlers, which expand a click on any member to select
         // every graphic with the same GroupId. Null means ungrouped. Persisted (not JsonIgnore)
