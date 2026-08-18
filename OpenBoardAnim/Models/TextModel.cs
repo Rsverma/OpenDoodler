@@ -64,7 +64,8 @@ namespace OpenBoardAnim.Models
                 SelectedFontFamily = SelectedFontFamily,
                 SelectedFontSize = SelectedFontSize,
                 SelectedFontStyle = SelectedFontStyle,
-                SelectedFontWeight = SelectedFontWeight
+                SelectedFontWeight = SelectedFontWeight,
+                IsLocked = IsLocked
             };
         }
     }

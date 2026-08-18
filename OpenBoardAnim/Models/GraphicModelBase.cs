@@ -91,6 +91,17 @@ namespace OpenBoardAnim.Models
             }
         }
 
+        private bool _isLocked;
+        public bool IsLocked
+        {
+            get { return _isLocked; }
+            set
+            {
+                _isLocked = value;
+                OnPropertyChanged();
+            }
+        }
+
         public abstract GraphicModelBase Clone();
     }
 }

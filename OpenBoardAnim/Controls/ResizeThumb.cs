@@ -12,6 +12,7 @@ namespace OpenBoardAnim.Controls
         public ResizeThumb()
         {
             DragDelta += new DragDeltaEventHandler(this.ResizeThumb_DragDelta);
+            DragStarted += ResizeThumb_DragStarted;
             Loaded += ResizeThumb_Loaded;
         }
 
@@ -43,6 +44,35 @@ namespace OpenBoardAnim.Controls
             }
         }
 
+        // Re-baselines originalRatio/originalHeight from the persisted model at the start of
+        // EVERY drag gesture, not just once for the lifetime of this Thumb instance. Without
+        // this, a second resize on the same container (or the first resize after a scene
+        // switch recreates this container and ResizeThumb_Loaded restores the item's size
+        // from the model) could clamp against a stale aspect ratio/height captured from
+        // ActualHeight/ActualWidth before layout had caught up with the restored size -
+        // visually the box would barely change size while its content appeared to rescale
+        // inside it. Reading straight from the model sidesteps that layout-timing race.
+        private void ResizeThumb_DragStarted(object sender, DragStartedEventArgs e)
+        {
+            try
+            {
+                Control designerItem = this.DataContext as Control;
+                if (designerItem == null) return;
+                var model = designerItem.DataContext as GraphicModelBase;
+                if (model == null) return;
+
+                designerItem.Height = model.Height;
+                designerItem.Width = model.Width;
+                originalHeight = model.Height;
+                originalRatio = model.Height / model.Width;
+            }
+            catch (Exception ex)
+            {
+                if (Logger.LogError(ex, LogAction.LogAndShow))
+                    throw;
+            }
+        }
+
         private void ResizeThumb_DragDelta(object sender, DragDeltaEventArgs e)
         {
             try
@@ -51,15 +81,8 @@ namespace OpenBoardAnim.Controls
 
                 if (designerItem != null)
                 {
-                    if (originalRatio < 0)
-                    {
-                        designerItem.Height = designerItem.ActualHeight;
-                        designerItem.Width = designerItem.ActualWidth;
-                        originalRatio = designerItem.ActualHeight / designerItem.ActualWidth;
-                        originalHeight = designerItem.Height;
-                    }
                     var model = designerItem.DataContext as GraphicModelBase;
-                    if (model != null)
+                    if (model != null && !model.IsLocked)
                     {
                         double deltaVertical, deltaHorizontal;
 

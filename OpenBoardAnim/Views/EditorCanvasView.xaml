@@ -7,7 +7,8 @@
              xmlns:local="clr-namespace:OpenBoardAnim.Views"
              xmlns:s="clr-namespace:OpenBoardAnim.Controls"
              xmlns:models="clr-namespace:OpenBoardAnim.Models"
-             mc:Ignorable="d" 
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             mc:Ignorable="d"
              d:DesignHeight="450" d:DesignWidth="800">
     <UserControl.Resources>
 
@@ -34,26 +35,35 @@
             </Grid>
         </ControlTemplate>
         <DataTemplate DataType="{x:Type models:DrawingModel}">
-            <ContentControl Template="{StaticResource DesignerItemTemplate}">
-                <Image IsHitTestVisible="False">
-                    <Image.Source>
-                        <DrawingImage Drawing="{Binding ImgDrawingGroup}"/>
-                    </Image.Source>
-                </Image>
-            </ContentControl>
+            <Image IsHitTestVisible="False" Stretch="Uniform">
+                <Image.Source>
+                    <DrawingImage Drawing="{Binding ImgDrawingGroup}"/>
+                </Image.Source>
+            </Image>
         </DataTemplate>
         <DataTemplate DataType="{x:Type models:TextModel}">
-            <ContentControl Template="{StaticResource DesignerItemTemplate}">
-                <Path Data="{Binding TextGeometry}" Fill="Black" Stroke="Black" StrokeThickness="1"/>
-            </ContentControl>
+            <Path Data="{Binding TextGeometry}" Fill="Black" Stroke="Black" StrokeThickness="1" Stretch="Uniform"/>
         </DataTemplate>
     </UserControl.Resources>
-    <ListBox ItemsSource="{Binding SceneGraphics}" SelectionMode="Extended"
+    <!-- Background is explicit White rather than left to HandyControl's themed default -
+         a plain ListBox otherwise picks up the dark skin's own background in Dark theme,
+         which paints over (it's a child, so it renders after/on top of) the White canvas
+         area behind it whenever the ItemsPanel Canvas itself doesn't fully cover it. -->
+    <ListBox ItemsSource="{Binding SceneGraphics}" SelectionMode="Extended" Background="White"
              SelectedItem="{Binding DataContext.Actions.SelectedGraphic, RelativeSource={RelativeSource AncestorType={x:Type local:EditorView}}, Mode=TwoWay}"
              SelectionChanged="GraphicsListBox_SelectionChanged">
         <ItemsControl.ItemsPanel>
             <ItemsPanelTemplate>
-                <Canvas Background="White"/>
+                <!-- Canvas never auto-sizes to its content (it always measures to 0x0
+                     regardless of children), so without an explicit size it only rendered
+                     wherever an ancestor happened to stretch it to a non-zero size - visible
+                     once a graphic gave it something to be arranged around, collapsed back to
+                     nothing (revealing the surrounding SimplePanel's Gray/dark background)
+                     when the scene had none. Bind directly to the project's own canvas size
+                     so it's always correctly sized regardless of content. -->
+                <Canvas Background="White"
+                        Width="{Binding DataContext.Actions.Project.Settings.EditorWidth, RelativeSource={RelativeSource AncestorType={x:Type local:EditorView}}}"
+                        Height="{Binding DataContext.Actions.Project.Settings.EditorHeight, RelativeSource={RelativeSource AncestorType={x:Type local:EditorView}}}"/>
             </ItemsPanelTemplate>
         </ItemsControl.ItemsPanel>
         <ItemsControl.ItemContainerStyle>
@@ -64,7 +74,31 @@
         </ItemsControl.ItemContainerStyle>
         <ListBox.ItemTemplate>
             <DataTemplate>
-                <ContentControl Template="{StaticResource DesignerItemTemplate}" Content="{Binding}"/>
+                <ContentControl Template="{StaticResource DesignerItemTemplate}" Content="{Binding}"
+                                PreviewMouseRightButtonDown="GraphicItem_PreviewMouseRightButtonDown"
+                                Tag="{Binding DataContext.Actions, RelativeSource={RelativeSource AncestorType={x:Type local:EditorView}}}">
+                    <ContentControl.ContextMenu>
+                        <ContextMenu Width="170">
+                            <MenuItem Header="Copy" Icon="{materialDesign:PackIcon ContentCopy}"
+                                      Command="{Binding PlacementTarget.Tag.CopyGraphicCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                            <MenuItem Header="Cut" Icon="{materialDesign:PackIcon ContentCut}"
+                                      Command="{Binding PlacementTarget.Tag.CutGraphicCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                            <MenuItem Header="Duplicate" Icon="{materialDesign:PackIcon ContentDuplicate}"
+                                      Command="{Binding PlacementTarget.Tag.DuplicateGraphicCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                            <Separator/>
+                            <MenuItem Header="Move Up" Icon="{materialDesign:PackIcon ArrowUpBold}"
+                                      Command="{Binding PlacementTarget.Tag.MoveUpCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                            <MenuItem Header="Move Down" Icon="{materialDesign:PackIcon ArrowDownBold}"
+                                      Command="{Binding PlacementTarget.Tag.MoveDownCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                            <Separator/>
+                            <MenuItem Header="Locked" IsCheckable="True" IsChecked="{Binding IsLocked, Mode=OneWay}"
+                                      Command="{Binding PlacementTarget.Tag.ToggleLockCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                            <Separator/>
+                            <MenuItem Header="Delete" Icon="{materialDesign:PackIcon Delete}"
+                                      Command="{Binding PlacementTarget.Tag.DeleteItemCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                        </ContextMenu>
+                    </ContentControl.ContextMenu>
+                </ContentControl>
             </DataTemplate>
         </ListBox.ItemTemplate>
     </ListBox>    

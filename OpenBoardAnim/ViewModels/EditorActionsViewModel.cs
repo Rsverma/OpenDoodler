@@ -48,6 +48,9 @@ namespace OpenBoardAnim.ViewModels
                 NudgeSelectedGraphicCommand = new RelayCommand(execute: o => NudgeSelectedGraphic((string)o), canExecute: o => HasSelection);
                 CopyGraphicCommand = new RelayCommand(execute: o => CopySelectedGraphic(), canExecute: o => SelectedGraphic != null);
                 PasteGraphicCommand = new RelayCommand(execute: o => PasteGraphic(), canExecute: o => _copiedGraphic != null && CurrentScene != null);
+                CutGraphicCommand = new RelayCommand(execute: o => CutSelectedGraphic(), canExecute: o => SelectedGraphic != null);
+                DuplicateGraphicCommand = new RelayCommand(execute: o => DuplicateSelectedGraphic(), canExecute: o => SelectedGraphic != null);
+                ToggleLockCommand = new RelayCommand(execute: o => ToggleLock(), canExecute: o => SelectedGraphic != null);
                 LaunchSceneSettingsCommand = new RelayCommand(execute: o => LaunchSceneSettings(), canExecute: o => CurrentScene != null);
                 LaunchProjectSettingsCommand = new RelayCommand(execute: o => LaunchProjectSettings(), canExecute: o => true);
             }
@@ -162,6 +165,7 @@ namespace OpenBoardAnim.ViewModels
                 double step = Keyboard.Modifiers.HasFlag(ModifierKeys.Shift) ? 10 : 1;
                 foreach (GraphicModelBase graphic in targets)
                 {
+                    if (graphic.IsLocked) continue;
                     switch (direction)
                     {
                         case "Left": graphic.X -= step; break;
@@ -204,6 +208,54 @@ namespace OpenBoardAnim.ViewModels
                 pasted.Y += 20;
                 _pubSub.Publish(SubTopic.GraphicAdded, pasted);
                 SelectedGraphic = pasted;
+            }
+            catch (Exception ex)
+            {
+                if (Logger.LogError(ex, LogAction.LogAndShow))
+                    throw;
+            }
+        }
+
+        private void CutSelectedGraphic()
+        {
+            try
+            {
+                if (SelectedGraphic == null || CurrentScene == null) return;
+                _copiedGraphic = SelectedGraphic.Clone();
+                CurrentScene.Graphics.Remove(SelectedGraphic);
+            }
+            catch (Exception ex)
+            {
+                if (Logger.LogError(ex, LogAction.LogAndShow))
+                    throw;
+            }
+        }
+
+        private void DuplicateSelectedGraphic()
+        {
+            try
+            {
+                if (SelectedGraphic == null || CurrentScene == null) return;
+                GraphicModelBase duplicate = SelectedGraphic.Clone();
+                // Offset so the duplicate never lands exactly on top of the source graphic.
+                duplicate.X += 20;
+                duplicate.Y += 20;
+                _pubSub.Publish(SubTopic.GraphicAdded, duplicate);
+                SelectedGraphic = duplicate;
+            }
+            catch (Exception ex)
+            {
+                if (Logger.LogError(ex, LogAction.LogAndShow))
+                    throw;
+            }
+        }
+
+        private void ToggleLock()
+        {
+            try
+            {
+                if (SelectedGraphic == null) return;
+                SelectedGraphic.IsLocked = !SelectedGraphic.IsLocked;
             }
             catch (Exception ex)
             {
@@ -425,6 +477,9 @@ namespace OpenBoardAnim.ViewModels
         public ICommand NudgeSelectedGraphicCommand { get; set; }
         public ICommand CopyGraphicCommand { get; set; }
         public ICommand PasteGraphicCommand { get; set; }
+        public ICommand CutGraphicCommand { get; set; }
+        public ICommand DuplicateGraphicCommand { get; set; }
+        public ICommand ToggleLockCommand { get; set; }
         public ICommand SaveProjectCommand { get; set; }
         public ICommand ExportProjectCommand { get; set; }
         public ICommand CancelExportCommand { get; set; }

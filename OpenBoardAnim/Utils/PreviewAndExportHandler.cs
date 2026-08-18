@@ -117,7 +117,17 @@ namespace OpenBoardAnim.Utils
                         if (graphic is DrawingModel drawing)
                         {
                             DrawingGroup drawingGroup = drawing.ImgDrawingGroup.Clone();
-                            drawingGroup.Transform = new ScaleTransform(drawing.ResizeRatio, drawing.ResizeRatio);
+                            // Scale from the drawing's own untransformed bounds to its current
+                            // Height/Width - the same values the canvas resize handle edits -
+                            // rather than the separately-tracked ResizeRatio, which only reflects
+                            // the scale delta of the most recent resize gesture (not the
+                            // cumulative scale from the drawing's natural size) once a graphic has
+                            // been resized more than once.
+                            Rect drawingBounds = drawingGroup.Bounds;
+                            double drawingScale = drawingBounds.Width > 0 && drawingBounds.Height > 0
+                                ? Math.Min(drawing.Width / drawingBounds.Width, drawing.Height / drawingBounds.Height)
+                                : 1;
+                            drawingGroup.Transform = new ScaleTransform(drawingScale, drawingScale);
                             element = new Image
                             {
                                 Source = new DrawingImage(drawingGroup)
@@ -136,8 +146,22 @@ namespace OpenBoardAnim.Utils
                                 FontStyle = text.SelectedFontStyle,
                                 FontWeight = text.SelectedFontWeight
                             };
+                            // Same rationale as the DrawingModel branch above - scale from the
+                            // text's natural (unscaled) geometry bounds to its current
+                            // Height/Width so a canvas resize is reflected here too, since
+                            // TextBlock rendering otherwise has no relationship to those at all.
+                            Rect textBounds = text.TextGeometry?.Bounds ?? Rect.Empty;
+                            double textScale = !textBounds.IsEmpty && textBounds.Width > 0 && textBounds.Height > 0
+                                ? Math.Min(text.Width / textBounds.Width, text.Height / textBounds.Height)
+                                : 1;
+                            if (textScale != 1)
+                                element.RenderTransform = new ScaleTransform(textScale, textScale);
                             if (entranceStyle == EntranceStyle.HandDrawn)
-                                geometry = text.TextGeometry;
+                            {
+                                geometry = text.TextGeometry?.Clone();
+                                if (geometry != null)
+                                    geometry.Transform = new ScaleTransform(textScale, textScale);
+                            }
                         }
 
                         if (entranceStyle == EntranceStyle.HandDrawn && geometry != null)

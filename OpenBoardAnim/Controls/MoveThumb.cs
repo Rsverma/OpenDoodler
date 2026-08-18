@@ -81,6 +81,7 @@ namespace OpenBoardAnim.Controls
 
                 foreach (GraphicModelBase model in listBox.SelectedItems.Cast<GraphicModelBase>())
                 {
+                    if (model.IsLocked) continue;
                     model.X += e.HorizontalChange;
                     model.Y += e.VerticalChange;
                 }

@@ -48,6 +48,29 @@ namespace OpenBoardAnim.Views
             }
         }
 
+        // ListBoxItem doesn't select itself on right-click by default (only left-click does,
+        // via MoveThumb_PreviewMouseLeftButtonDown), so without this the context menu would
+        // act on whatever was selected before, not the item actually right-clicked.
+        private void GraphicItem_PreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            try
+            {
+                if (sender is not DependencyObject element) return;
+                if (FindAncestor<ListBoxItem>(element) is not ListBoxItem listBoxItem) return;
+                if (FindAncestor<ListBox>(listBoxItem) is not ListBox listBox) return;
+                if (!listBoxItem.IsSelected)
+                {
+                    listBox.SelectedItems.Clear();
+                    listBoxItem.IsSelected = true;
+                }
+            }
+            catch (Exception ex)
+            {
+                if (Logger.LogError(ex, LogAction.LogAndShow))
+                    throw;
+            }
+        }
+
         private static T FindAncestor<T>(DependencyObject current) where T : DependencyObject
         {
             while (current != null)

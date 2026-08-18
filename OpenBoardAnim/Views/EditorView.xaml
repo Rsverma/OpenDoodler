@@ -28,7 +28,15 @@
             <RowDefinition Height="auto" />
         </Grid.RowDefinitions>
         <hc:SimplePanel Margin="10 0" Background="Gray">
-            <ContentControl Margin="10" Width="{Binding Actions.Project.Settings.EditorWidth}" Height="{Binding Actions.Project.Settings.EditorHeight}" Content="{Binding Canvas}"/>
+            <!-- Border (not just a plain ContentControl) so this area is *guaranteed* to paint
+                 white regardless of how the ListBox/Canvas inside EditorCanvasView lays itself
+                 out - a bare ContentControl doesn't render Background at all under its default
+                 template, so it wasn't reliably covering this EditorWidth x EditorHeight
+                 rectangle on a blank scene, letting whatever's behind it (dark in Dark theme)
+                 show through instead. -->
+            <Border Margin="10" Width="{Binding Actions.Project.Settings.EditorWidth}" Height="{Binding Actions.Project.Settings.EditorHeight}" Background="White">
+                <ContentControl Content="{Binding Canvas}"/>
+            </Border>
         </hc:SimplePanel>
         <ContentControl Grid.Row="1" Margin="20 0" Height="216" Content="{Binding Timeline}"/>
         <Expander Name="DrawerLeft" Grid.Row="0" IsExpanded="True" Header="Library" ExpandDirection="Right" Background="{DynamicResource RegionBrush}"
