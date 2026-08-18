@@ -31,11 +31,11 @@
             <ContentControl Margin="10" Width="{Binding Actions.Project.Settings.EditorWidth}" Height="{Binding Actions.Project.Settings.EditorHeight}" Content="{Binding Canvas}"/>
         </hc:SimplePanel>
         <ContentControl Grid.Row="1" Margin="20 0" Height="190" Content="{Binding Timeline}"/>
-        <Expander Name="DrawerLeft" Grid.RowSpan="2" IsExpanded="True" Header="Library" ExpandDirection="Right" Background="{DynamicResource RegionBrush}"
+        <Expander Name="DrawerLeft" Grid.Row="0" IsExpanded="True" Header="Library" ExpandDirection="Right" Background="{DynamicResource RegionBrush}"
                   HorizontalAlignment="Left" Style="{StaticResource Expander.Small}" BorderThickness="0 1 1 1" BorderBrush="{DynamicResource BorderBrush}">
             <ContentControl Content="{Binding Library}"/>
         </Expander>
-        <Expander Name="DrawerRight" Grid.RowSpan="2" IsExpanded="True" Header="Actions" ExpandDirection="Left" Background="{DynamicResource RegionBrush}"
+        <Expander Name="DrawerRight" Grid.Row="0" IsExpanded="True" Header="Actions" ExpandDirection="Left" Background="{DynamicResource RegionBrush}"
                   HorizontalAlignment="Right" Style="{StaticResource Expander.Small}" BorderThickness="1 1 0 1" BorderBrush="{DynamicResource BorderBrush}">
             <ContentControl Content="{Binding Actions}"/>
         </Expander>

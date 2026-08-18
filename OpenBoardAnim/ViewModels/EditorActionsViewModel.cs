@@ -346,6 +346,12 @@ namespace OpenBoardAnim.ViewModels
                 if (!ConfirmDiscardUnsavedChanges())
                     return;
 
+                // Closing back to Launch immediately re-triggers LaunchViewModel's recovery
+                // check (it's DI-transient, so a fresh instance runs OfferBackupRecovery on
+                // every navigation there) - a lingering backup from this session's autosave
+                // timer would otherwise pop the "recover unsaved project?" prompt right after
+                // an intentional close, even though the user just chose to discard/save.
+                _cache.ClearBackup();
                 Project = null;
                 _navigation.NavigateTo<LaunchViewModel>();
             }

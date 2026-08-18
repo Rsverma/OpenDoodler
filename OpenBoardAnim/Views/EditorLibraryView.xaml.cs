@@ -1,4 +1,5 @@
-﻿using System;
+﻿using OpenBoardAnim.Utilities;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -23,6 +24,25 @@ namespace OpenBoardAnim.Views
         public EditorLibraryView()
         {
             InitializeComponent();
+        }
+
+        // The graphics ListBox sits inside GraphicsScrollViewer (which is what should actually
+        // scroll, since it also covers the "Load More" button below the list) - even with the
+        // ListBox's own ScrollViewer.VerticalScrollBarVisibility set to Disabled, its internal
+        // ScrollViewer still swallows MouseWheel before it bubbles to the outer one. Scroll the
+        // outer ScrollViewer directly instead of relying on bubbling.
+        private void GraphicsListBox_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
+        {
+            try
+            {
+                GraphicsScrollViewer.ScrollToVerticalOffset(GraphicsScrollViewer.VerticalOffset - e.Delta);
+                e.Handled = true;
+            }
+            catch (Exception ex)
+            {
+                if (Logger.LogError(ex, LogAction.LogAndShow))
+                    throw;
+            }
         }
     }
 }
