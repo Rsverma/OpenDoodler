@@ -13,6 +13,19 @@
              d:DesignHeight="450" d:DesignWidth="800">
     <UserControl.Resources>
         <utils:ResizeConverter x:Key="ResizeConverter"/>
+        <utils:HexEqualsThicknessConverter x:Key="HexEqualsThicknessConverter"/>
+        <Style x:Key="ColorSwatchButtonStyle" TargetType="Button">
+            <Setter Property="Width" Value="22"/>
+            <Setter Property="Height" Value="22"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="4"/>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
         <!-- Non-interactive (no move/resize thumbs) content-only template, just for rendering a
              read-only thumbnail preview of a template's graphics - same technique the timeline's
              own scene cards already use. -->
@@ -29,7 +42,7 @@
             </Image>
         </DataTemplate>
         <DataTemplate DataType="{x:Type models:TextModel}">
-            <Path Data="{Binding TextGeometry}" Fill="Black" Stroke="Black" StrokeThickness="1"/>
+            <Path Data="{Binding TextGeometry}" Fill="{Binding SelectedColor}" Stroke="{Binding SelectedColor}" StrokeThickness="1"/>
         </DataTemplate>
     </UserControl.Resources>
     <Border Background="{DynamicResource RegionBrush}" Width="300" BorderThickness="0,0,1,0" BorderBrush="{DynamicResource BorderBrush}">
@@ -184,6 +197,7 @@
                         <TextBlock Margin="5 5 2 5" Text="Text" VerticalAlignment="Center"/>
                         <TextBlock Margin="5 5 2 5" Text="Font Family" Grid.Row="1" VerticalAlignment="Center"/>
                         <TextBlock Margin="5 5 2 5" Text="Font Style" Grid.Row="2" VerticalAlignment="Center"/>
+                        <TextBlock Margin="5 5 2 5" Text="Color" Grid.Row="3" VerticalAlignment="Center"/>
                         <TextBlock Margin="5 5 2 5" Text="Font Size" Grid.Row="4" VerticalAlignment="Center"/>
                         <hc:TextBox Margin="5 5 2 5" Grid.Column="1" hc:InfoElement.Placeholder="Enter Text to display" Text="{Binding RawText}"/>
                         <hc:ComboBox x:Name="fontSelector" Margin="5 5 2 5" Grid.Column="1" Grid.Row="1"
@@ -191,17 +205,54 @@
                         <hc:ComboBox x:Name="typefaceSelector" Margin="5 5 2 5" Grid.Column="1" Grid.Row="2"
                                      ItemsSource="{Binding SelectedItem.FamilyTypefaces, ElementName=fontSelector}" DisplayMemberPath="AdjustedFaceNames[en-US]"
                                      SelectedItem="{Binding SelectedTypeFace}"/>
-                        <hc:NumericUpDown x:Name="sizeSelector" Margin="5 5 2 5" Grid.Column="1" Grid.Row="4" Minimum="1" Value="{Binding FontSize}"/>
-                        <Button Margin="5 5 2 5" Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="5" Style="{DynamicResource ButtonPrimary}" 
+                        <StackPanel Grid.Column="1" Grid.Row="3" Orientation="Horizontal" Margin="5 5 2 5">
+                            <Border BorderBrush="Black" CornerRadius="4" Padding="2" Margin="0 0 6 0" BorderThickness="{Binding SelectedTextColorHex, Converter={StaticResource HexEqualsThicknessConverter}, ConverterParameter=#FF000000}">
+                                <Button Style="{StaticResource ColorSwatchButtonStyle}" Background="#FF000000" Tag="#FF000000" Click="TextColor_Click"/>
+                            </Border>
+                            <Border BorderBrush="Black" CornerRadius="4" Padding="2" Margin="0 0 6 0" BorderThickness="{Binding SelectedTextColorHex, Converter={StaticResource HexEqualsThicknessConverter}, ConverterParameter=#FFE53935}">
+                                <Button Style="{StaticResource ColorSwatchButtonStyle}" Background="#FFE53935" Tag="#FFE53935" Click="TextColor_Click"/>
+                            </Border>
+                            <Border BorderBrush="Black" CornerRadius="4" Padding="2" Margin="0 0 6 0" BorderThickness="{Binding SelectedTextColorHex, Converter={StaticResource HexEqualsThicknessConverter}, ConverterParameter=#FF1E88E5}">
+                                <Button Style="{StaticResource ColorSwatchButtonStyle}" Background="#FF1E88E5" Tag="#FF1E88E5" Click="TextColor_Click"/>
+                            </Border>
+                            <Border BorderBrush="Black" CornerRadius="4" Padding="2" Margin="0 0 6 0" BorderThickness="{Binding SelectedTextColorHex, Converter={StaticResource HexEqualsThicknessConverter}, ConverterParameter=#FF43A047}">
+                                <Button Style="{StaticResource ColorSwatchButtonStyle}" Background="#FF43A047" Tag="#FF43A047" Click="TextColor_Click"/>
+                            </Border>
+                            <Border BorderBrush="Black" CornerRadius="4" Padding="2" Margin="0 0 6 0" BorderThickness="{Binding SelectedTextColorHex, Converter={StaticResource HexEqualsThicknessConverter}, ConverterParameter=#FFFB8C00}">
+                                <Button Style="{StaticResource ColorSwatchButtonStyle}" Background="#FFFB8C00" Tag="#FFFB8C00" Click="TextColor_Click"/>
+                            </Border>
+                            <Border BorderBrush="Black" CornerRadius="4" Padding="2" Margin="0 0 6 0" BorderThickness="{Binding SelectedTextColorHex, Converter={StaticResource HexEqualsThicknessConverter}, ConverterParameter=#FF8E24AA}">
+                                <Button Style="{StaticResource ColorSwatchButtonStyle}" Background="#FF8E24AA" Tag="#FF8E24AA" Click="TextColor_Click"/>
+                            </Border>
+                            <Border BorderBrush="Black" CornerRadius="4" Padding="2" BorderThickness="{Binding SelectedTextColorHex, Converter={StaticResource HexEqualsThicknessConverter}, ConverterParameter=#FF6D4C41}">
+                                <Button Style="{StaticResource ColorSwatchButtonStyle}" Background="#FF6D4C41" Tag="#FF6D4C41" Click="TextColor_Click"/>
+                            </Border>
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Grid.Row="4" Orientation="Horizontal" Margin="5 5 2 5">
+                            <hc:NumericUpDown x:Name="sizeSelector" Minimum="1" Value="{Binding FontSize}"/>
+                            <CheckBox Content="Underline" Margin="10 0 0 0" VerticalAlignment="Center" IsChecked="{Binding IsUnderline}"/>
+                        </StackPanel>
+                        <Button Margin="5 5 2 5" Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="5" Style="{DynamicResource ButtonPrimary}"
                                  Command="{Binding AddTextCommand}" Content ="Add Text"/>
                         <TextBlock Margin="5 5 2 5" Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="6"
                                    FontFamily="{Binding SelectedItem.Source, ElementName=fontSelector}"
                                    FontStretch="{Binding SelectedItem.Stretch, ElementName=typefaceSelector}"
                                    FontStyle="{Binding SelectedItem.Style, ElementName=typefaceSelector}"
                                    FontWeight="{Binding SelectedItem.Weight, ElementName=typefaceSelector}"
-                                   Text="Sample" 
+                                   Text="Sample"
                                    FontSize="{Binding Value, ElementName=sizeSelector}"
-                                   HorizontalAlignment="Center" />
+                                   Foreground="{Binding SelectedTextColor}"
+                                   HorizontalAlignment="Center">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsUnderline}" Value="True">
+                                            <Setter Property="TextDecorations" Value="{x:Static TextDecorations.Underline}"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
                     </Grid>
                 </hc:TabItem>
                 <hc:TabItem Header="{materialDesign:PackIcon music}" ToolTip="Audio">

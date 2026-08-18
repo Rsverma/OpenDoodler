@@ -140,11 +140,12 @@ namespace OpenBoardAnim.Utils
                             element = new TextBlock()
                             {
                                 Text = text.RawText,
-                                Foreground = Brushes.Black,
+                                Foreground = text.SelectedColor,
                                 FontFamily = text.SelectedFontFamily,
                                 FontSize = text.SelectedFontSize,
                                 FontStyle = text.SelectedFontStyle,
-                                FontWeight = text.SelectedFontWeight
+                                FontWeight = text.SelectedFontWeight,
+                                TextDecorations = text.IsUnderline ? TextDecorations.Underline : null
                             };
                             // Same rationale as the DrawingModel branch above - scale from the
                             // text's natural (unscaled) geometry bounds to its current

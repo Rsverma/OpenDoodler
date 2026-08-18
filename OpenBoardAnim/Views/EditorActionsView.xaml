@@ -19,7 +19,7 @@
             </Image>
         </DataTemplate>
         <DataTemplate DataType="{x:Type models:TextModel}">
-            <Path Data="{Binding TextGeometry}" Fill="Black" Stroke="Black" StrokeThickness="1" VerticalAlignment="Center"/>
+            <Path Data="{Binding TextGeometry}" Fill="{Binding SelectedColor}" Stroke="{Binding SelectedColor}" StrokeThickness="1" VerticalAlignment="Center"/>
         </DataTemplate>
     </UserControl.Resources>
     <Border Background="{DynamicResource RegionBrush}" Width="300" BorderThickness="1,0,0,0" BorderBrush="{DynamicResource BorderBrush}">

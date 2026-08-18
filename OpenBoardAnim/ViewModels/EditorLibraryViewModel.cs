@@ -190,6 +190,37 @@ namespace OpenBoardAnim.ViewModels
             }
         }
 
+        private bool _isUnderline;
+        public bool IsUnderline
+        {
+            get { return _isUnderline; }
+            set
+            {
+                _isUnderline = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private string _selectedTextColorHex = "#FF000000";
+        public string SelectedTextColorHex
+        {
+            get { return _selectedTextColorHex; }
+            set
+            {
+                _selectedTextColorHex = value;
+                try { _selectedTextColor = (Brush)new BrushConverter().ConvertFromString(value); }
+                catch (FormatException) { /* keep the previous color on an unparsable hex value */ }
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(SelectedTextColor));
+            }
+        }
+
+        // Paired with SelectedTextColorHex (same pattern as TextModel.SelectedColorHex/SelectedColor)
+        // so the "Sample" preview's Foreground can bind to an actual Brush rather than relying on
+        // an implicit string-to-Brush binding conversion.
+        private Brush _selectedTextColor = Brushes.Black;
+        public Brush SelectedTextColor => _selectedTextColor;
+
         private BindingList<SceneTemplateModel> _sceneTemplates;
 
         public BindingList<SceneTemplateModel> SceneTemplates
@@ -319,7 +350,7 @@ namespace OpenBoardAnim.ViewModels
             try
             {
                 PathGeometry pathGeometry = GeometryHelper.ConvertTextToGeometry(RawText, SelectedFontFamily,
-                        SelectedTypeFace.Style, SelectedTypeFace.Weight, FontSize);
+                        SelectedTypeFace.Style, SelectedTypeFace.Weight, FontSize, IsUnderline);
                 TextModel textModel = new TextModel
                 {
                     TextGeometry = pathGeometry,
@@ -327,7 +358,9 @@ namespace OpenBoardAnim.ViewModels
                     SelectedFontFamily = SelectedFontFamily,
                     SelectedFontStyle = SelectedTypeFace.Style,
                     SelectedFontWeight = SelectedTypeFace.Weight,
-                    SelectedFontSize = FontSize
+                    SelectedFontSize = FontSize,
+                    IsUnderline = IsUnderline,
+                    SelectedColorHex = SelectedTextColorHex
                 };
                 _pubSub.Publish(SubTopic.GraphicAdded, textModel);
             }

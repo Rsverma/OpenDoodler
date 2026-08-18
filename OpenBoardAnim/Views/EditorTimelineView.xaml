@@ -25,7 +25,7 @@
             </Image>
         </DataTemplate>
         <DataTemplate DataType="{x:Type models:TextModel}">
-            <Path Data="{Binding TextGeometry}" Fill="Black" Stroke="Black" StrokeThickness="1"/>
+            <Path Data="{Binding TextGeometry}" Fill="{Binding SelectedColor}" Stroke="{Binding SelectedColor}" StrokeThickness="1"/>
         </DataTemplate>
         <utils:ResizeConverter x:Key="ResizeConverter"/>
         <utils:NullToVisibilityConverter x:Key="NullToVisibilityConverter"/>

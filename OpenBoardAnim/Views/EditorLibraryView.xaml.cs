@@ -1,4 +1,5 @@
 ﻿using OpenBoardAnim.Utilities;
+using OpenBoardAnim.ViewModels;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -37,6 +38,21 @@ namespace OpenBoardAnim.Views
             {
                 GraphicsScrollViewer.ScrollToVerticalOffset(GraphicsScrollViewer.VerticalOffset - e.Delta);
                 e.Handled = true;
+            }
+            catch (Exception ex)
+            {
+                if (Logger.LogError(ex, LogAction.LogAndShow))
+                    throw;
+            }
+        }
+
+        private void TextColor_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                if (DataContext is not EditorLibraryViewModel viewModel) return;
+                if (sender is Button button && button.Tag is string hex)
+                    viewModel.SelectedTextColorHex = hex;
             }
             catch (Exception ex)
             {

@@ -46,6 +46,25 @@ namespace OpenBoardAnim.Models
         public FontStyle SelectedFontStyle { get;  set; }
         public FontWeight SelectedFontWeight { get;  set; }
         public double SelectedFontSize { get;  set; }
+        public bool IsUnderline { get; set; }
+
+        private string _selectedColorHex = "#FF000000";
+        public string SelectedColorHex
+        {
+            get { return _selectedColorHex; }
+            set
+            {
+                _selectedColorHex = value;
+                try { selectedColor = (Brush)new BrushConverter().ConvertFromString(value); }
+                catch (FormatException) { /* keep the previous color on an unparsable hex value */ }
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(SelectedColor));
+            }
+        }
+
+        private Brush selectedColor = Brushes.Black;
+        [JsonIgnore]
+        public Brush SelectedColor => selectedColor;
 
         public override GraphicModelBase Clone()
         {
@@ -65,7 +84,9 @@ namespace OpenBoardAnim.Models
                 SelectedFontSize = SelectedFontSize,
                 SelectedFontStyle = SelectedFontStyle,
                 SelectedFontWeight = SelectedFontWeight,
-                IsLocked = IsLocked
+                IsLocked = IsLocked,
+                IsUnderline = IsUnderline,
+                SelectedColorHex = SelectedColorHex
             };
         }
     }

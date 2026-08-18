@@ -15,7 +15,7 @@ namespace OpenBoardAnim.Utils
 {
     public class GeometryHelper
     {
-        public static PathGeometry ConvertTextToGeometry(string text, FontFamily fontFamily, FontStyle fontStyle, FontWeight fontWeight, double fontSize)
+        public static PathGeometry ConvertTextToGeometry(string text, FontFamily fontFamily, FontStyle fontStyle, FontWeight fontWeight, double fontSize, bool isUnderline = false)
         {
             try
             {
@@ -29,6 +29,13 @@ namespace OpenBoardAnim.Utils
                     fontSize,
                     Brushes.Black,
                     VisualTreeHelper.GetDpi(Application.Current.MainWindow).PixelsPerDip);
+
+                // Baking the underline into the outlined geometry itself (rather than drawing it
+                // separately) keeps it consistent with how text is rendered everywhere else in
+                // the app - as plain vector paths, both for the settled look and for the
+                // hand-drawn stroke animation, which reuses this same geometry.
+                if (isUnderline)
+                    formattedText.SetTextDecorations(TextDecorations.Underline);
 
                 // Create a geometry from the formatted text
                 Geometry textGeometry = formattedText.BuildGeometry(new Point(0, 0));
