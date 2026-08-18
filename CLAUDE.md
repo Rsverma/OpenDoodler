@@ -5,7 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Project
 
 OpenDoodler (assembly/project name `OpenBoardAnim`) is an open-source whiteboard/doodle animation desktop app —
-a WPF (.NET 8) app that lets users compose SVG/text graphics on a canvas, animate them stroke-by-stroke, and
+a WPF (.NET 10) app that lets users compose SVG/text graphics on a canvas, animate them stroke-by-stroke, and
 export the result as video.
 
 ## Commands
@@ -17,7 +17,7 @@ dotnet build OpenBoardAnim.sln -c Debug
 # Run the app (WPF, Windows-only — must run on Windows, not WSL/Linux)
 dotnet run --project OpenBoardAnim/OpenBoardAnim.csproj
 # or launch the built exe directly:
-OpenBoardAnim/bin/Debug/net8.0-windows/OpenBoardAnim.exe
+OpenBoardAnim/bin/Debug/net10.0-windows/OpenBoardAnim.exe
 
 # EF Core migrations (run from OpenBoardAnim.Library/)
 dotnet ef migrations add <Name> --project OpenBoardAnim.Library
@@ -31,7 +31,7 @@ commands.
 
 Four projects in `OpenBoardAnim.sln`:
 
-- **`OpenBoardAnim`** — the WPF UI app (`net8.0-windows`, `UseWPF=true`). Uses HandyControl and
+- **`OpenBoardAnim`** — the WPF UI app (`net10.0-windows`, `UseWPF=true`). Uses HandyControl and
   MaterialDesignThemes for UI, SharpVectors for SVG rendering, `Microsoft.Extensions.DependencyInjection` for DI.
 - **`OpenBoardAnim.Library`** — data layer: EF Core + SQLite (`DataContext`, `Entities/`, `Migrations/`,
   `Repositories/`).
