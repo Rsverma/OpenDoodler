@@ -6,7 +6,8 @@
              xmlns:hc="https://handyorg.github.io/handycontrol"
              xmlns:local="clr-namespace:OpenBoardAnim.Views"
              xmlns:vm="clr-namespace:OpenBoardAnim.ViewModels"
-             mc:Ignorable="d" 
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             mc:Ignorable="d"
              d:DesignHeight="750" d:DesignWidth="1200">
     <UserControl.Resources>
         <DataTemplate DataType="{x:Type vm:EditorCanvasViewModel}">
@@ -28,15 +29,46 @@
             <RowDefinition Height="auto" />
         </Grid.RowDefinitions>
         <hc:SimplePanel Margin="10 0" Background="Gray">
-            <!-- Border (not just a plain ContentControl) so this area is *guaranteed* to paint
-                 white regardless of how the ListBox/Canvas inside EditorCanvasView lays itself
-                 out - a bare ContentControl doesn't render Background at all under its default
-                 template, so it wasn't reliably covering this EditorWidth x EditorHeight
-                 rectangle on a blank scene, letting whatever's behind it (dark in Dark theme)
-                 show through instead. -->
-            <Border Margin="10" Width="{Binding Actions.Project.Settings.EditorWidth}" Height="{Binding Actions.Project.Settings.EditorHeight}" Background="White">
-                <ContentControl Content="{Binding Canvas}"/>
-            </Border>
+            <ScrollViewer x:Name="CanvasScrollViewer" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto"
+                          SizeChanged="CanvasScrollViewer_SizeChanged"
+                          PreviewMouseWheel="CanvasScrollViewer_PreviewMouseWheel"
+                          PreviewMouseDown="CanvasScrollViewer_PreviewMouseDown"
+                          PreviewMouseMove="CanvasScrollViewer_PreviewMouseMove"
+                          PreviewMouseUp="CanvasScrollViewer_PreviewMouseUp">
+                <!-- CanvasSlack's MinWidth/MinHeight are kept a bit larger than the ScrollViewer's
+                     own viewport (see CanvasScrollViewer_SizeChanged) so there's always genuine
+                     scrollable extent to pan into, even when the (possibly zoomed-down) board is
+                     smaller than the viewport. Without that slack, HorizontalOffset/VerticalOffset
+                     can only range over [0,0] in that case, so cursor-anchored zoom has nowhere to
+                     apply its correction and just falls back to a plain centered zoom. CanvasBoard
+                     centers itself within this slack area via ordinary alignment, keeping the same
+                     centered-by-default look as before. -->
+                <Grid x:Name="CanvasSlack">
+                    <!-- Border (not just a plain ContentControl) so this area is *guaranteed* to paint
+                         white regardless of how the ListBox/Canvas inside EditorCanvasView lays itself
+                         out - a bare ContentControl doesn't render Background at all under its default
+                         template, so it wasn't reliably covering this EditorWidth x EditorHeight
+                         rectangle on a blank scene, letting whatever's behind it (dark in Dark theme)
+                         show through instead. -->
+                    <Border x:Name="CanvasBoard" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="10"
+                            Width="{Binding Actions.Project.Settings.EditorWidth}" Height="{Binding Actions.Project.Settings.EditorHeight}" Background="White">
+                        <!-- LayoutTransform (not RenderTransform) so the ScrollViewer sees the
+                             zoomed size when computing scrollable extent/panning bounds. -->
+                        <Border.LayoutTransform>
+                            <ScaleTransform ScaleX="{Binding Canvas.ZoomLevel}" ScaleY="{Binding Canvas.ZoomLevel}"/>
+                        </Border.LayoutTransform>
+                        <ContentControl Content="{Binding Canvas}"/>
+                    </Border>
+                </Grid>
+            </ScrollViewer>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0 16 0 0"
+                        Background="{DynamicResource RegionBrush}">
+                <Button Padding="4" Command="{Binding Canvas.ZoomOutCommand}" ToolTip="Zoom Out" Content="{materialDesign:PackIcon MagnifyMinus}"/>
+                <TextBlock Text="{Binding Canvas.ZoomPercentageText}" Width="42" TextAlignment="Center" VerticalAlignment="Center" FontSize="11"/>
+                <Button Padding="4" Command="{Binding Canvas.ZoomInCommand}" ToolTip="Zoom In" Content="{materialDesign:PackIcon MagnifyPlus}"/>
+                <Button Margin="8 0 0 0" Padding="4" Command="{Binding Canvas.ResetZoomCommand}" Click="ResetZoomButton_Click"
+                        ToolTip="Reset Zoom and Recenter (Ctrl+wheel to zoom, middle-drag to pan)" Content="{materialDesign:PackIcon Restore}"/>
+            </StackPanel>
         </hc:SimplePanel>
         <ContentControl Grid.Row="1" Margin="20 0" Height="216" Content="{Binding Timeline}"/>
         <Expander Name="DrawerLeft" Grid.Row="0" IsExpanded="True" Header="Library" ExpandDirection="Right" Background="{DynamicResource RegionBrush}"
