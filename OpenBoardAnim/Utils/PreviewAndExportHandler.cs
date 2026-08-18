@@ -64,9 +64,19 @@ namespace OpenBoardAnim.Utils
                 int totalGraphics = project.Scenes.Sum(s => s.Graphics?.Count(g => g.IsVisible) ?? 0);
                 int processedGraphics = 0;
                 int index = 1;
-                for (int i = 0; i < project.Scenes.Count - 1; i++)
+                // Excludes the trailing "+" add-scene card either way; PreviewSceneIndex further
+                // narrows this to a single scene for an isolated preview (see
+                // ProjectDetails.PreviewSceneIndex) instead of always starting from scene 1.
+                int startSceneIndex = 0;
+                int endSceneIndex = project.Scenes.Count - 2;
+                if (project.PreviewSceneIndex is int previewIndex && previewIndex >= 0 && previewIndex <= endSceneIndex)
                 {
-                    if (i > 0 && sceneTransition != SceneTransition.None)
+                    startSceneIndex = previewIndex;
+                    endSceneIndex = previewIndex;
+                }
+                for (int i = startSceneIndex; i <= endSceneIndex; i++)
+                {
+                    if (i > startSceneIndex && sceneTransition != SceneTransition.None)
                         await PlaySceneTransition(canvas, sceneTransition, cancellationToken);
                     else
                         canvas.Children.Clear();
@@ -256,6 +266,19 @@ namespace OpenBoardAnim.Utils
                 voiceoverTrimTimer?.Stop();
                 voiceoverPlayer?.Close();
             }
+        }
+
+        // Rough per-scene duration estimate (sum of each visible graphic's Delay + Duration) -
+        // the same approximation EditorTimelineViewModel already uses for the timeline's
+        // proportional layout (hand-drawn stroke timing isn't known ahead of time, so this is
+        // "good enough", not a promise). Used by ProjectPreviewView to position/cap the
+        // background-music track for a single-scene preview so it lines up roughly where that
+        // scene would fall in the full project, without actually having to play through
+        // everything before it.
+        public static double GetEstimatedSceneDurationSeconds(SceneModel scene)
+        {
+            if (scene?.Graphics == null) return 0;
+            return scene.Graphics.Where(g => g.IsVisible).Sum(g => g.Delay + g.Duration);
         }
 
         // Live playback (preview) has no equivalent to ffmpeg's -t, so a trimmed clip's end is

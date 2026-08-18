@@ -125,7 +125,8 @@
                             <Border Width="{Binding Width}" Height="90" Style="{StaticResource SceneCardBorderStyle}"
                                     MouseLeftButtonDown="SceneCard_MouseLeftButtonDown"
                                     PreviewMouseLeftButtonDown="SceneCard_PreviewMouseLeftButtonDown"
-                                    PreviewMouseMove="SceneCard_PreviewMouseMove">
+                                    PreviewMouseMove="SceneCard_PreviewMouseMove"
+                                    Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType={x:Type local:EditorTimelineView}}}">
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*"/>
@@ -166,6 +167,10 @@
                                 </Grid>
                                 <Border.ContextMenu>
                                     <ContextMenu Width="170">
+                                        <MenuItem Header="Preview Scene" Icon="{materialDesign:PackIcon Play}"
+                                                  Command="{Binding PlacementTarget.Tag.PreviewSceneCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                  CommandParameter="{Binding Scene}"/>
+                                        <Separator />
                                         <MenuItem Header="Move Left" Icon="{materialDesign:PackIcon arrowleft}" Command="{Binding Scene.SceneLeftCommand}"/>
                                         <MenuItem Header="Move Right" Icon="{materialDesign:PackIcon arrowright}" Command="{Binding Scene.SceneRightCommand}"/>
                                         <Separator />

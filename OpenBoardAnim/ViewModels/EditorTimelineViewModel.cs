@@ -28,6 +28,7 @@ namespace OpenBoardAnim.ViewModels
         private double MinSegmentWidth => Math.Max(AbsoluteMinSegmentWidth, BaseMinSegmentWidth * _zoomLevel);
 
         private readonly IPubSubService _pubSub;
+        private readonly IDialogService _dialog;
         private SceneModel _addScene;
         // Rightmost X the playhead may reach - the end of the last real scene's segment,
         // excluding the trailing "+" add-scene card so dragging can never land on it.
@@ -36,16 +37,43 @@ namespace OpenBoardAnim.ViewModels
         public ICommand ZoomInCommand { get; set; }
         public ICommand ZoomOutCommand { get; set; }
         public ICommand ResetZoomCommand { get; set; }
-        public EditorTimelineViewModel(IPubSubService pubSub)
+        public ICommand PreviewSceneCommand { get; set; }
+        public EditorTimelineViewModel(IPubSubService pubSub, IDialogService dialog)
         {
             _pubSub = pubSub;
+            _dialog = dialog;
             _pubSub.Subscribe(SubTopic.SceneReplaced, SceneReplacedHandler);
             _pubSub.Subscribe(SubTopic.SceneTemplateInserted, SceneTemplateInsertedHandler);
             SceneDeleteCommand = new RelayCommand(SceneDeleteCommandHandler, o => true);
             ZoomInCommand = new RelayCommand(o => ZoomLevel *= ZoomStep, o => ZoomLevel < MaxZoom - 0.001);
             ZoomOutCommand = new RelayCommand(o => ZoomLevel /= ZoomStep, o => ZoomLevel > MinZoom + 0.001);
             ResetZoomCommand = new RelayCommand(o => ZoomLevel = 1.0, o => Math.Abs(ZoomLevel - 1.0) > 0.001);
+            PreviewSceneCommand = new RelayCommand(o => PreviewScene(o as SceneModel), canExecute: o => Project != null);
             Segments = new BindingList<SceneTimelineSegment>();
+        }
+
+        // Isolates the preview dialog to just this scene, instead of always previewing the
+        // whole project from scene 1 - see ProjectDetails.PreviewSceneIndex. Always cleared
+        // again once the (modal) dialog closes, so it can't leak into a later whole-project
+        // preview from the Actions panel's own Preview button.
+        private void PreviewScene(SceneModel scene)
+        {
+            try
+            {
+                if (scene == null || Project == null) return;
+                Project.PreviewSceneIndex = Scenes.IndexOf(scene);
+                _ = _dialog.ShowDialog(DialogType.PreviewProject, Project);
+            }
+            catch (Exception ex)
+            {
+                if (Logger.LogError(ex, LogAction.LogAndShow))
+                    throw;
+            }
+            finally
+            {
+                if (Project != null)
+                    Project.PreviewSceneIndex = null;
+            }
         }
 
         private double _zoomLevel = 1.0;

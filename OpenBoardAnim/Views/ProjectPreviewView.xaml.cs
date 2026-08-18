@@ -56,10 +56,31 @@ namespace OpenBoardAnim.Views
                     _audioPlayer = new MediaPlayer();
                     _audioPlayer.Open(new Uri(project.AudioPath));
                     _audioPlayer.Volume = project.AudioVolume / 100.0;
-                    _audioPlayer.Position = TimeSpan.FromSeconds(Math.Max(0, project.AudioTrimStart));
+
+                    double audioStart = Math.Max(0, project.AudioTrimStart);
+                    double? audioCap = project.AudioTrimEnd > project.AudioTrimStart ? project.AudioTrimEnd : null;
+
+                    if (project.PreviewSceneIndex is int sceneIndex && sceneIndex >= 0 && sceneIndex < project.Scenes.Count)
+                    {
+                        // Roughly line the background-music track up with where this scene would
+                        // fall in the full project (an estimate, not exact - see
+                        // GetEstimatedSceneDurationSeconds) instead of always starting from the
+                        // very beginning of the track, and cap it so it doesn't bleed into where
+                        // the next scene's portion would start.
+                        double offset = 0;
+                        for (int i = 0; i < sceneIndex; i++)
+                            offset += PreviewAndExportHandler.GetEstimatedSceneDurationSeconds(project.Scenes[i]);
+                        double sceneDuration = PreviewAndExportHandler.GetEstimatedSceneDurationSeconds(project.Scenes[sceneIndex]);
+
+                        audioStart += offset;
+                        double sceneCap = audioStart + sceneDuration;
+                        audioCap = audioCap.HasValue ? Math.Min(audioCap.Value, sceneCap) : sceneCap;
+                    }
+
+                    _audioPlayer.Position = TimeSpan.FromSeconds(audioStart);
                     _audioPlayer.Play();
-                    if (project.AudioTrimEnd > project.AudioTrimStart)
-                        _audioTrimTimer = PreviewAndExportHandler.StartTrimStopTimer(_audioPlayer, project.AudioTrimEnd);
+                    if (audioCap.HasValue)
+                        _audioTrimTimer = PreviewAndExportHandler.StartTrimStopTimer(_audioPlayer, audioCap.Value);
                 }
                 await PreviewAndExportHandler.RunAnimationsOnCanvas(project, PreviewCanvas, false, cancellationToken: cancellationToken);
             }

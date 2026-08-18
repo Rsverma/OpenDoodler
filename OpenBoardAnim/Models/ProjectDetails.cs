@@ -44,6 +44,15 @@ namespace OpenBoardAnim.Models
 
         public List<SceneModel> Scenes { get; set; }
 
+        // Transient - never persisted. Set just before opening the preview dialog (and cleared
+        // again once it closes) to isolate playback to a single scene instead of the whole
+        // project; null means "preview everything, from scene 1" as before. Lives directly on
+        // the project object (rather than a separate wrapper) to avoid restructuring
+        // ProjectPreviewView's DataContext, matching how other UI-only wiring already sits
+        // directly on domain models in this app (e.g. SceneModel's Scene*Action delegates).
+        [JsonIgnore]
+        public int? PreviewSceneIndex { get; set; }
+
         private string _audioPath;
         public string AudioPath
         {
