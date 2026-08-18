@@ -44,8 +44,15 @@ namespace OpenBoardAnim.Utils
                 };
                 // Cues collected as scenes start, in real (wall-clock) time - handed to the
                 // exporter so it can delay each voiceover clip into place when muxing, since
-                // export doesn't play audio live (frame capture is visual-only).
+                // export doesn't play audio live (frame capture is visual-only). Populated after
+                // the loop below (see rawVoiceoverCues) once every scene's start time is known,
+                // so each voiceover can be capped to not bleed into the next scene.
                 List<SceneAudioCue> sceneAudioCues = new();
+                // Keyed by scene loop index rather than a plain sequential list, so a null scene
+                // (skipped via `continue` before it gets an entry) can't shift the alignment
+                // between this and each raw cue's SceneIndex below.
+                Dictionary<int, double> sceneStartTimes = new();
+                List<(string Path, double Start, double TrimStart, double TrimEnd, int SceneIndex)> rawVoiceoverCues = new();
                 Stopwatch sceneClock = Stopwatch.StartNew();
                 if (isExport)
                 {
@@ -60,7 +67,7 @@ namespace OpenBoardAnim.Utils
                 for (int i = 0; i < project.Scenes.Count - 1; i++)
                 {
                     if (i > 0 && sceneTransition != SceneTransition.None)
-                        await PlaySceneTransition(canvas, sceneTransition);
+                        await PlaySceneTransition(canvas, sceneTransition, cancellationToken);
                     else
                         canvas.Children.Clear();
 
@@ -78,9 +85,10 @@ namespace OpenBoardAnim.Utils
                     bool hasVoiceover = !string.IsNullOrWhiteSpace(scene.VoiceoverPath) && System.IO.File.Exists(scene.VoiceoverPath);
                     if (isExport)
                     {
+                        double sceneStart = sceneClock.Elapsed.TotalSeconds;
+                        sceneStartTimes[i] = sceneStart;
                         if (hasVoiceover)
-                            sceneAudioCues.Add(new SceneAudioCue(scene.VoiceoverPath, sceneClock.Elapsed.TotalSeconds,
-                                scene.VoiceoverTrimStart, scene.VoiceoverTrimEnd));
+                            rawVoiceoverCues.Add((scene.VoiceoverPath, sceneStart, scene.VoiceoverTrimStart, scene.VoiceoverTrimEnd, i));
                     }
                     else
                     {
@@ -148,7 +156,13 @@ namespace OpenBoardAnim.Utils
                             }
                             var example = new PathAnimationHelper(canvas, paths, graphic, hand);
                             example.AnimatePathOnCanvas();
-                            await example.tcs.Task;
+                            // PathAnimationHelper isn't cancellation-aware internally (it
+                            // completes tcs.Task via a Storyboard callback) - WaitAsync stops
+                            // *waiting* as soon as the token fires without needing that, so
+                            // Play/Close doesn't have to sit through a whole stroke animation
+                            // (previously the biggest reason cancelling only took effect after
+                            // roughly a full scene's worth of drawing).
+                            await example.tcs.Task.WaitAsync(cancellationToken);
 
                             if (element != null)
                             {
@@ -162,7 +176,7 @@ namespace OpenBoardAnim.Utils
                         }
                         else if (element != null)
                         {
-                            await AnimateElementEntrance(canvas, element, graphic, entranceStyle);
+                            await AnimateElementEntrance(canvas, element, graphic, entranceStyle, cancellationToken);
                             index = canvas.Children.Count;
                         }
 
@@ -175,7 +189,27 @@ namespace OpenBoardAnim.Utils
                     }
                 }
                 canvas.Children.Remove(hand);
-                await Task.Delay(500);
+                await Task.Delay(500, cancellationToken);
+
+                // Cap each voiceover to the following scene's start time so it can't bleed into
+                // a scene it doesn't belong to - adelay only controls when a clip starts, not
+                // when it stops, so without this a voiceover longer than its own scene (or with
+                // no explicit trim end) would keep playing over whatever comes next. The last
+                // scene has no following start time to cap against, so it's left uncapped.
+                if (isExport)
+                {
+                    foreach (var raw in rawVoiceoverCues)
+                    {
+                        double effectiveTrimEnd = raw.TrimEnd;
+                        if (sceneStartTimes.TryGetValue(raw.SceneIndex + 1, out double nextSceneStart))
+                        {
+                            double capEnd = raw.TrimStart + Math.Max(0, nextSceneStart - raw.Start);
+                            if (effectiveTrimEnd <= raw.TrimStart || effectiveTrimEnd > capEnd)
+                                effectiveTrimEnd = capEnd;
+                        }
+                        sceneAudioCues.Add(new SceneAudioCue(raw.Path, raw.Start, raw.TrimStart, effectiveTrimEnd));
+                    }
+                }
             }
             catch (OperationCanceledException)
             {
@@ -219,7 +253,7 @@ namespace OpenBoardAnim.Utils
         // capturing/animating a bitmap snapshot of it - simpler and avoids relying on
         // RenderTargetBitmap producing a usable capture of a canvas that isn't backed by an
         // on-screen HWND during export. Runs in real time so frame-capture records it.
-        private static async Task PlaySceneTransition(Canvas canvas, SceneTransition transition)
+        private static async Task PlaySceneTransition(Canvas canvas, SceneTransition transition, CancellationToken cancellationToken)
         {
             if (canvas.Children.Count == 0)
                 return;
@@ -256,7 +290,7 @@ namespace OpenBoardAnim.Utils
             }
 
             storyboard.Begin();
-            await Task.Delay(duration);
+            await Task.Delay(duration, cancellationToken);
 
             canvas.Children.Clear();
         }
@@ -264,7 +298,7 @@ namespace OpenBoardAnim.Utils
         // Non-hand-drawn reveals for graphics that don't need the "drawn by hand" look.
         // Runs in real time (like the hand-drawn path animation) so the frame-capture
         // loop in VideoExporter, which samples the live canvas, records the motion.
-        private static async Task AnimateElementEntrance(Canvas canvas, UIElement element, GraphicModelBase graphic, EntranceStyle style)
+        private static async Task AnimateElementEntrance(Canvas canvas, UIElement element, GraphicModelBase graphic, EntranceStyle style, CancellationToken cancellationToken)
         {
             Canvas.SetLeft(element, graphic.X);
             Canvas.SetTop(element, graphic.Y);
@@ -299,7 +333,7 @@ namespace OpenBoardAnim.Utils
             // Wait out the real duration directly rather than relying on Storyboard.Completed -
             // see PlaySceneTransition for why that event isn't trustworthy here.
             storyboard.Begin();
-            await Task.Delay(duration);
+            await Task.Delay(duration, cancellationToken);
         }
     }
 }
