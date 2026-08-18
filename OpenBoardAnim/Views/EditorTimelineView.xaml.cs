@@ -73,6 +73,35 @@ namespace OpenBoardAnim.Views
             }
         }
 
+        // Ctrl+wheel zooms the timeline in/out; plain wheel scrolls it horizontally. Plain
+        // MouseWheel over a ScrollViewer with vertical scrolling disabled doesn't scroll
+        // anything by default in WPF (wheel input only drives vertical offset natively), so
+        // both directions are handled here explicitly.
+        private void TimelineScrollViewer_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
+        {
+            try
+            {
+                if (DataContext is not EditorTimelineViewModel viewModel) return;
+
+                if (Keyboard.Modifiers.HasFlag(ModifierKeys.Control))
+                {
+                    ICommand zoomCommand = e.Delta > 0 ? viewModel.ZoomInCommand : viewModel.ZoomOutCommand;
+                    if (zoomCommand.CanExecute(null))
+                        zoomCommand.Execute(null);
+                }
+                else
+                {
+                    TimelineScrollViewer.ScrollToHorizontalOffset(TimelineScrollViewer.HorizontalOffset - e.Delta);
+                }
+                e.Handled = true;
+            }
+            catch (Exception ex)
+            {
+                if (Logger.LogError(ex, LogAction.LogAndShow))
+                    throw;
+            }
+        }
+
         private void SetVoiceover_Click(object sender, RoutedEventArgs e)
         {
             try

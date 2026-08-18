@@ -10,12 +10,22 @@ namespace OpenBoardAnim.ViewModels
 {
     public class EditorTimelineViewModel : ViewModel
     {
-        // Pixel scale used to lay scenes out proportionally to their estimated duration -
+        // Base pixel scale used to lay scenes out proportionally to their estimated duration -
         // sum of each graphic's Delay + Duration. A rough estimate (hand-drawn stroke timing
-        // isn't known ahead of time), good enough for a navigational timeline.
-        private const double PixelsPerSecond = 40;
-        private const double MinSegmentWidth = 160;
+        // isn't known ahead of time), good enough for a navigational timeline. Scaled at
+        // render time by ZoomLevel.
+        private const double BasePixelsPerSecond = 40;
+        private const double BaseMinSegmentWidth = 160;
+        // Segments never shrink narrower than this, even zoomed all the way out, so a scene
+        // card stays clickable.
+        private const double AbsoluteMinSegmentWidth = 40;
         private const double SegmentGap = 6;
+        private const double MinZoom = 0.25;
+        private const double MaxZoom = 4.0;
+        private const double ZoomStep = 1.25;
+
+        private double PixelsPerSecond => BasePixelsPerSecond * _zoomLevel;
+        private double MinSegmentWidth => Math.Max(AbsoluteMinSegmentWidth, BaseMinSegmentWidth * _zoomLevel);
 
         private readonly IPubSubService _pubSub;
         private SceneModel _addScene;
@@ -23,13 +33,36 @@ namespace OpenBoardAnim.ViewModels
         // excluding the trailing "+" add-scene card so dragging can never land on it.
         private double _maxPlayheadX;
         public ICommand SceneDeleteCommand { get; set; }
+        public ICommand ZoomInCommand { get; set; }
+        public ICommand ZoomOutCommand { get; set; }
+        public ICommand ResetZoomCommand { get; set; }
         public EditorTimelineViewModel(IPubSubService pubSub)
         {
             _pubSub = pubSub;
             _pubSub.Subscribe(SubTopic.SceneReplaced, SceneReplacedHandler);
             SceneDeleteCommand = new RelayCommand(SceneDeleteCommandHandler, o => true);
+            ZoomInCommand = new RelayCommand(o => ZoomLevel *= ZoomStep, o => ZoomLevel < MaxZoom - 0.001);
+            ZoomOutCommand = new RelayCommand(o => ZoomLevel /= ZoomStep, o => ZoomLevel > MinZoom + 0.001);
+            ResetZoomCommand = new RelayCommand(o => ZoomLevel = 1.0, o => Math.Abs(ZoomLevel - 1.0) > 0.001);
             Segments = new BindingList<SceneTimelineSegment>();
         }
+
+        private double _zoomLevel = 1.0;
+        public double ZoomLevel
+        {
+            get { return _zoomLevel; }
+            set
+            {
+                double clamped = Math.Clamp(value, MinZoom, MaxZoom);
+                if (_zoomLevel == clamped) return;
+                _zoomLevel = clamped;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(ZoomPercentageText));
+                RecomputeSegments();
+            }
+        }
+
+        public string ZoomPercentageText => $"{_zoomLevel * 100:0}%";
 
         private void SceneDeleteCommandHandler(object obj)
         {
@@ -109,7 +142,7 @@ namespace OpenBoardAnim.ViewModels
 
         // Width of the background-music layer - spans every real scene (excluding the
         // trailing "+" add-scene card), same span the playhead is clamped to.
-        private double _realContentWidth = MinSegmentWidth;
+        private double _realContentWidth = BaseMinSegmentWidth;
         public double RealContentWidth
         {
             get { return _realContentWidth; }
@@ -131,7 +164,7 @@ namespace OpenBoardAnim.ViewModels
             }
         }
 
-        private double _totalWidth = MinSegmentWidth;
+        private double _totalWidth = BaseMinSegmentWidth;
         public double TotalWidth
         {
             get { return _totalWidth; }

@@ -46,7 +46,15 @@
         </Style>
     </UserControl.Resources>
     <Border BorderThickness="0 1 0 0" BorderBrush="Black">
-        <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" Margin="10 20">
+        <DockPanel>
+            <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" HorizontalAlignment="Right" Margin="10 4 10 0">
+                <Button Padding="4" Command="{Binding ZoomOutCommand}" ToolTip="Zoom Out" Content="{materialDesign:PackIcon MagnifyMinus}"/>
+                <TextBlock Text="{Binding ZoomPercentageText}" Width="42" TextAlignment="Center" VerticalAlignment="Center" FontSize="11"/>
+                <Button Padding="4" Command="{Binding ZoomInCommand}" ToolTip="Zoom In" Content="{materialDesign:PackIcon MagnifyPlus}"/>
+                <Button Margin="8 0 0 0" Padding="4" Command="{Binding ResetZoomCommand}" ToolTip="Reset Zoom" Content="{materialDesign:PackIcon Restore}"/>
+            </StackPanel>
+            <ScrollViewer x:Name="TimelineScrollViewer" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" Margin="10 4 10 16"
+                          PreviewMouseWheel="TimelineScrollViewer_PreviewMouseWheel">
             <Canvas Width="{Binding TotalWidth}" Height="134">
                 <!-- Voiceover layer: one bar per scene, above the cards, only visible for scenes that have one set -->
                 <ItemsControl ItemsSource="{Binding Segments}" Canvas.Left="0" Canvas.Top="0">
@@ -176,6 +184,7 @@
                     </Thumb.Template>
                 </Thumb>
             </Canvas>
-        </ScrollViewer>
+            </ScrollViewer>
+        </DockPanel>
     </Border>
 </UserControl>
