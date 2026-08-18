@@ -17,7 +17,7 @@ namespace OpenBoardAnim.Views
     /// <summary>
     /// Interaction logic for DialogWindow.xaml
     /// </summary>
-    public partial class DialogWindow : Window
+    public partial class DialogWindow : HandyControl.Controls.Window
     {
         public DialogWindow()
         {

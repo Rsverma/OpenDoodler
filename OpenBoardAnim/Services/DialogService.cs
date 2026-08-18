@@ -43,7 +43,16 @@ namespace OpenBoardAnim.Services
 
                 DialogWindow dialog = new DialogWindow
                 {
-                    DataContext = content
+                    DataContext = content,
+                    Owner = Application.Current.MainWindow,
+                    Title = dialogType switch
+                    {
+                        DialogType.PreviewProject => "Preview",
+                        DialogType.ProjectSettings => "Project Settings",
+                        DialogType.SceneSettings => "Scene Settings",
+                        DialogType.AboutUs => "About",
+                        _ => "OpenDoodler"
+                    }
                 };
 
                 if (dialogType == DialogType.PreviewProject)

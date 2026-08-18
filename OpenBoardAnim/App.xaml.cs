@@ -82,6 +82,22 @@ namespace OpenBoardAnim
 
         protected override void OnExit(ExitEventArgs e)
         {
+            try
+            {
+                // OnExit only runs on a graceful shutdown (File > Exit, close button, Alt+F4
+                // confirmed) - a crash never reaches this. The periodic autosave backup exists
+                // purely for crash recovery, but the 30s timer keeps writing it regardless of
+                // whether there are unsaved changes, and can recreate it after an explicit save
+                // too if it ticks again before the app closes. Clearing it here, unconditionally,
+                // on every clean exit is what keeps the recovery prompt from firing next launch
+                // for a session that closed normally instead of crashing.
+                _serviceProvider?.GetRequiredService<CacheService>().ClearBackup();
+            }
+            catch (Exception ex)
+            {
+                Logger.LogWarning($"Failed to clear autosave backup on exit: {ex.Message}");
+            }
+
             _serviceProvider?.Dispose();
             base.OnExit(e);
         }

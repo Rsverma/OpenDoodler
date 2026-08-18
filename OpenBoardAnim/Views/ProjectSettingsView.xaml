@@ -42,24 +42,20 @@
                 </Setter.Value>
             </Setter>
         </Style>
-        <Style x:Key="SettingsComboBoxStyle" TargetType="ComboBox">
-            <Setter Property="Width" Value="220"/>
-            <Setter Property="HorizontalAlignment" Value="Left"/>
-            <Setter Property="ItemTemplate">
-                <Setter.Value>
-                    <DataTemplate>
-                        <TextBlock Text="{Binding Converter={StaticResource FriendlyEnumConverter}}"/>
-                    </DataTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
+        <!--
+            hc:ComboBox's nice bordered/themed look comes from its own implicit default style
+            (matched by control type) - a Style targeting the plain ComboBox base type would
+            replace that template outright instead of layering on top of it, so the shared
+            look here is just a reusable ItemTemplate applied locally on each control instead.
+        -->
+        <DataTemplate x:Key="FriendlyEnumItemTemplate">
+            <TextBlock Text="{Binding Converter={StaticResource FriendlyEnumConverter}}"/>
+        </DataTemplate>
     </UserControl.Resources>
 
     <ScrollViewer VerticalScrollBarVisibility="Auto">
         <StackPanel Margin="20" Width="440" HorizontalAlignment="Center" VerticalAlignment="Top">
-            <TextBlock Text="Project Settings" Style="{StaticResource TextBlockTitle}" Margin="0 0 0 12"/>
-
-            <Border Style="{StaticResource SettingsCardStyle}">
+            <Border Style="{StaticResource SettingsCardStyle}" Margin="0 8 0 8">
                 <StackPanel>
                     <TextBlock Text="Background Music" Style="{StaticResource SettingsSectionTitleStyle}"/>
                     <TextBlock Text="Play a music track underneath the whole project." Style="{StaticResource SettingsHintStyle}"/>
@@ -80,7 +76,7 @@
                 <StackPanel>
                     <TextBlock Text="Entrance Style" Style="{StaticResource SettingsSectionTitleStyle}"/>
                     <TextBlock Text="How each graphic appears on screen when it's added to a scene." Style="{StaticResource SettingsHintStyle}"/>
-                    <ComboBox x:Name="EntranceStyleComboBox" Style="{StaticResource SettingsComboBoxStyle}" SelectedItem="{Binding Settings.EntranceStyle, Mode=TwoWay}"/>
+                    <hc:ComboBox x:Name="EntranceStyleComboBox" Width="220" HorizontalAlignment="Left" ItemTemplate="{StaticResource FriendlyEnumItemTemplate}" SelectedItem="{Binding Settings.EntranceStyle, Mode=TwoWay}"/>
                 </StackPanel>
             </Border>
 
@@ -122,7 +118,7 @@
                 <StackPanel>
                     <TextBlock Text="Aspect Ratio" Style="{StaticResource SettingsSectionTitleStyle}"/>
                     <TextBlock Text="Canvas shape used by the editor, preview, and exported video." Style="{StaticResource SettingsHintStyle}"/>
-                    <ComboBox x:Name="AspectRatioComboBox" Style="{StaticResource SettingsComboBoxStyle}" SelectedItem="{Binding Settings.AspectRatio, Mode=TwoWay}"/>
+                    <hc:ComboBox x:Name="AspectRatioComboBox" Width="220" HorizontalAlignment="Left" ItemTemplate="{StaticResource FriendlyEnumItemTemplate}" SelectedItem="{Binding Settings.AspectRatio, Mode=TwoWay}"/>
                 </StackPanel>
             </Border>
 
@@ -130,7 +126,7 @@
                 <StackPanel>
                     <TextBlock Text="Scene Transitions" Style="{StaticResource SettingsSectionTitleStyle}"/>
                     <TextBlock Text="How the canvas changes when moving from one scene to the next." Style="{StaticResource SettingsHintStyle}"/>
-                    <ComboBox x:Name="SceneTransitionComboBox" Style="{StaticResource SettingsComboBoxStyle}" SelectedItem="{Binding Settings.SceneTransition, Mode=TwoWay}"/>
+                    <hc:ComboBox x:Name="SceneTransitionComboBox" Width="220" HorizontalAlignment="Left" ItemTemplate="{StaticResource FriendlyEnumItemTemplate}" SelectedItem="{Binding Settings.SceneTransition, Mode=TwoWay}"/>
                 </StackPanel>
             </Border>
         </StackPanel>

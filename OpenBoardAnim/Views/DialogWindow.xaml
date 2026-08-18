@@ -1,12 +1,12 @@
-﻿<Window x:Class="OpenBoardAnim.Views.DialogWindow"
+﻿<hc:Window x:Class="OpenBoardAnim.Views.DialogWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:hc="https://handyorg.github.io/handycontrol"
         xmlns:local="clr-namespace:OpenBoardAnim.Views"
         mc:Ignorable="d"
         WindowStartupLocation="CenterOwner"
-        WindowStyle="ToolWindow"
         Background="{DynamicResource RegionBrush}"
         Foreground="{DynamicResource PrimaryTextBrush}"
         Height="650" Width="1050">
@@ -14,7 +14,8 @@
         Content is set explicitly by DialogService per DialogType rather than routed via
         DataTemplate-by-model-type: two different dialog types (Preview, ProjectSettings)
         can pass the same model CLR type (ProjectDetails), which a type-keyed DataTemplate
-        can't tell apart.
+        can't tell apart. hc:Window draws its own themed title bar in place of the native
+        (always-white) one, matching MainWindow's chrome.
     -->
     <ContentPresenter HorizontalAlignment="Center" x:Name="ContentPresenter" Content="{Binding}"/>
-</Window>
+</hc:Window>
