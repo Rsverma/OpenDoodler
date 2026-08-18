@@ -50,7 +50,9 @@ namespace OpenBoardAnim.ViewModels
                 PasteGraphicCommand = new RelayCommand(execute: o => PasteGraphic(), canExecute: o => _copiedGraphic != null && CurrentScene != null);
                 CutGraphicCommand = new RelayCommand(execute: o => CutSelectedGraphic(), canExecute: o => SelectedGraphic != null);
                 DuplicateGraphicCommand = new RelayCommand(execute: o => DuplicateSelectedGraphic(), canExecute: o => SelectedGraphic != null);
-                ToggleLockCommand = new RelayCommand(execute: o => ToggleLock(), canExecute: o => SelectedGraphic != null);
+                ToggleLockCommand = new RelayCommand(execute: o => ToggleLock(), canExecute: o => HasSelection);
+                GroupGraphicsCommand = new RelayCommand(execute: o => GroupSelectedGraphics(), canExecute: o => GetSelectedGraphicsOrFallback().Count >= 2);
+                UngroupGraphicsCommand = new RelayCommand(execute: o => UngroupSelectedGraphics(), canExecute: o => GetSelectedGraphicsOrFallback().Any(g => g.GroupId.HasValue));
                 LaunchSceneSettingsCommand = new RelayCommand(execute: o => LaunchSceneSettings(), canExecute: o => CurrentScene != null);
                 LaunchProjectSettingsCommand = new RelayCommand(execute: o => LaunchProjectSettings(), canExecute: o => true);
             }
@@ -254,8 +256,45 @@ namespace OpenBoardAnim.ViewModels
         {
             try
             {
-                if (SelectedGraphic == null) return;
-                SelectedGraphic.IsLocked = !SelectedGraphic.IsLocked;
+                List<GraphicModelBase> targets = GetSelectedGraphicsOrFallback();
+                if (targets.Count == 0) return;
+                // A group selection should end up in one consistent state rather than each
+                // member flipping its own IsLocked independently - lock everything if any
+                // member is currently unlocked, otherwise unlock the whole selection.
+                bool lockAll = targets.Any(g => !g.IsLocked);
+                foreach (GraphicModelBase graphic in targets)
+                    graphic.IsLocked = lockAll;
+            }
+            catch (Exception ex)
+            {
+                if (Logger.LogError(ex, LogAction.LogAndShow))
+                    throw;
+            }
+        }
+
+        private void GroupSelectedGraphics()
+        {
+            try
+            {
+                List<GraphicModelBase> targets = GetSelectedGraphicsOrFallback();
+                if (targets.Count < 2) return;
+                Guid groupId = Guid.NewGuid();
+                foreach (GraphicModelBase graphic in targets)
+                    graphic.GroupId = groupId;
+            }
+            catch (Exception ex)
+            {
+                if (Logger.LogError(ex, LogAction.LogAndShow))
+                    throw;
+            }
+        }
+
+        private void UngroupSelectedGraphics()
+        {
+            try
+            {
+                foreach (GraphicModelBase graphic in GetSelectedGraphicsOrFallback())
+                    graphic.GroupId = null;
             }
             catch (Exception ex)
             {
@@ -480,6 +519,8 @@ namespace OpenBoardAnim.ViewModels
         public ICommand CutGraphicCommand { get; set; }
         public ICommand DuplicateGraphicCommand { get; set; }
         public ICommand ToggleLockCommand { get; set; }
+        public ICommand GroupGraphicsCommand { get; set; }
+        public ICommand UngroupGraphicsCommand { get; set; }
         public ICommand SaveProjectCommand { get; set; }
         public ICommand ExportProjectCommand { get; set; }
         public ICommand CancelExportCommand { get; set; }

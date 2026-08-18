@@ -102,6 +102,21 @@ namespace OpenBoardAnim.Models
             }
         }
 
+        // Graphics sharing the same GroupId are treated as one unit for selection/move/delete -
+        // see EditorCanvasView's click handlers, which expand a click on any member to select
+        // every graphic with the same GroupId. Null means ungrouped. Persisted (not JsonIgnore)
+        // so grouping survives save/load, unlike the transient ListBox multi-selection.
+        private Guid? _groupId;
+        public Guid? GroupId
+        {
+            get { return _groupId; }
+            set
+            {
+                _groupId = value;
+                OnPropertyChanged();
+            }
+        }
+
         public abstract GraphicModelBase Clone();
     }
 }

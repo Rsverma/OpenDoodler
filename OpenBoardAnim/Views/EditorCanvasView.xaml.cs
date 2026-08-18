@@ -61,7 +61,21 @@ namespace OpenBoardAnim.Views
                 if (!listBoxItem.IsSelected)
                 {
                     listBox.SelectedItems.Clear();
-                    listBoxItem.IsSelected = true;
+                    // A grouped item selects every graphic sharing its GroupId too, so the
+                    // context menu's Delete/Lock/Ungroup act on the whole group, matching the
+                    // same expansion MoveThumb does for a plain left-click.
+                    if (listBoxItem.DataContext is GraphicModelBase model && model.GroupId.HasValue)
+                    {
+                        foreach (object item in listBox.Items)
+                        {
+                            if (item is GraphicModelBase graphic && graphic.GroupId == model.GroupId)
+                                listBox.SelectedItems.Add(graphic);
+                        }
+                    }
+                    else
+                    {
+                        listBoxItem.IsSelected = true;
+                    }
                 }
             }
             catch (Exception ex)

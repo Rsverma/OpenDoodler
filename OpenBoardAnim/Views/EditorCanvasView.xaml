@@ -91,6 +91,11 @@
                             <MenuItem Header="Move Down" Icon="{materialDesign:PackIcon ArrowDownBold}"
                                       Command="{Binding PlacementTarget.Tag.MoveDownCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
                             <Separator/>
+                            <MenuItem Header="Group" Icon="{materialDesign:PackIcon Group}"
+                                      Command="{Binding PlacementTarget.Tag.GroupGraphicsCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                            <MenuItem Header="Ungroup" Icon="{materialDesign:PackIcon Ungroup}"
+                                      Command="{Binding PlacementTarget.Tag.UngroupGraphicsCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                            <Separator/>
                             <MenuItem Header="Locked" IsCheckable="True" IsChecked="{Binding IsLocked, Mode=OneWay}"
                                       Command="{Binding PlacementTarget.Tag.ToggleLockCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
                             <Separator/>

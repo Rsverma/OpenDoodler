@@ -32,20 +32,25 @@ namespace OpenBoardAnim.Controls
                 if (FindAncestor<ListBoxItem>(this) is not ListBoxItem listBoxItem) return;
                 if (FindAncestor<ListBox>(listBoxItem) is not ListBox listBox) return;
 
+                GraphicModelBase model = listBoxItem.DataContext as GraphicModelBase;
                 bool multiSelectModifier = Keyboard.Modifiers.HasFlag(ModifierKeys.Control) || Keyboard.Modifiers.HasFlag(ModifierKeys.Shift);
                 if (multiSelectModifier)
                 {
-                    // Ctrl/Shift toggles this item in or out of the existing selection.
-                    listBoxItem.IsSelected = !listBoxItem.IsSelected;
+                    // Ctrl/Shift toggles this item in or out of the existing selection - a
+                    // grouped item toggles its whole group together so a group never ends up
+                    // partially selected.
+                    bool nowSelected = !listBoxItem.IsSelected;
+                    SetGroupSelection(listBox, model, nowSelected);
                 }
                 else if (!listBoxItem.IsSelected)
                 {
                     // Plain click on an unselected item replaces whatever multi-selection
                     // existed before, matching standard click-to-select semantics that
                     // Thumb's own MouseLeftButtonDown handling (see class comment above)
-                    // prevents ListBoxItem from doing itself.
+                    // prevents ListBoxItem from doing itself. A grouped item selects every
+                    // graphic sharing its GroupId, so the whole group drags together.
                     listBox.SelectedItems.Clear();
-                    listBoxItem.IsSelected = true;
+                    SetGroupSelection(listBox, model, true);
                 }
                 // else: a plain click on an item that's already part of a multi-selection
                 // leaves the whole selection alone, so dragging it moves the whole group.
@@ -54,6 +59,31 @@ namespace OpenBoardAnim.Controls
             {
                 if (Logger.LogError(ex, LogAction.LogAndShow))
                     throw;
+            }
+        }
+
+        // Selects (or deselects) model plus every other graphic sharing its GroupId, if any -
+        // ungrouped graphics (GroupId == null) just select themselves, same as before grouping
+        // existed.
+        private static void SetGroupSelection(ListBox listBox, GraphicModelBase model, bool select)
+        {
+            if (model == null) return;
+            foreach (object item in listBox.Items)
+            {
+                if (item is not GraphicModelBase graphic) continue;
+                bool sameItem = ReferenceEquals(graphic, model);
+                bool sameGroup = model.GroupId.HasValue && graphic.GroupId == model.GroupId;
+                if (!sameItem && !sameGroup) continue;
+
+                if (select)
+                {
+                    if (!listBox.SelectedItems.Contains(graphic))
+                        listBox.SelectedItems.Add(graphic);
+                }
+                else
+                {
+                    listBox.SelectedItems.Remove(graphic);
+                }
             }
         }
 
