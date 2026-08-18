@@ -20,10 +20,12 @@
 ## Key Features
 
 * Launch page to create a new project or pick up a recent one, with unsaved-changes protection and automatic crash recovery from a periodic autosave backup
-* Editor canvas to compose SVG and text graphics, with drag, resize, reorder, multi-select with group move/delete, and copy/paste across scenes
+* Editor canvas to compose SVG and text graphics, with drag, resize, zoom/pan, lock-in-place, persistent grouping, multi-select with group move/delete, a right-click context menu (copy/cut/duplicate/lock/group/delete), and copy/paste across scenes
+* Scene-template gallery: built-in starter layouts plus your own saved scenes, inserted as a brand-new scene so picking one never overwrites your current work
 * Stroke-by-stroke hand-drawn animation with configurable stroke color/width, plus Fade In / Pop In as alternate entrance styles
-* Whole-project timeline: scenes sized proportionally to their duration with a draggable playhead, reorder/duplicate/delete, hard-cut/crossfade/wipe transitions, and per-scene voiceover layered under project-wide background music
+* Whole-project timeline: scenes sized proportionally to their duration with a draggable, zoomable playhead, reorder/duplicate/delete, hard-cut/crossfade/wipe transitions, and per-scene voiceover (with trim in/out points and waveform display) layered under project-wide background music
 * Undo/redo
+* Light / Dark / System UI theme
 * Project Settings: board type, background music, stroke styling, entrance style, aspect ratio (16:9 / 9:16 / 1:1), and scene transitions
 * In-app preview and MP4 video export (background music and per-scene voiceovers mixed in) with progress reporting and cancellation
 * Keyboard shortcuts for undo/redo, save, new/open project, delete, copy/paste, and nudging the selected graphic(s)
@@ -32,7 +34,6 @@
 * Configurable hand/pen (choose a hand skin, pen color, or turn the hand off entirely)
 * Snapping/alignment guides while dragging graphics on the canvas
 * Camera pan/zoom (Ken Burns-style focus moves)
-* Editor canvas zoom/pan
 * Animated GIF export alongside MP4
 * Custom/arbitrary export resolution beyond the built-in aspect-ratio presets
 
