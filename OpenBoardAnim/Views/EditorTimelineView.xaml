@@ -7,6 +7,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:local="clr-namespace:OpenBoardAnim.Views"
              xmlns:utils="clr-namespace:OpenBoardAnim.Utils"
+             xmlns:controls="clr-namespace:OpenBoardAnim.Controls"
              mc:Ignorable="d"
              d:DesignHeight="450" d:DesignWidth="800">
     <UserControl.Resources>
@@ -64,11 +65,14 @@
                         <DataTemplate DataType="{x:Type models:SceneTimelineSegment}">
                             <Border Width="{Binding Width}" Height="18" CornerRadius="4" Background="#FF8E24AA"
                                     Visibility="{Binding Scene.VoiceoverPath, Converter={StaticResource NullToVisibilityConverter}}"
-                                    ToolTip="{Binding Scene.VoiceoverPath}">
-                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                    <materialDesign:PackIcon Kind="Microphone" Width="12" Height="12" Foreground="White" Margin="0 0 3 0"/>
-                                    <TextBlock Text="Voiceover" FontSize="9" Foreground="White"/>
-                                </StackPanel>
+                                    ToolTip="{Binding Scene.VoiceoverPath}" ClipToBounds="True">
+                                <Grid>
+                                    <controls:WaveformControl AudioPath="{Binding Scene.VoiceoverPath}" WaveformBrush="#66FFFFFF" Margin="2 0"/>
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                        <materialDesign:PackIcon Kind="Microphone" Width="12" Height="12" Foreground="White" Margin="0 0 3 0"/>
+                                        <TextBlock Text="Voiceover" FontSize="9" Foreground="White"/>
+                                    </StackPanel>
+                                </Grid>
                             </Border>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
@@ -77,11 +81,14 @@
                 <!-- Background music layer: one bar spanning every real scene, below the cards -->
                 <Border Canvas.Left="0" Canvas.Top="116" Width="{Binding RealContentWidth}" Height="18" CornerRadius="4" Background="#FF43A047"
                         Visibility="{Binding Project.AudioPath, Converter={StaticResource NullToVisibilityConverter}}"
-                        ToolTip="{Binding Project.AudioPath}">
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="8 0 0 0">
-                        <materialDesign:PackIcon Kind="MusicNote" Width="12" Height="12" Foreground="White" Margin="0 0 4 0"/>
-                        <TextBlock Text="Background Music" FontSize="9" Foreground="White"/>
-                    </StackPanel>
+                        ToolTip="{Binding Project.AudioPath}" ClipToBounds="True">
+                    <Grid>
+                        <controls:WaveformControl AudioPath="{Binding Project.AudioPath}" WaveformBrush="#66FFFFFF" Margin="2 0"/>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="8 0 0 0">
+                            <materialDesign:PackIcon Kind="MusicNote" Width="12" Height="12" Foreground="White" Margin="0 0 4 0"/>
+                            <TextBlock Text="Background Music" FontSize="9" Foreground="White"/>
+                        </StackPanel>
+                    </Grid>
                 </Border>
 
                 <ItemsControl ItemsSource="{Binding Segments}" Canvas.Left="0" Canvas.Top="22">
