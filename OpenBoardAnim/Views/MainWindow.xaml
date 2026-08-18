@@ -7,10 +7,15 @@
         xmlns:local="clr-namespace:OpenBoardAnim"
         xmlns:views="clr-namespace:OpenBoardAnim.Views"
         xmlns:vm="clr-namespace:OpenBoardAnim.ViewModels"
+        xmlns:models="clr-namespace:OpenBoardAnim.Models"
+        xmlns:utils="clr-namespace:OpenBoardAnim.Utils"
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
         WindowState="Maximized"
         Closing="Window_Closing"
         mc:Ignorable="d" MinHeight="650" MinWidth="1200">
+    <hc:Window.Resources>
+        <utils:EnumEqualsBooleanConverter x:Key="EnumEqualsBooleanConverter"/>
+    </hc:Window.Resources>
     <hc:Window.InputBindings>
         <KeyBinding Key="Z" Modifiers="Control" Command="{Binding UndoCommand}"/>
         <KeyBinding Key="Y" Modifiers="Control" Command="{Binding RedoCommand}"/>
@@ -59,6 +64,17 @@
                         <Separator/>
                         <MenuItem Header="Copy Graphic" Icon="{materialDesign:PackIcon ContentCopy}" Command="{Binding Navigation.CurrentView.Actions.CopyGraphicCommand}" InputGestureText="Ctrl+C"/>
                         <MenuItem Header="Paste Graphic" Icon="{materialDesign:PackIcon ContentPaste}" Command="{Binding Navigation.CurrentView.Actions.PasteGraphicCommand}" InputGestureText="Ctrl+V"/>
+                    </MenuItem>
+                    <MenuItem Header="View">
+                        <MenuItem Header="Light" IsCheckable="True" Icon="{materialDesign:PackIcon WhiteBalanceSunny}"
+                                  IsChecked="{Binding Theme.CurrentTheme, Converter={StaticResource EnumEqualsBooleanConverter}, ConverterParameter=Light, Mode=OneWay}"
+                                  Command="{Binding Theme.SetThemeCommand}" CommandParameter="{x:Static models:AppTheme.Light}"/>
+                        <MenuItem Header="Dark" IsCheckable="True" Icon="{materialDesign:PackIcon WeatherNight}"
+                                  IsChecked="{Binding Theme.CurrentTheme, Converter={StaticResource EnumEqualsBooleanConverter}, ConverterParameter=Dark, Mode=OneWay}"
+                                  Command="{Binding Theme.SetThemeCommand}" CommandParameter="{x:Static models:AppTheme.Dark}"/>
+                        <MenuItem Header="Match System" IsCheckable="True" Icon="{materialDesign:PackIcon ThemeLightDark}"
+                                  IsChecked="{Binding Theme.CurrentTheme, Converter={StaticResource EnumEqualsBooleanConverter}, ConverterParameter=System, Mode=OneWay}"
+                                  Command="{Binding Theme.SetThemeCommand}" CommandParameter="{x:Static models:AppTheme.System}"/>
                     </MenuItem>
                     <MenuItem Header="Help">
                         <MenuItem Header="About" Icon="{materialDesign:PackIcon Info}"/>

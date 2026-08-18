@@ -22,7 +22,7 @@
             <Path Data="{Binding TextGeometry}" Fill="Black" Stroke="Black" StrokeThickness="1" VerticalAlignment="Center"/>
         </DataTemplate>
     </UserControl.Resources>
-    <Border Background="{DynamicResource BackgroundBrush}" Width="300" BorderThickness="1,0,0,0" BorderBrush="{DynamicResource BorderBrush}">
+    <Border Background="{DynamicResource RegionBrush}" Width="300" BorderThickness="1,0,0,0" BorderBrush="{DynamicResource BorderBrush}">
         <Grid Margin="20 0">
             <Grid.RowDefinitions>
                 <RowDefinition Height="auto" />

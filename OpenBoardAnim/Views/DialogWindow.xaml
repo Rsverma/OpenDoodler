@@ -7,6 +7,8 @@
         mc:Ignorable="d"
         WindowStartupLocation="CenterOwner"
         WindowStyle="ToolWindow"
+        Background="{DynamicResource RegionBrush}"
+        Foreground="{DynamicResource PrimaryTextBrush}"
         Height="650" Width="1050">
     <!--
         Content is set explicitly by DialogService per DialogType rather than routed via

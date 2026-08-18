@@ -17,7 +17,7 @@ namespace OpenBoardAnim.ViewModels
         private string _title;
         private string _userName;
 
-        public MainViewModel(INavigationService navService, IPubSubService pubSub, StateSnapshotService stateSnapshotService, CacheService cache, EditorActionsViewModel actions)
+        public MainViewModel(INavigationService navService, IPubSubService pubSub, StateSnapshotService stateSnapshotService, CacheService cache, EditorActionsViewModel actions, ThemeService theme)
         {
             try
             {
@@ -25,6 +25,7 @@ namespace OpenBoardAnim.ViewModels
                 _stateSnapshotService = stateSnapshotService;
                 _cache = cache;
                 _actions = actions;
+                Theme = theme;
                 Title = "Open Board Animator";
                 UserName = "RSV";
                 Navigation = navService;
@@ -118,6 +119,7 @@ namespace OpenBoardAnim.ViewModels
         public RelayCommand NewProjectCommand { get; set; }
         public RelayCommand OpenProjectCommand { get; set; }
         public RelayCommand ExitCommand { get; set; }
+        public ThemeService Theme { get; private set; }
         public INavigationService Navigation
         {
             get => _navigation;

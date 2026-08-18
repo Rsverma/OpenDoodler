@@ -41,6 +41,7 @@ namespace OpenBoardAnim
                 services.AddSingleton<IDialogService, DialogService>();
                 services.AddSingleton<CacheService>();
                 services.AddSingleton<StateSnapshotService>();
+                services.AddSingleton<ThemeService>();
                 services.AddSingleton<MainViewModel>();
                 services.AddTransient<LaunchViewModel>();
                 services.AddSingleton<EditorActionsViewModel>();
@@ -67,6 +68,7 @@ namespace OpenBoardAnim
         {
             try
             {
+                _serviceProvider.GetRequiredService<ThemeService>().ApplySkin();
                 var mainWindow = _serviceProvider.GetRequiredService<MainWindow>();
                 mainWindow.Show();
                 base.OnStartup(e);
