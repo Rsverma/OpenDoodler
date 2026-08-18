@@ -100,7 +100,11 @@
                     </Grid>
                 </Border>
 
-                <ItemsControl ItemsSource="{Binding Segments}" Canvas.Left="0" Canvas.Top="22">
+                <!-- AllowDrop/DragOver/Drop here (not on each card) so a card dropped anywhere
+                     within another card's bounds still resolves to that card via DataContext
+                     hit-testing in the Drop handler - simpler than tracking per-card drop zones. -->
+                <ItemsControl ItemsSource="{Binding Segments}" Canvas.Left="0" Canvas.Top="22"
+                              AllowDrop="True" DragOver="ScenesItemsControl_DragOver" Drop="ScenesItemsControl_Drop">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
                             <Canvas IsItemsHost="True"/>
@@ -114,8 +118,14 @@
                     </ItemsControl.ItemContainerStyle>
                     <ItemsControl.ItemTemplate>
                         <DataTemplate DataType="{x:Type models:SceneTimelineSegment}">
+                            <!-- PreviewMouseLeftButtonDown/PreviewMouseMove initiate a drag past
+                                 a movement threshold, without ever marking the event Handled, so
+                                 a plain click still reaches MouseLeftButtonDown below and selects
+                                 normally - dragging only kicks in once the mouse actually moves. -->
                             <Border Width="{Binding Width}" Height="90" Style="{StaticResource SceneCardBorderStyle}"
-                                    MouseLeftButtonDown="SceneCard_MouseLeftButtonDown">
+                                    MouseLeftButtonDown="SceneCard_MouseLeftButtonDown"
+                                    PreviewMouseLeftButtonDown="SceneCard_PreviewMouseLeftButtonDown"
+                                    PreviewMouseMove="SceneCard_PreviewMouseMove">
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*"/>

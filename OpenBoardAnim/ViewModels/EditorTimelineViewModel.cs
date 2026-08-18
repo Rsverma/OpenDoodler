@@ -465,5 +465,46 @@ namespace OpenBoardAnim.ViewModels
             SelectedScene = newScene;
             RecomputeSegments();
         }
+
+        // Reorders scenes via drag-and-drop on the timeline (EditorTimelineView's drag/drop
+        // code-behind calls this) - moves dragged to right before target's current position.
+        // Unlike SceneLeftHandler/SceneRightHandler (which only swap with an immediate
+        // neighbor), this can jump a scene to any position in one gesture.
+        public void MoveScene(SceneModel dragged, SceneModel target)
+        {
+            try
+            {
+                if (dragged == null || target == null || dragged == target) return;
+                if (dragged == _addScene || target == _addScene) return;
+                int oldIndex = Scenes.IndexOf(dragged);
+                if (oldIndex < 0) return;
+
+                Scenes.RemoveAt(oldIndex);
+                int targetIndex = Scenes.IndexOf(target);
+                if (targetIndex < 0)
+                {
+                    // target vanished mid-operation (shouldn't happen) - put dragged back rather
+                    // than lose it.
+                    Scenes.Insert(oldIndex, dragged);
+                    return;
+                }
+                Scenes.Insert(targetIndex, dragged);
+
+                for (int i = 1; i < Scenes.Count; i++)
+                {
+                    SceneModel scene = Scenes[i - 1];
+                    scene.Name = i.ToString();
+                    scene.Index = i;
+                }
+
+                SelectedScene = dragged;
+                RecomputeSegments();
+            }
+            catch (Exception ex)
+            {
+                if (Logger.LogError(ex, LogAction.LogAndShow))
+                    throw;
+            }
+        }
     }
 }
