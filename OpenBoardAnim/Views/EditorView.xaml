@@ -68,6 +68,10 @@
                 <Button Padding="4" Command="{Binding Canvas.ZoomInCommand}" ToolTip="Zoom In" Content="{materialDesign:PackIcon MagnifyPlus}"/>
                 <Button Margin="8 0 0 0" Padding="4" Command="{Binding Canvas.ResetZoomCommand}" Click="ResetZoomButton_Click"
                         ToolTip="Reset Zoom and Recenter (Ctrl+wheel to zoom, middle-drag to pan)" Content="{materialDesign:PackIcon Restore}"/>
+                <Button Margin="8 0 0 0" Padding="4" Click="ZoomToFit_Click"
+                        ToolTip="Zoom to Fit" Content="{materialDesign:PackIcon FitToPageOutline}"/>
+                <Button Margin="4 0 0 0" Padding="4" Click="ZoomToSelection_Click"
+                        ToolTip="Zoom to Selection" Content="{materialDesign:PackIcon ImageFilterCenterFocusStrong}"/>
             </StackPanel>
         </hc:SimplePanel>
         <ContentControl Grid.Row="1" Margin="20 0" Height="216" Content="{Binding Timeline}"/>

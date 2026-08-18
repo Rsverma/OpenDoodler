@@ -1,7 +1,10 @@
 ﻿
+using OpenBoardAnim.Models;
 using OpenBoardAnim.Utilities;
 using OpenBoardAnim.ViewModels;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -78,6 +81,71 @@ namespace OpenBoardAnim.Views
                 if (Logger.LogError(ex, LogAction.LogAndShow))
                     throw;
             }
+        }
+
+        private void ZoomToFit_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                if (DataContext is not EditorViewModel viewModel) return;
+                double boardWidth = viewModel.Actions.Project?.Settings?.EditorWidth ?? 0;
+                double boardHeight = viewModel.Actions.Project?.Settings?.EditorHeight ?? 0;
+                ZoomToFitBounds(viewModel, new Rect(0, 0, boardWidth, boardHeight));
+            }
+            catch (Exception ex)
+            {
+                if (Logger.LogError(ex, LogAction.LogAndShow))
+                    throw;
+            }
+        }
+
+        private void ZoomToSelection_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                if (DataContext is not EditorViewModel viewModel) return;
+                List<GraphicModelBase> selected = viewModel.Actions.GetSelectedGraphicsOrFallback();
+                if (selected.Count == 0) return;
+
+                double left = selected.Min(g => g.X);
+                double top = selected.Min(g => g.Y);
+                double right = selected.Max(g => g.X + g.Width);
+                double bottom = selected.Max(g => g.Y + g.Height);
+                ZoomToFitBounds(viewModel, new Rect(left, top, right - left, bottom - top));
+            }
+            catch (Exception ex)
+            {
+                if (Logger.LogError(ex, LogAction.LogAndShow))
+                    throw;
+            }
+        }
+
+        // Shared by Zoom to Fit (whole board) and Zoom to Selection (just the selected
+        // graphics' bounding box) - computes a zoom level that fits canvasBounds (in unscaled
+        // canvas units) into the current viewport, then re-centers on it using the same
+        // TranslatePoint-based delta-correction approach as the cursor-anchored wheel zoom
+        // above, just targeting the viewport's center instead of the cursor position.
+        private void ZoomToFitBounds(EditorViewModel viewModel, Rect canvasBounds)
+        {
+            if (canvasBounds.Width <= 0 || canvasBounds.Height <= 0) return;
+
+            double viewportWidth = CanvasScrollViewer.ViewportWidth;
+            double viewportHeight = CanvasScrollViewer.ViewportHeight;
+            if (viewportWidth <= 0 || viewportHeight <= 0) return;
+
+            // A little breathing room around the fitted area instead of flush to the viewport edges.
+            const double marginFactor = 0.9;
+            double fitZoom = Math.Min(viewportWidth / canvasBounds.Width, viewportHeight / canvasBounds.Height) * marginFactor;
+            viewModel.Canvas.ZoomLevel = fitZoom;
+
+            CanvasScrollViewer.UpdateLayout();
+
+            Point centerCanvasPos = new(canvasBounds.X + canvasBounds.Width / 2, canvasBounds.Y + canvasBounds.Height / 2);
+            Point centerViewportPosAfterZoom = CanvasBoard.TranslatePoint(centerCanvasPos, CanvasScrollViewer);
+            Point viewportCenter = new(viewportWidth / 2, viewportHeight / 2);
+            Vector correction = centerViewportPosAfterZoom - viewportCenter;
+            CanvasScrollViewer.ScrollToHorizontalOffset(CanvasScrollViewer.HorizontalOffset + correction.X);
+            CanvasScrollViewer.ScrollToVerticalOffset(CanvasScrollViewer.VerticalOffset + correction.Y);
         }
 
         private void CanvasScrollViewer_PreviewMouseWheel(object sender, MouseWheelEventArgs e)

@@ -148,7 +148,7 @@ namespace OpenBoardAnim.ViewModels
         // has happened.
         public List<GraphicModelBase> SelectedGraphics { get; set; } = new();
 
-        private List<GraphicModelBase> GetSelectedGraphicsOrFallback()
+        public List<GraphicModelBase> GetSelectedGraphicsOrFallback()
         {
             if (SelectedGraphics != null && SelectedGraphics.Count > 0)
                 return SelectedGraphics;
