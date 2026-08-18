@@ -13,8 +13,10 @@ namespace OpenBoardAnim.Utils
 {
     // A per-scene voiceover clip and the real-time offset (seconds from the start of the
     // export capture) at which its scene began - used to delay the clip into place when
-    // mixing it against the looped background music.
-    public record SceneAudioCue(string Path, double StartSeconds);
+    // mixing it against the looped background music. TrimStart/TrimEnd are seconds into the
+    // source file itself (which portion of it plays), independent of StartSeconds (when that
+    // portion begins in the exported timeline); TrimEnd of 0 means "play to the file's end".
+    public record SceneAudioCue(string Path, double StartSeconds, double TrimStart = 0, double TrimEnd = 0);
 
     public class VideoExporter
     {
@@ -24,10 +26,13 @@ namespace OpenBoardAnim.Utils
         private string _outputVideoPath;
         private string _audioPath;
         private double _audioVolumePercent;
+        private double _audioTrimStart;
+        private double _audioTrimEnd;
         private List<SceneAudioCue> _sceneAudioCues;
         private int _frameCount;
 
-        public VideoExporter(Canvas canvas, int frameRate, string outputVideoPath, string audioPath = null, double audioVolumePercent = 100, List<SceneAudioCue> sceneAudioCues = null)
+        public VideoExporter(Canvas canvas, int frameRate, string outputVideoPath, string audioPath = null, double audioVolumePercent = 100,
+            List<SceneAudioCue> sceneAudioCues = null, double audioTrimStart = 0, double audioTrimEnd = 0)
         {
             try
             {
@@ -36,6 +41,8 @@ namespace OpenBoardAnim.Utils
                 _outputVideoPath = outputVideoPath;
                 _audioPath = audioPath;
                 _audioVolumePercent = audioVolumePercent;
+                _audioTrimStart = audioTrimStart;
+                _audioTrimEnd = audioTrimEnd;
                 _sceneAudioCues = sceneAudioCues ?? new List<SceneAudioCue>();
                 _tempImageDir = Path.Combine(Path.GetTempPath(), "WpfAnimationFrames");
                 if (Directory.Exists(_tempImageDir)) Directory.Delete(_tempImageDir, true); // Cleanup
@@ -129,10 +136,13 @@ namespace OpenBoardAnim.Utils
                 {
                     // -stream_loop -1 on the (usually shorter) music track so it doesn't run
                     // out before the video does; -shortest then caps the output at the video's
-                    // actual length instead of looping the audio forever.
+                    // actual length instead of looping the audio forever. The trim args (-ss/-t)
+                    // are input options, so they must sit right before this input's own -i and
+                    // apply to each loop iteration, looping just the trimmed segment.
                     string volume = (_audioVolumePercent / 100.0).ToString(CultureInfo.InvariantCulture);
+                    string audioTrimArgs = BuildTrimArgs(_audioTrimStart, _audioTrimEnd);
                     arguments = $"-y -framerate {_frameRate} -i \"{_tempImageDir}/frame_%04d.png\" " +
-                        $"-stream_loop -1 -i \"{_audioPath}\" -filter:a \"volume={volume}\" " +
+                        $"{audioTrimArgs}-stream_loop -1 -i \"{_audioPath}\" -filter:a \"volume={volume}\" " +
                         $"-map 0:v:0 -map 1:a:0 -c:v libx264 -pix_fmt yuv420p -c:a aac -shortest \"{_outputVideoPath}\"";
                 }
                 else
@@ -148,7 +158,7 @@ namespace OpenBoardAnim.Utils
 
                     if (hasAudio)
                     {
-                        inputs.Append($"-stream_loop -1 -i \"{_audioPath}\" ");
+                        inputs.Append($"{BuildTrimArgs(_audioTrimStart, _audioTrimEnd)}-stream_loop -1 -i \"{_audioPath}\" ");
                         string volume = (_audioVolumePercent / 100.0).ToString(CultureInfo.InvariantCulture);
                         filterParts.Add($"[{nextInputIndex}:a]volume={volume}[bg]");
                         mixLabels.Add("[bg]");
@@ -157,7 +167,7 @@ namespace OpenBoardAnim.Utils
 
                     for (int i = 0; i < voiceovers.Count; i++)
                     {
-                        inputs.Append($"-i \"{voiceovers[i].Path}\" ");
+                        inputs.Append($"{BuildTrimArgs(voiceovers[i].TrimStart, voiceovers[i].TrimEnd)}-i \"{voiceovers[i].Path}\" ");
                         int delayMs = Math.Max(0, (int)Math.Round(voiceovers[i].StartSeconds * 1000));
                         filterParts.Add($"[{nextInputIndex}:a]adelay={delayMs}:all=1[vo{i}]");
                         mixLabels.Add($"[vo{i}]");
@@ -229,6 +239,19 @@ namespace OpenBoardAnim.Utils
             {
                 process?.Dispose();
             }
+        }
+
+        // Input-level trim (-ss/-t), which must precede the -i it applies to in a multi-input
+        // ffmpeg command. trimEnd of 0 (or not past trimStart) means "no explicit end - keep
+        // whatever -ss already gave us, through the source's natural end".
+        private static string BuildTrimArgs(double trimStart, double trimEnd)
+        {
+            string args = "";
+            if (trimStart > 0)
+                args += $"-ss {trimStart.ToString(CultureInfo.InvariantCulture)} ";
+            if (trimEnd > trimStart)
+                args += $"-t {(trimEnd - trimStart).ToString(CultureInfo.InvariantCulture)} ";
+            return args;
         }
 
         private void CleanupTempFrames()

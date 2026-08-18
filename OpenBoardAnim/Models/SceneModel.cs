@@ -57,6 +57,8 @@ namespace OpenBoardAnim.Models
                 Index = Index,
                 Graphics = new BindingList<GraphicModelBase>(Graphics.Select(x=>x.Clone()).ToList()),
                 VoiceoverPath = VoiceoverPath,
+                VoiceoverTrimStart = VoiceoverTrimStart,
+                VoiceoverTrimEnd = VoiceoverTrimEnd,
             };
         }
 
@@ -67,6 +69,32 @@ namespace OpenBoardAnim.Models
             set
             {
                 _voiceoverPath = value;
+                OnPropertyChanged();
+            }
+        }
+
+        // Seconds into the voiceover file to start playback from. Both trim fields are plain
+        // seconds rather than nullable so they bind directly to a NumericUpDown; 0 for the end
+        // is the sentinel for "no explicit end - play to the file's natural end", since an
+        // actual end time of 0 (silence) is never a value anyone would intentionally choose.
+        private double _voiceoverTrimStart;
+        public double VoiceoverTrimStart
+        {
+            get { return _voiceoverTrimStart; }
+            set
+            {
+                _voiceoverTrimStart = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private double _voiceoverTrimEnd;
+        public double VoiceoverTrimEnd
+        {
+            get { return _voiceoverTrimEnd; }
+            set
+            {
+                _voiceoverTrimEnd = value;
                 OnPropertyChanged();
             }
         }

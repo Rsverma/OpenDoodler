@@ -13,6 +13,7 @@ using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
+using System.Windows.Threading;
 
 namespace OpenBoardAnim.Utils
 {
@@ -22,6 +23,7 @@ namespace OpenBoardAnim.Utils
         {
             VideoExporter exporter = null;
             MediaPlayer voiceoverPlayer = null;
+            DispatcherTimer voiceoverTrimTimer = null;
             try
             {
                 if (project == null) return;
@@ -47,7 +49,8 @@ namespace OpenBoardAnim.Utils
                 Stopwatch sceneClock = Stopwatch.StartNew();
                 if (isExport)
                 {
-                    exporter = new(canvas, 30, outputVideoPath, project.AudioPath, project.AudioVolume, sceneAudioCues);
+                    exporter = new(canvas, 30, outputVideoPath, project.AudioPath, project.AudioVolume, sceneAudioCues,
+                        project.AudioTrimStart, project.AudioTrimEnd);
                     exporter.StartCapture();
                     sceneClock.Restart();
                 }
@@ -76,17 +79,23 @@ namespace OpenBoardAnim.Utils
                     if (isExport)
                     {
                         if (hasVoiceover)
-                            sceneAudioCues.Add(new SceneAudioCue(scene.VoiceoverPath, sceneClock.Elapsed.TotalSeconds));
+                            sceneAudioCues.Add(new SceneAudioCue(scene.VoiceoverPath, sceneClock.Elapsed.TotalSeconds,
+                                scene.VoiceoverTrimStart, scene.VoiceoverTrimEnd));
                     }
                     else
                     {
+                        voiceoverTrimTimer?.Stop();
+                        voiceoverTrimTimer = null;
                         voiceoverPlayer?.Close();
                         voiceoverPlayer = null;
                         if (hasVoiceover)
                         {
                             voiceoverPlayer = new MediaPlayer();
                             voiceoverPlayer.Open(new Uri(scene.VoiceoverPath));
+                            voiceoverPlayer.Position = TimeSpan.FromSeconds(Math.Max(0, scene.VoiceoverTrimStart));
                             voiceoverPlayer.Play();
+                            if (scene.VoiceoverTrimEnd > scene.VoiceoverTrimStart)
+                                voiceoverTrimTimer = StartTrimStopTimer(voiceoverPlayer, scene.VoiceoverTrimEnd);
                         }
                     }
 
@@ -181,8 +190,27 @@ namespace OpenBoardAnim.Utils
             {
                 if (isExport && exporter != null)
                     await exporter.StopCapture(progress, cancellationToken);
+                voiceoverTrimTimer?.Stop();
                 voiceoverPlayer?.Close();
             }
+        }
+
+        // Live playback (preview) has no equivalent to ffmpeg's -t, so a trimmed clip's end is
+        // enforced by polling position and pausing once it's reached. Shared with
+        // ProjectPreviewView for the background-music track, which needs the same behavior.
+        public static DispatcherTimer StartTrimStopTimer(MediaPlayer player, double trimEndSeconds)
+        {
+            DispatcherTimer timer = new() { Interval = TimeSpan.FromMilliseconds(200) };
+            timer.Tick += (s, e) =>
+            {
+                if (player.Position.TotalSeconds >= trimEndSeconds)
+                {
+                    player.Pause();
+                    timer.Stop();
+                }
+            };
+            timer.Start();
+            return timer;
         }
 
         // Plays a hard-cut alternative between the outgoing (fully-drawn) scene and the

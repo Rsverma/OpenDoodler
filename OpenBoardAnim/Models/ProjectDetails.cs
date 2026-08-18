@@ -66,6 +66,33 @@ namespace OpenBoardAnim.Models
             }
         }
 
+        // Seconds into the background music file to start playback/looping from. Both trim
+        // fields are plain seconds rather than nullable so they bind directly to a
+        // NumericUpDown; 0 for the end is the sentinel for "no explicit end - play to the
+        // file's natural end", since an actual end time of 0 (silence) is never a value
+        // anyone would intentionally choose.
+        private double _audioTrimStart;
+        public double AudioTrimStart
+        {
+            get { return _audioTrimStart; }
+            set
+            {
+                _audioTrimStart = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private double _audioTrimEnd;
+        public double AudioTrimEnd
+        {
+            get { return _audioTrimEnd; }
+            set
+            {
+                _audioTrimEnd = value;
+                OnPropertyChanged();
+            }
+        }
+
         public ProjectDetails Clone()
         {
             return new ProjectDetails
@@ -84,7 +111,9 @@ namespace OpenBoardAnim.Models
                 },
                 Scenes = Scenes.Select(s => s.Clone()).ToList(),
                 AudioPath = AudioPath,
-                AudioVolume = AudioVolume
+                AudioVolume = AudioVolume,
+                AudioTrimStart = AudioTrimStart,
+                AudioTrimEnd = AudioTrimEnd
             };
         }
     }

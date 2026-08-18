@@ -69,6 +69,14 @@
                         <Slider Width="180" Minimum="0" Maximum="100" VerticalAlignment="Center" Value="{Binding AudioVolume, Mode=TwoWay}"/>
                         <TextBlock Margin="10 0 0 0" VerticalAlignment="Center" Text="{Binding AudioVolume, StringFormat={}{0:0}%}"/>
                     </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0 6 0 0">
+                        <TextBlock Text="Trim" VerticalAlignment="Center" Width="55"/>
+                        <TextBlock Text="Start" VerticalAlignment="Center" FontSize="11" Margin="0 0 4 0"/>
+                        <hc:NumericUpDown Width="65" Minimum="0" DecimalPlaces="1" ValueFormat="0.0" Value="{Binding AudioTrimStart, Mode=TwoWay}"/>
+                        <TextBlock Text="End" VerticalAlignment="Center" FontSize="11" Margin="10 0 4 0"/>
+                        <hc:NumericUpDown Width="65" Minimum="0" DecimalPlaces="1" ValueFormat="0.0" Value="{Binding AudioTrimEnd, Mode=TwoWay}"
+                                          ToolTip="Seconds from the start of the file. 0 = play to the end."/>
+                    </StackPanel>
                 </StackPanel>
             </Border>
 

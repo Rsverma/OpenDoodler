@@ -33,11 +33,12 @@ namespace OpenBoardAnim.Services
                 // Content is picked by DialogType, not by the model's CLR type - PreviewProject
                 // and ProjectSettings both take a ProjectDetails, so type-based routing (e.g. a
                 // DataTemplate keyed on ProjectDetails) can't tell them apart. Types with no
-                // dedicated view yet (SceneSettings, AboutUs) fall back to showing the raw model.
+                // dedicated view yet (AboutUs) fall back to showing the raw model.
                 object content = dialogType switch
                 {
                     DialogType.PreviewProject => new ProjectPreviewView { DataContext = model },
                     DialogType.ProjectSettings => new ProjectSettingsView { DataContext = model },
+                    DialogType.SceneSettings => new SceneSettingsView { DataContext = model },
                     _ => (object)model
                 };
 
@@ -65,7 +66,7 @@ namespace OpenBoardAnim.Services
                     dialog.SizeToContent = SizeToContent.WidthAndHeight;
                     dialog.ResizeMode = ResizeMode.NoResize;
                 }
-                else if (dialogType == DialogType.ProjectSettings)
+                else if (dialogType == DialogType.ProjectSettings || dialogType == DialogType.SceneSettings)
                 {
                     // Settings content is a fixed-width, compact stack of cards (one of
                     // which - Stroke - can disappear entirely) - size to it directly
