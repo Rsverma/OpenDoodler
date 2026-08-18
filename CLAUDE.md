@@ -73,11 +73,15 @@ Manual MVVM, no CommunityToolkit.Mvvm or other messenger library:
 ### Persistence
 
 EF Core over SQLite. `OpenBoardAnim.Library/DataContext.cs` (`DataContext : DbContext`) exposes
-`DbSet<GraphicEntity> Graphics` and `DbSet<ProjectEntity> Projects`. The DB file lives at
-`%LocalAppData%\OpenBoardAnim.db`; the parameterless constructor auto-runs `Database.Migrate()` on first use.
-Entities: `GraphicEntity`, `ProjectEntity`, `SceneEntity`. Repositories (`GraphicRepository`, `ProjectRepository`,
-`SceneRepository`, `ShapeRepository`) wrap `DataContext` and are the only things ViewModels should talk to for
-persistence — don't reach into `DataContext` directly from a ViewModel.
+`DbSet<GraphicEntity> Graphics`, `DbSet<ProjectEntity> Projects`, and `DbSet<SceneTemplateEntity>
+SceneTemplates`. The DB file lives at `%LocalAppData%\OpenBoardAnim.db`; `App.xaml.cs` runs
+`Database.Migrate()` on startup. Entities: `GraphicEntity`, `ProjectEntity`, `SceneTemplateEntity` (the
+scene-template gallery — each row stores a full serialized `SceneModel` as JSON, self-contained rather
+than referencing `GraphicEntity` rows, seeded with a handful of built-in starter layouts on first run;
+user-saved ones come from "Save Current Scene as Template" in the library panel). Repositories
+(`GraphicRepository`, `ProjectRepository`, `SceneRepository`, `ShapeRepository`) wrap `DataContext` and
+are the only things ViewModels should talk to for persistence — don't reach into `DataContext` directly
+from a ViewModel.
 
 ### Undo/redo
 

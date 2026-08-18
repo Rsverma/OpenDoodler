@@ -6,6 +6,7 @@ namespace OpenBoardAnim.Services
     public enum SubTopic
     {
         SceneReplaced,
+        SceneTemplateInserted,
         SceneChanged,
         GraphicAdded,
         ProjectLaunched,

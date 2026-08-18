@@ -7,8 +7,31 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:svgc="http://sharpvectors.codeplex.com/svgc/"
              xmlns:local="clr-namespace:OpenBoardAnim.Views"
-             mc:Ignorable="d" 
+             xmlns:models="clr-namespace:OpenBoardAnim.Models"
+             xmlns:utils="clr-namespace:OpenBoardAnim.Utils"
+             mc:Ignorable="d"
              d:DesignHeight="450" d:DesignWidth="800">
+    <UserControl.Resources>
+        <utils:ResizeConverter x:Key="ResizeConverter"/>
+        <!-- Non-interactive (no move/resize thumbs) content-only template, just for rendering a
+             read-only thumbnail preview of a template's graphics - same technique the timeline's
+             own scene cards already use. -->
+        <ControlTemplate x:Key="DesignerItemTemplate" TargetType="ContentControl">
+            <Grid DataContext="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ContentControl}}}">
+                <ContentPresenter Content="{TemplateBinding ContentControl.Content}"/>
+            </Grid>
+        </ControlTemplate>
+        <DataTemplate DataType="{x:Type models:DrawingModel}">
+            <Image IsHitTestVisible="False">
+                <Image.Source>
+                    <DrawingImage Drawing="{Binding ImgDrawingGroup}"/>
+                </Image.Source>
+            </Image>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type models:TextModel}">
+            <Path Data="{Binding TextGeometry}" Fill="Black" Stroke="Black" StrokeThickness="1"/>
+        </DataTemplate>
+    </UserControl.Resources>
     <Border Background="{DynamicResource RegionBrush}" Width="300" BorderThickness="0,0,1,0" BorderBrush="{DynamicResource BorderBrush}">
         <Grid>
             <Grid.RowDefinitions>
@@ -17,7 +40,62 @@
             </Grid.RowDefinitions>
             <hc:TabControl Grid.Row="1" IsAnimationEnabled="True" IsDraggable="True" IsTabFillEnabled="True" TabItemWidth="20">
                 <hc:TabItem Header="{materialDesign:PackIcon imageFrame}" ToolTip="Scenes" ScrollViewer.VerticalScrollBarVisibility="Visible">
-                    <TextBlock Text="Under&#x0a;construction" TextAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="30"/>
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <Button Grid.Row="0" Margin="5" HorizontalAlignment="Stretch" Command="{Binding SaveCurrentSceneAsTemplateCommand}"
+                                ToolTip="Add the currently selected scene to this gallery for reuse" Content="Save Current Scene as Template"/>
+                        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Visible">
+                            <ListBox ItemsSource="{Binding SceneTemplates}" ScrollViewer.VerticalScrollBarVisibility="Disabled"
+                                     BorderThickness="0" Background="Transparent">
+                                <ListBox.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <WrapPanel/>
+                                    </ItemsPanelTemplate>
+                                </ListBox.ItemsPanel>
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate DataType="{x:Type models:SceneTemplateModel}">
+                                        <Border Margin="5" Width="160" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="6">
+                                            <StackPanel>
+                                                <Border Height="90" Background="White" CornerRadius="5 5 0 0" ClipToBounds="True">
+                                                    <ListBox ItemsSource="{Binding Scene.Graphics}" IsHitTestVisible="False"
+                                                             BorderThickness="0" Background="Transparent">
+                                                        <ItemsControl.ItemsPanel>
+                                                            <ItemsPanelTemplate>
+                                                                <Canvas/>
+                                                            </ItemsPanelTemplate>
+                                                        </ItemsControl.ItemsPanel>
+                                                        <ItemsControl.ItemContainerStyle>
+                                                            <Style TargetType="ListBoxItem">
+                                                                <Setter Property="Canvas.Left" Value="{Binding X,Converter={StaticResource ResizeConverter},Mode=OneWay}"/>
+                                                                <Setter Property="Canvas.Top" Value="{Binding Y,Converter={StaticResource ResizeConverter},Mode=OneWay}"/>
+                                                                <Setter Property="Width" Value="{Binding Width,Converter={StaticResource ResizeConverter},Mode=OneWay}"/>
+                                                                <Setter Property="Height" Value="{Binding Height,Converter={StaticResource ResizeConverter},Mode=OneWay}"/>
+                                                            </Style>
+                                                        </ItemsControl.ItemContainerStyle>
+                                                        <ListBox.ItemTemplate>
+                                                            <DataTemplate>
+                                                                <ContentControl Template="{StaticResource DesignerItemTemplate}" Content="{Binding}"/>
+                                                            </DataTemplate>
+                                                        </ListBox.ItemTemplate>
+                                                    </ListBox>
+                                                </Border>
+                                                <TextBlock Text="{Binding Name}" HorizontalAlignment="Center" Margin="4" FontSize="11" TextTrimming="CharacterEllipsis"/>
+                                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0 0 0 6">
+                                                    <Button Padding="10 2" Style="{StaticResource ButtonPrimary}" Command="{Binding InsertTemplateCommand}"
+                                                            ToolTip="Insert as a new scene" Content="Use"/>
+                                                    <Button Margin="4 0 0 0" Padding="6 2" Style="{StaticResource ButtonDanger}" Command="{Binding DeleteTemplateCommand}"
+                                                            ToolTip="Delete this template" Content="{materialDesign:PackIcon Delete}"/>
+                                                </StackPanel>
+                                            </StackPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                        </ScrollViewer>
+                    </Grid>
                 </hc:TabItem>
                 <hc:TabItem IsSelected="True" Header="{materialDesign:PackIcon AccountGroup}" ToolTip="Graphics">
                     <Grid>

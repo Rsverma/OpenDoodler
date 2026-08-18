@@ -7,6 +7,7 @@ namespace OpenBoardAnim.Library
         public string DbPath { get; }
         public DbSet<GraphicEntity> Graphics { get; set; }
         public DbSet<ProjectEntity> Projects { get; set; }
+        public DbSet<SceneTemplateEntity> SceneTemplates { get; set; }
         public DataContext(DbContextOptions<DataContext> options) : base(options) { }
         public DataContext()
         {

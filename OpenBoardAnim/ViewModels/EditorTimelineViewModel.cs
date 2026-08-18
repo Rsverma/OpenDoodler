@@ -40,6 +40,7 @@ namespace OpenBoardAnim.ViewModels
         {
             _pubSub = pubSub;
             _pubSub.Subscribe(SubTopic.SceneReplaced, SceneReplacedHandler);
+            _pubSub.Subscribe(SubTopic.SceneTemplateInserted, SceneTemplateInsertedHandler);
             SceneDeleteCommand = new RelayCommand(SceneDeleteCommandHandler, o => true);
             ZoomInCommand = new RelayCommand(o => ZoomLevel *= ZoomStep, o => ZoomLevel < MaxZoom - 0.001);
             ZoomOutCommand = new RelayCommand(o => ZoomLevel /= ZoomStep, o => ZoomLevel > MinZoom + 0.001);
@@ -105,6 +106,25 @@ namespace OpenBoardAnim.ViewModels
                 Scenes[index - 1] = scene;
                 SelectedScene = scene;
                 RecomputeSegments();
+            }
+            catch (Exception ex)
+            {
+                if (Logger.LogError(ex, LogAction.LogAndShow))
+                    throw;
+            }
+        }
+
+        // Inserts a scene-template gallery selection as a brand-new scene right after the
+        // currently selected one, rather than overwriting anything (unlike SceneReplacedHandler
+        // above) - picking a starter layout should never destroy existing work.
+        private void SceneTemplateInsertedHandler(object obj)
+        {
+            try
+            {
+                if (obj is not SceneModel template) return;
+                int position = SelectedScene != null ? Scenes.IndexOf(SelectedScene) : -1;
+                if (position < 0) position = Scenes.Count - 1;
+                InsertSceneAfter(position, template);
             }
             catch (Exception ex)
             {
@@ -415,29 +435,35 @@ namespace OpenBoardAnim.ViewModels
                 if (model == null) return;
                 int position = Scenes.IndexOf(model);
                 if (position < 0) return;
-
-                SceneModel duplicate = model.Clone();
-                duplicate.SceneLeftAction = SceneLeftHandler;
-                duplicate.SceneRightAction = SceneRightHandler;
-                duplicate.SceneDeleteAction = SceneDeleteHandler;
-                duplicate.SceneDuplicateAction = SceneDuplicateHandler;
-
-                Scenes.Insert(position + 1, duplicate);
-                for (int i = 1; i < Scenes.Count; i++)
-                {
-                    SceneModel scene = Scenes[i - 1];
-                    scene.Name = i.ToString();
-                    scene.Index = i;
-                }
-
-                SelectedScene = duplicate;
-                RecomputeSegments();
+                InsertSceneAfter(position, model.Clone());
             }
             catch (Exception ex)
             {
                 if (Logger.LogError(ex, LogAction.LogAndShow))
                     throw;
             }
+        }
+
+        // Shared by SceneDuplicateHandler and SceneTemplateInsertedHandler - inserts newScene
+        // right after position, renumbers every scene's Name/Index to match its new position,
+        // and selects it.
+        private void InsertSceneAfter(int position, SceneModel newScene)
+        {
+            newScene.SceneLeftAction = SceneLeftHandler;
+            newScene.SceneRightAction = SceneRightHandler;
+            newScene.SceneDeleteAction = SceneDeleteHandler;
+            newScene.SceneDuplicateAction = SceneDuplicateHandler;
+
+            Scenes.Insert(position + 1, newScene);
+            for (int i = 1; i < Scenes.Count; i++)
+            {
+                SceneModel scene = Scenes[i - 1];
+                scene.Name = i.ToString();
+                scene.Index = i;
+            }
+
+            SelectedScene = newScene;
+            RecomputeSegments();
         }
     }
 }

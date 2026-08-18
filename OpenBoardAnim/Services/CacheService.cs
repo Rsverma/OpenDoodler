@@ -19,12 +19,11 @@ namespace OpenBoardAnim.Services
         private readonly ProjectRepository _pRepo;
         private readonly ShapeRepository _shRepo;
         private List<GraphicEntity> _graphicEntities;
-        private List<SceneEntity> _sceneEntities;
         public BindingList<RecentProjectModel> RecentProjects { get; set; }
         public ProjectDetails CurrentProject { get; set; }
         public BindingList<DrawingModel> LoadedGraphics { get; set; }
         public BindingList<DrawingModel> AllShapes { get; set; }
-        public BindingList<SceneModel> LoadedScenes { get; set; }
+        public BindingList<SceneTemplateModel> LoadedSceneTemplates { get; set; }
 
         public CacheService(GraphicRepository gRepo, SceneRepository sRepo, ProjectRepository pRepo, ShapeRepository shRepo)
         {
@@ -36,8 +35,8 @@ namespace OpenBoardAnim.Services
                 _shRepo = shRepo;
                 LoadRecentProjects();
                 LoadGraphics();
-                LoadScenes();
                 LoadShapes();
+                LoadSceneTemplates();
             }
             catch (Exception ex)
             {
@@ -122,24 +121,82 @@ namespace OpenBoardAnim.Services
                     throw;
             }
         }
-        private void LoadScenes()
+        private void LoadSceneTemplates()
         {
             try
             {
-                _sceneEntities = _sRepo.SceneEntities;
-                List<SceneModel> scenes = _sceneEntities.Select(e =>
-                new SceneModel
-                {
-                    Name = e.Name
-                }).ToList();
-                LoadedScenes = new BindingList<SceneModel>(scenes);
+                _sRepo.SeedBuiltInTemplatesIfNeeded(BuiltInSceneTemplates.GetAll(AllShapes));
+                List<SceneTemplateEntity> entities = _sRepo.GetAllTemplates();
+                List<SceneTemplateModel> templates = entities.Select(GetModelFromSceneTemplateEntity).Where(x => x != null).ToList();
+                LoadedSceneTemplates = new BindingList<SceneTemplateModel>(templates);
             }
             catch (Exception ex)
             {
                 if (Logger.LogError(ex, LogAction.LogAndThrow))
                     throw;
             }
+        }
 
+        private static SceneTemplateModel GetModelFromSceneTemplateEntity(SceneTemplateEntity e)
+        {
+            try
+            {
+                SceneModel scene = JsonSerializer.Deserialize<SceneModel>(e.SceneJson);
+                foreach (GraphicModelBase g in scene.Graphics)
+                {
+                    if (g is DrawingModel d)
+                        d.ImgDrawingGroup = GeometryHelper.GetPathGeometryFromSVG(d.SVGText);
+                    else if (g is TextModel t)
+                        t.TextGeometry = GeometryHelper.ConvertTextToGeometry(t.RawText, t.SelectedFontFamily,
+                            t.SelectedFontStyle, t.SelectedFontWeight, t.SelectedFontSize);
+                }
+                return new SceneTemplateModel
+                {
+                    Id = e.SceneTemplateID,
+                    Name = e.Name,
+                    IsBuiltIn = e.IsBuiltIn,
+                    Scene = scene
+                };
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, LogAction.LogOnly);
+                return null;
+            }
+        }
+
+        public void SaveSceneAsTemplate(SceneModel scene, string name)
+        {
+            try
+            {
+                if (scene == null || string.IsNullOrWhiteSpace(name)) return;
+                SceneModel clone = scene.Clone();
+                clone.Name = name;
+                clone.Index = 0;
+                string json = JsonSerializer.Serialize(clone);
+                _sRepo.AddTemplate(new SceneTemplateEntity { Name = name, SceneJson = json, IsBuiltIn = false });
+                LoadSceneTemplates();
+            }
+            catch (Exception ex)
+            {
+                if (Logger.LogError(ex, LogAction.LogAndThrow))
+                    throw;
+            }
+        }
+
+        public void DeleteSceneTemplate(SceneTemplateModel template)
+        {
+            try
+            {
+                if (template == null || template.IsBuiltIn) return;
+                _sRepo.DeleteTemplate(template.Id);
+                LoadedSceneTemplates.Remove(template);
+            }
+            catch (Exception ex)
+            {
+                if (Logger.LogError(ex, LogAction.LogAndThrow))
+                    throw;
+            }
         }
         private void LoadGraphics()
         {

@@ -16,19 +16,26 @@ namespace OpenBoardAnim.ViewModels
     {
         private IPubSubService _pubSub;
         private readonly CacheService _cache;
+        private readonly IDialogService _dialog;
         private string _oldSearchText = string.Empty;
+        // Tracked purely so "Save Current Scene as Template" knows what to save - Save/Insert
+        // template graphics stay independent of the current on-canvas selection.
+        private SceneModel _currentScene;
         public ICommand AddTextCommand { get; set; }
         public ICommand ImportGraphicsCommand { get; set; }
         public ICommand LoadMoreGraphicsCommand { get; set; }
         public ICommand SearchGraphicsCommand { get; set; }
+        public ICommand SaveCurrentSceneAsTemplateCommand { get; set; }
 
 
-        public EditorLibraryViewModel(IPubSubService pubSub, CacheService cache)
+        public EditorLibraryViewModel(IPubSubService pubSub, CacheService cache, IDialogService dialog)
         {
             try
             {
                 _pubSub = pubSub;
                 _cache = cache;
+                _dialog = dialog;
+                _pubSub.Subscribe(SubTopic.SceneChanged, SceneChangedHandler);
                 Graphics = cache.LoadedGraphics;
                 Shapes = cache.AllShapes;
                 foreach (var graphic in Graphics)
@@ -39,16 +46,14 @@ namespace OpenBoardAnim.ViewModels
                 {
                     shape.AddGraphic = AddGraphicHandler;
                 }
-                Scenes = cache.LoadedScenes;
-                foreach (var scene in Scenes)
-                {
-                    scene.ReplaceScene = ReplaceSceneHandler;
-                }
+                SceneTemplates = cache.LoadedSceneTemplates;
+                WireSceneTemplateActions(SceneTemplates);
                 AddTextCommand = new RelayCommand(AddTextCommandHandler,
                     canExecute: o => { return !string.IsNullOrEmpty(RawText) && SelectedFontFamily is not null && SelectedTypeFace is not null; });
                 ImportGraphicsCommand = new RelayCommand(ImportGraphicsCommandHandler, o => true);
                 LoadMoreGraphicsCommand = new RelayCommand(LoadMoreGraphicsCommandHandler, o => true);
                 SearchGraphicsCommand = new RelayCommand(SearchGraphicsCommandHandler, o => true);
+                SaveCurrentSceneAsTemplateCommand = new RelayCommand(o => SaveCurrentSceneAsTemplateHandler(), canExecute: o => _currentScene != null);
             }
             catch (Exception ex)
             {
@@ -185,21 +190,93 @@ namespace OpenBoardAnim.ViewModels
             }
         }
 
-        private BindingList<SceneModel> _scenes;
+        private BindingList<SceneTemplateModel> _sceneTemplates;
 
-        public BindingList<SceneModel> Scenes
+        public BindingList<SceneTemplateModel> SceneTemplates
         {
-            get { return _scenes; }
+            get { return _sceneTemplates; }
             set
             {
-                _scenes = value;
+                _sceneTemplates = value;
                 OnPropertyChanged();
             }
         }
 
-        private void ReplaceSceneHandler(SceneModel model)
+        private void WireSceneTemplateActions(BindingList<SceneTemplateModel> templates)
         {
-            _pubSub.Publish(SubTopic.SceneReplaced, model.Clone());
+            foreach (SceneTemplateModel template in templates)
+            {
+                template.InsertTemplate = InsertTemplateHandler;
+                template.DeleteTemplate = DeleteTemplateHandler;
+            }
+        }
+
+        // Inserts the template as a brand-new scene rather than overwriting anything, so
+        // picking a starter layout never destroys existing work.
+        private void InsertTemplateHandler(SceneTemplateModel template)
+        {
+            try
+            {
+                _pubSub.Publish(SubTopic.SceneTemplateInserted, template.Scene.Clone());
+            }
+            catch (Exception ex)
+            {
+                if (Logger.LogError(ex, LogAction.LogAndShow))
+                    throw;
+            }
+        }
+
+        private void DeleteTemplateHandler(SceneTemplateModel template)
+        {
+            try
+            {
+                _cache.DeleteSceneTemplate(template);
+            }
+            catch (Exception ex)
+            {
+                if (Logger.LogError(ex, LogAction.LogAndShow))
+                    throw;
+            }
+        }
+
+        private void SaveCurrentSceneAsTemplateHandler()
+        {
+            try
+            {
+                if (_currentScene == null) return;
+                SceneTemplateModel prompt = new()
+                {
+                    Name = "My Scene",
+                    Scene = _currentScene,
+                    SaveTemplate = SaveTemplateHandler
+                };
+                _ = _dialog.ShowDialog(DialogType.SaveSceneTemplate, prompt);
+            }
+            catch (Exception ex)
+            {
+                if (Logger.LogError(ex, LogAction.LogAndShow))
+                    throw;
+            }
+        }
+
+        private void SaveTemplateHandler(SceneTemplateModel prompt)
+        {
+            try
+            {
+                _cache.SaveSceneAsTemplate(prompt.Scene, prompt.Name);
+                SceneTemplates = _cache.LoadedSceneTemplates;
+                WireSceneTemplateActions(SceneTemplates);
+            }
+            catch (Exception ex)
+            {
+                if (Logger.LogError(ex, LogAction.LogAndShow))
+                    throw;
+            }
+        }
+
+        private void SceneChangedHandler(object obj)
+        {
+            _currentScene = obj as SceneModel;
         }
 
         private BindingList<DrawingModel> _graphics;
