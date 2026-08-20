@@ -1,5 +1,7 @@
-﻿using System.Windows.Controls.Primitives;
+﻿using System.Windows;
+using System.Windows.Controls.Primitives;
 using System.Windows.Controls;
+using System.Windows.Media;
 using OpenBoardAnim.Models;
 using OpenBoardAnim.Utilities;
 
@@ -9,6 +11,15 @@ namespace OpenBoardAnim.Controls
     {
         private double originalRatio = -1;
         private double originalHeight = -1;
+
+        // A newly-added (never-resized, ResizeRatio == 1) graphic's Image/Path content has no
+        // explicit Width/Height in EditorCanvasView's DataTemplates, so it naturally measures
+        // to its own intrinsic size below - an SVG authored at a large native size (or a large
+        // font-size text graphic) could then bake in dimensions bigger than the board itself,
+        // visually covering the whole scene the instant it's added. Capped to this fraction of
+        // the current board size (preserving aspect ratio) instead.
+        private const double MaxSizeFractionOfBoard = 0.5;
+
         public ResizeThumb()
         {
             DragDelta += new DragDeltaEventHandler(this.ResizeThumb_DragDelta);
@@ -27,8 +38,20 @@ namespace OpenBoardAnim.Controls
                     var model = designerItem.DataContext as GraphicModelBase;
                     if (model != null && model.ResizeRatio == 1)
                     {
-                        model.Height = designerItem.ActualHeight;
-                        model.Width = designerItem.ActualWidth;
+                        double height = designerItem.ActualHeight;
+                        double width = designerItem.ActualWidth;
+                        // ActualHeight/ActualWidth so far just reflect the container's natural,
+                        // unconstrained size (nothing binds it to the model yet at this point) -
+                        // clamping only the model here would leave the on-screen container at
+                        // its full, unclamped intrinsic size until something else happened to
+                        // resize it. Explicitly assigning the clamped values back onto
+                        // designerItem (same as the else branch below does for an
+                        // already-resized graphic) is what actually shrinks it immediately.
+                        ClampToMaxBoardFraction(ref width, ref height);
+                        model.Height = height;
+                        model.Width = width;
+                        designerItem.Height = height;
+                        designerItem.Width = width;
                     }
                     else
                     {
@@ -42,6 +65,32 @@ namespace OpenBoardAnim.Controls
                 if (Logger.LogError(ex, LogAction.LogAndShow))
                     throw;
             }
+        }
+
+        private void ClampToMaxBoardFraction(ref double width, ref double height)
+        {
+            if (width <= 0 || height <= 0) return;
+            if (FindAncestor<Canvas>(this) is not Canvas boardCanvas) return;
+            if (boardCanvas.ActualWidth <= 0 || boardCanvas.ActualHeight <= 0) return;
+
+            double maxWidth = boardCanvas.ActualWidth * MaxSizeFractionOfBoard;
+            double maxHeight = boardCanvas.ActualHeight * MaxSizeFractionOfBoard;
+            double scale = Math.Min(1, Math.Min(maxWidth / width, maxHeight / height));
+            if (scale >= 1) return;
+
+            width *= scale;
+            height *= scale;
+        }
+
+        private static T FindAncestor<T>(DependencyObject current) where T : DependencyObject
+        {
+            while (current != null)
+            {
+                if (current is T match)
+                    return match;
+                current = VisualTreeHelper.GetParent(current);
+            }
+            return null;
         }
 
         // Re-baselines originalRatio/originalHeight from the persisted model at the start of
