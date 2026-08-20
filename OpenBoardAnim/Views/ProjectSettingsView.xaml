@@ -77,6 +77,7 @@
                         <TextBlock Text="End" VerticalAlignment="Center" FontSize="11" Margin="10 0 4 0"/>
                         <hc:NumericUpDown Width="65" Minimum="0" DecimalPlaces="1" ValueFormat="0.0" Value="{Binding AudioTrimEnd, Mode=TwoWay}"
                                           ToolTip="Seconds from the start of the file. 0 = play to the end."/>
+                        <TextBlock Margin="6 0 0 0" VerticalAlignment="Center" Text="seconds" FontSize="11" Opacity="0.65"/>
                     </StackPanel>
                 </StackPanel>
             </Border>
