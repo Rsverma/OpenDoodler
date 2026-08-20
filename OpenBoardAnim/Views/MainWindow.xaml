@@ -81,7 +81,7 @@
                     </MenuItem>
                 </Menu>
             </StackPanel>
-            <TextBlock Grid.ColumnSpan="3" HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource TextBlockSubTitleBold}">Editor</TextBlock>
+            <TextBlock Grid.ColumnSpan="3" HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource TextBlockSubTitleBold}" Text="{Binding ProjectStatusText}"/>
             <StackPanel Orientation="Horizontal" Grid.Column="2">
                 <Button Content="{Binding UserName}"/>
 

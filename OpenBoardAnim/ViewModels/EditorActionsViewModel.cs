@@ -610,6 +610,7 @@ namespace OpenBoardAnim.ViewModels
         public void MarkProjectSaved()
         {
             _savedProjectJson = Project == null ? null : JsonSerializer.Serialize(Project);
+            OnPropertyChanged(nameof(HasUnsavedChanges));
         }
 
         // Used after recovering an autosave backup: the recovered content is newer than
@@ -619,9 +620,18 @@ namespace OpenBoardAnim.ViewModels
         public void MarkProjectUnsaved()
         {
             _savedProjectJson = null;
+            OnPropertyChanged(nameof(HasUnsavedChanges));
         }
 
         public bool HasUnsavedChanges => Project != null && JsonSerializer.Serialize(Project) != _savedProjectJson;
+
+        // HasUnsavedChanges has no backing field to observe - nested edits (graphic drags,
+        // text changes, scene edits, etc.) never touch the Project property setter itself,
+        // so nothing raises PropertyChanged for it on its own. EditorViewModel's periodic
+        // snapshot timer already re-serializes the whole project every couple seconds for
+        // undo/redo purposes; piggyback on that same tick to keep the window header's
+        // unsaved indicator reasonably live instead of adding a second polling timer.
+        public void RefreshUnsavedStatus() => OnPropertyChanged(nameof(HasUnsavedChanges));
 
         // Prompts to save/discard/cancel if there are unsaved changes. Returns true if
         // it's safe to proceed (nothing to lose, changes were saved, or the user chose
@@ -658,6 +668,7 @@ namespace OpenBoardAnim.ViewModels
             {
                 _project = value;
                 OnPropertyChanged();
+                OnPropertyChanged(nameof(HasUnsavedChanges));
             }
         }
         public ICommand CloseProjectCommand { get; set; }

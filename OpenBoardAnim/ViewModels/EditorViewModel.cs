@@ -64,6 +64,7 @@ namespace OpenBoardAnim.ViewModels
             if(actions?.Project != null)
             {
                 _stateSnapshotService.SaveState(actions.Project);
+                actions.RefreshUnsavedStatus();
             }
         }
 

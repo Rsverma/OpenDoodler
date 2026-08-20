@@ -3,12 +3,17 @@ using OpenBoardAnim.Core;
 using OpenBoardAnim.Models;
 using OpenBoardAnim.Services;
 using OpenBoardAnim.Utilities;
+using System.ComponentModel;
 using System.Windows;
 
 namespace OpenBoardAnim.ViewModels
 {
     public class MainViewModel : ViewModel
     {
+        // Base app name shown in the window header when no project is open, and appended
+        // after the project name/unsaved marker once one is.
+        private const string AppName = "Open Board Animator";
+
         private readonly IPubSubService _pubSub;
         private readonly StateSnapshotService _stateSnapshotService;
         private readonly CacheService _cache;
@@ -25,8 +30,10 @@ namespace OpenBoardAnim.ViewModels
                 _stateSnapshotService = stateSnapshotService;
                 _cache = cache;
                 _actions = actions;
+                _actions.PropertyChanged += Actions_PropertyChanged;
                 Theme = theme;
-                Title = "Open Board Animator";
+                Title = AppName;
+                UpdateWindowTitle();
                 UserName = "RSV";
                 Navigation = navService;
                 NavigateToLaunchCommand = new RelayCommand(
@@ -51,6 +58,28 @@ namespace OpenBoardAnim.ViewModels
                 if (Logger.LogError(ex, LogAction.LogAndShow))
                     throw;
             }
+        }
+
+        // Keeps the window header in sync with whichever project is currently open and
+        // whether it has unsaved changes - Project reassignment (open/new/close) and
+        // HasUnsavedChanges both notify through here (see EditorActionsViewModel).
+        private void Actions_PropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(EditorActionsViewModel.Project) || e.PropertyName == nameof(EditorActionsViewModel.HasUnsavedChanges))
+                UpdateWindowTitle();
+        }
+
+        private void UpdateWindowTitle()
+        {
+            string projectTitle = _actions.Project?.Title;
+            if (string.IsNullOrWhiteSpace(projectTitle))
+            {
+                ProjectStatusText = "";
+                return;
+            }
+
+            string unsavedMarker = _actions.HasUnsavedChanges ? "* " : "";
+            ProjectStatusText = $"{unsavedMarker}{projectTitle}";
         }
 
         private void RestoreState(ProjectDetails project)
@@ -135,6 +164,18 @@ namespace OpenBoardAnim.ViewModels
             set
             {
                 _title = value;
+                OnPropertyChanged();
+            }
+        }
+        private string _projectStatusText = "";
+        // Shown centered in the title bar: the open project's name (with an unsaved-changes
+        // marker) in place of the old static "Editor" label, or blank when no project is open.
+        public string ProjectStatusText
+        {
+            get => _projectStatusText;
+            set
+            {
+                _projectStatusText = value;
                 OnPropertyChanged();
             }
         }
