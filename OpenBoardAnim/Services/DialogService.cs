@@ -12,7 +12,8 @@ namespace OpenBoardAnim.Services
         ProjectSettings,
         AboutUs,
         PreviewProject,
-        SaveSceneTemplate
+        SaveSceneTemplate,
+        LibraryManager
     }
     public interface IDialogService
     {
@@ -41,6 +42,7 @@ namespace OpenBoardAnim.Services
                     DialogType.ProjectSettings => new ProjectSettingsView { DataContext = model },
                     DialogType.SceneSettings => new SceneSettingsView { DataContext = model },
                     DialogType.SaveSceneTemplate => new SaveSceneTemplateView { DataContext = model },
+                    DialogType.LibraryManager => new LibraryManagerView { DataContext = model },
                     _ => (object)model
                 };
 
@@ -55,6 +57,7 @@ namespace OpenBoardAnim.Services
                         DialogType.SceneSettings => "Scene Settings",
                         DialogType.AboutUs => "About",
                         DialogType.SaveSceneTemplate => "Save Scene as Template",
+                        DialogType.LibraryManager => "Library Manager",
                         _ => "OpenDoodler"
                     }
                 };

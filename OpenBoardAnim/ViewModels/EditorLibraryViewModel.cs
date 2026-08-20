@@ -26,6 +26,8 @@ namespace OpenBoardAnim.ViewModels
         public ICommand LoadMoreGraphicsCommand { get; set; }
         public ICommand SearchGraphicsCommand { get; set; }
         public ICommand SaveCurrentSceneAsTemplateCommand { get; set; }
+        public ICommand ManageLibraryCommand { get; set; }
+        public ICommand CleanupInvalidGraphicsCommand { get; set; }
 
 
         public EditorLibraryViewModel(IPubSubService pubSub, CacheService cache, IDialogService dialog)
@@ -41,6 +43,7 @@ namespace OpenBoardAnim.ViewModels
                 foreach (var graphic in Graphics)
                 {
                     graphic.AddGraphic = AddGraphicHandler;
+                    graphic.DeleteGraphic = DeleteGraphicHandler;
                 }
                 foreach (var shape in Shapes)
                 {
@@ -54,6 +57,8 @@ namespace OpenBoardAnim.ViewModels
                 LoadMoreGraphicsCommand = new RelayCommand(LoadMoreGraphicsCommandHandler, o => true);
                 SearchGraphicsCommand = new RelayCommand(SearchGraphicsCommandHandler, o => true);
                 SaveCurrentSceneAsTemplateCommand = new RelayCommand(o => SaveCurrentSceneAsTemplateHandler(), canExecute: o => _currentScene != null);
+                ManageLibraryCommand = new RelayCommand(o => ManageLibraryHandler(), canExecute: o => true);
+                CleanupInvalidGraphicsCommand = new RelayCommand(o => CleanupInvalidGraphicsHandler(), canExecute: o => true);
             }
             catch (Exception ex)
             {
@@ -72,6 +77,7 @@ namespace OpenBoardAnim.ViewModels
                 foreach (var model in drawingModels)
                 {
                     model.AddGraphic = AddGraphicHandler;
+                    model.DeleteGraphic = DeleteGraphicHandler;
                     Graphics.Add(model);
                 }
             }
@@ -93,6 +99,7 @@ namespace OpenBoardAnim.ViewModels
                 foreach (var model in drawingModels)
                 {
                     model.AddGraphic = AddGraphicHandler;
+                    model.DeleteGraphic = DeleteGraphicHandler;
                     Graphics.Add(model);
                 }
             }
@@ -121,6 +128,7 @@ namespace OpenBoardAnim.ViewModels
                 foreach (var graphic in Graphics)
                 {
                     graphic.AddGraphic = AddGraphicHandler;
+                    graphic.DeleteGraphic = DeleteGraphicHandler;
                 }
             }
             catch (Exception ex)
@@ -337,6 +345,51 @@ namespace OpenBoardAnim.ViewModels
             try
             {
                 _pubSub.Publish(SubTopic.GraphicAdded, model.Clone());
+            }
+            catch (Exception ex)
+            {
+                if (Logger.LogError(ex, LogAction.LogAndShow))
+                    throw;
+            }
+        }
+
+        // No confirmation prompt - matches DeleteSceneTemplate's own behavior, and only ever
+        // removes the library entry (see CacheService.DeleteGraphic), not anything already
+        // placed on a canvas.
+        private void DeleteGraphicHandler(DrawingModel model)
+        {
+            try
+            {
+                _cache.DeleteGraphic(model);
+            }
+            catch (Exception ex)
+            {
+                if (Logger.LogError(ex, LogAction.LogAndShow))
+                    throw;
+            }
+        }
+
+        private void ManageLibraryHandler()
+        {
+            try
+            {
+                _ = _dialog.ShowDialog(DialogType.LibraryManager, this);
+            }
+            catch (Exception ex)
+            {
+                if (Logger.LogError(ex, LogAction.LogAndShow))
+                    throw;
+            }
+        }
+
+        private void CleanupInvalidGraphicsHandler()
+        {
+            try
+            {
+                int removed = _cache.CleanupInvalidGraphics();
+                MessageBox.Show(
+                    removed > 0 ? $"Removed {removed} invalid graphic(s) from the library." : "No invalid graphics found.",
+                    "Library Cleanup", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             catch (Exception ex)
             {

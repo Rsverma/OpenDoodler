@@ -126,7 +126,7 @@
                         </Grid.ColumnDefinitions>
                         <hc:TextBox hc:InfoElement.Placeholder="Search graphics" Text="{Binding SearchText}" Grid.Column="0" Margin="2.5 5"/>
                         <Button Grid.Column="1" Padding="5" Margin="2.5 5" Command="{Binding SearchGraphicsCommand}" Style="{StaticResource ButtonPrimary}" Content="{materialDesign:PackIcon search}" ToolTip="Search"/>
-                        <Button Grid.Column="2" Padding="5" Margin="2.5 5" Command="{Binding ImportGraphicsCommand}" Content="{materialDesign:PackIcon import}" ToolTip="Import"/>
+                        <Button Grid.Column="2" Padding="5" Margin="2.5 5" Command="{Binding ManageLibraryCommand}" Content="{materialDesign:PackIcon FolderCog}" ToolTip="Manage Library"/>
                         <ScrollViewer x:Name="GraphicsScrollViewer" Grid.Row="1" Grid.ColumnSpan="3" VerticalScrollBarVisibility="Visible">
 
                             <Grid>
