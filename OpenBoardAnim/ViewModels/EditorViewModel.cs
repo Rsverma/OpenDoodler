@@ -70,7 +70,11 @@ namespace OpenBoardAnim.ViewModels
 
         private void SaveProjectBackup(object sender, EventArgs e)
         {
-            if (actions?.Project != null)
+            // Skip the write entirely if nothing has changed since the project was last saved
+            // (or, for a never-saved project, since it was loaded/created) - HasUnsavedChanges
+            // does its own live comparison, so this stays accurate even though it's a plain
+            // computed property rather than something this timer tracks itself.
+            if (actions?.Project != null && actions.HasUnsavedChanges)
             {
                 _cache.SaveBackup(actions.Project);
             }
