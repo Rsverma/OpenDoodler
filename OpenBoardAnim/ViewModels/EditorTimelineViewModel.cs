@@ -131,6 +131,7 @@ namespace OpenBoardAnim.ViewModels
 
                 SceneModel scene = (SceneModel)obj;
                 scene.Index = index;
+                WireGraphicsNotifications(scene);
                 Scenes[index - 1] = scene;
                 SelectedScene = scene;
                 RecomputeSegments();
@@ -244,6 +245,7 @@ namespace OpenBoardAnim.ViewModels
                     item.SceneRightAction = SceneRightHandler;
                     item.SceneDeleteAction = SceneDeleteHandler;
                     item.SceneDuplicateAction = SceneDuplicateHandler;
+                    WireGraphicsNotifications(item);
                 }
                 _addScene = _scenes.LastOrDefault();
                 SelectedScene = _scenes.FirstOrDefault();
@@ -254,6 +256,33 @@ namespace OpenBoardAnim.ViewModels
                 if (Logger.LogError(ex, LogAction.LogAndShow))
                     throw;
             }
+        }
+
+        // Segment widths are estimated from each graphic's Delay/Duration (see
+        // GetEstimatedDurationSeconds) but RecomputeSegments was previously only ever called
+        // from scene-structure operations (add/remove/reorder/duplicate/replace) - editing an
+        // already-placed graphic's Delay/Duration in the Actions panel silently left its
+        // scene's segment stale until something else happened to trigger a recompute (a scene
+        // switch, reorder, or relaunching the app to reload the project from scratch). Wiring
+        // directly to each graphic's own PropertyChanged closes that gap without needing every
+        // duration-editing call site to know about the timeline.
+        private void WireGraphicsNotifications(SceneModel scene)
+        {
+            if (scene?.Graphics == null) return;
+            scene.Graphics.ListChanged += (s, e) =>
+            {
+                if (e.ListChangedType == ListChangedType.ItemAdded && e.NewIndex >= 0 && e.NewIndex < scene.Graphics.Count)
+                    scene.Graphics[e.NewIndex].PropertyChanged += GraphicPropertyChangedHandler;
+                RecomputeSegments();
+            };
+            foreach (GraphicModelBase graphic in scene.Graphics)
+                graphic.PropertyChanged += GraphicPropertyChangedHandler;
+        }
+
+        private void GraphicPropertyChangedHandler(object sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(GraphicModelBase.Delay) || e.PropertyName == nameof(GraphicModelBase.Duration))
+                RecomputeSegments();
         }
 
         private SceneModel _selectedScene;
@@ -374,6 +403,7 @@ namespace OpenBoardAnim.ViewModels
                     SceneRightAction = SceneRightHandler,
                     SceneDuplicateAction = SceneDuplicateHandler,
                 };
+                WireGraphicsNotifications(newScene);
                 _scenes.Insert(index - 1, newScene);
                 ++_addScene.Index;
                 _selectedScene = newScene;
@@ -481,6 +511,7 @@ namespace OpenBoardAnim.ViewModels
             newScene.SceneRightAction = SceneRightHandler;
             newScene.SceneDeleteAction = SceneDeleteHandler;
             newScene.SceneDuplicateAction = SceneDuplicateHandler;
+            WireGraphicsNotifications(newScene);
 
             Scenes.Insert(position + 1, newScene);
             for (int i = 1; i < Scenes.Count; i++)
