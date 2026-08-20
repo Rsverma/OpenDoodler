@@ -54,6 +54,14 @@ namespace OpenBoardAnim.Utils
         // built on that average rate - most visibly, a voiceover creeping into the wrong scene
         // the further into the export it is.
         private Stopwatch _captureStopwatch;
+        // CompositionTarget.Rendering fires at the display's own refresh rate (60/120/144Hz+),
+        // not at _frameRate - without gating, a high-refresh monitor would render, BMP-encode,
+        // and disk-write several times more frames than the export video will ever use, all for
+        // no visual benefit (the concat list already times each frame by its own real elapsed
+        // timestamp, so extra frames beyond _frameRate just add I/O, not smoothness). Tracks the
+        // stopwatch time of the last frame actually captured so OnRendering can skip ticks that
+        // land inside the same 1/_frameRate window.
+        private double _lastCapturedSeconds = double.NegativeInfinity;
         // Real capture time of each frame, in the same order as _frameCount - used to build a
         // concat-demuxer list with each frame's own duration instead of assuming a fixed
         // -framerate, so the video's internal timing matches wall-clock time exactly rather than
@@ -143,6 +151,11 @@ namespace OpenBoardAnim.Utils
         {
             try
             {
+                double elapsedSeconds = _captureStopwatch.Elapsed.TotalSeconds;
+                if (elapsedSeconds - _lastCapturedSeconds < 1.0 / _frameRate)
+                    return;
+                _lastCapturedSeconds = elapsedSeconds;
+
                 var rtb = new RenderTargetBitmap(
                             (int)_targetCanvas.Width,
                             (int)_targetCanvas.Height,
@@ -151,7 +164,7 @@ namespace OpenBoardAnim.Utils
                 rtb.Render(_targetCanvas);
                 rtb.Freeze();
 
-                _frameTimestamps.Add(_captureStopwatch.Elapsed.TotalSeconds);
+                _frameTimestamps.Add(elapsedSeconds);
                 _frameChannel.Writer.TryWrite((_frameCount, rtb));
                 _frameCount++;
 
@@ -239,9 +252,13 @@ namespace OpenBoardAnim.Utils
                 bool hasAudio = !string.IsNullOrWhiteSpace(_audioPath) && File.Exists(_audioPath);
                 List<SceneAudioCue> voiceovers = _sceneAudioCues.Where(c => !string.IsNullOrWhiteSpace(c.Path) && File.Exists(c.Path)).ToList();
                 string arguments;
+                // veryfast trades some compression efficiency (slightly larger file) for a much
+                // faster encode than libx264's "medium" default - a reasonable trade for a local,
+                // one-off export that isn't optimizing for streaming bandwidth.
+                const string encodePreset = "-preset veryfast";
                 if (!hasAudio && voiceovers.Count == 0)
                 {
-                    arguments = $"-y {videoInput} -r {_frameRate} -c:v libx264 -pix_fmt yuv420p \"{_outputVideoPath}\"";
+                    arguments = $"-y {videoInput} -r {_frameRate} -c:v libx264 {encodePreset} -pix_fmt yuv420p \"{_outputVideoPath}\"";
                 }
                 else if (hasAudio && voiceovers.Count == 0)
                 {
@@ -254,7 +271,7 @@ namespace OpenBoardAnim.Utils
                     string audioTrimArgs = BuildTrimArgs(_audioTrimStart, _audioTrimEnd);
                     arguments = $"-y {videoInput} " +
                         $"{audioTrimArgs}-stream_loop -1 -i \"{_audioPath}\" -filter:a \"volume={volume}\" " +
-                        $"-map 0:v:0 -map 1:a:0 -r {_frameRate} -c:v libx264 -pix_fmt yuv420p -c:a aac -t {videoDuration} \"{_outputVideoPath}\"";
+                        $"-map 0:v:0 -map 1:a:0 -r {_frameRate} -c:v libx264 {encodePreset} -pix_fmt yuv420p -c:a aac -t {videoDuration} \"{_outputVideoPath}\"";
                 }
                 else
                 {
@@ -306,7 +323,7 @@ namespace OpenBoardAnim.Utils
                     // while audio kept playing.
                     arguments = inputs.ToString() +
                         $"-filter_complex \"{filterComplex}\" -map 0:v:0 -map \"{finalAudioLabel}\" " +
-                        $"-r {_frameRate} -c:v libx264 -pix_fmt yuv420p -c:a aac -t {videoDuration} \"{_outputVideoPath}\"";
+                        $"-r {_frameRate} -c:v libx264 {encodePreset} -pix_fmt yuv420p -c:a aac -t {videoDuration} \"{_outputVideoPath}\"";
                 }
 
                 // -progress pipe:1 makes ffmpeg emit machine-readable key=value progress lines
