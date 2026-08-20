@@ -1,6 +1,6 @@
 <h1 align="center">
   <br>
-  <img src="https://raw.githubusercontent.com/Rsverma/OpenDoodler/main/OpenBoardAnim/Resources/App.ico" alt="Open Doodler" width="200">
+  <img src="https://raw.githubusercontent.com/Rsverma/OpenDoodler/main/src/OpenBoardAnim/Resources/App.ico" alt="Open Doodler" width="200">
   <br>
   Open Doodler
   <br>
@@ -30,7 +30,7 @@
 * Project Settings: board type, background music, stroke styling, entrance style, aspect ratio (16:9 / 9:16 / 1:1), and scene transitions
 * In-app preview and MP4 video export (background music and per-scene voiceovers mixed in) with progress reporting and cancellation
 * Keyboard shortcuts for undo/redo, save, new/open project, delete, cut/copy/paste, and nudging the selected graphic(s)
-![](https://github.com/Rsverma/OpenDoodler/blob/main/OpenBoardAnim/Resources/Animation.gif)
+![](https://github.com/Rsverma/OpenDoodler/blob/main/docs/images/Animation.gif)
 ## Upcoming Features
 * Configurable hand/pen (choose a hand skin, pen color, or turn the hand off entirely)
 * Camera pan/zoom (Ken Burns-style focus moves)
@@ -55,7 +55,7 @@ $ git clone https://github.com/Rsverma/OpenDoodler.git
 * Click Library on the left of the screen to access svg and text graphics.
 * Click "Manage Library" next to the search bar to import your own svg images, delete ones you
   no longer need, or clean up invalid graphics.
-![](https://github.com/Rsverma/OpenDoodler/blob/main/OpenBoardAnim/Resources/Steps.png)
+![](https://github.com/Rsverma/OpenDoodler/blob/main/docs/images/Steps.png)
   
 ## Credits
 
