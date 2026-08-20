@@ -39,6 +39,9 @@
 
 ## How To Use
 
+Just want to use the app? See [Installing OpenDoodler](docs/installing.md) for the `.msi` installer.
+The steps below are for building and running it from source instead.
+
 * To clone and run this application, you'll need [Git](https://git-scm.com) and [Visual Studio](https://visualstudio.microsoft.com/) . From your command line:
 
 ```bash

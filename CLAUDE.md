@@ -32,7 +32,9 @@ commands.
 All buildable source lives under `src/` (three projects, listed below); the solution file
 (`OpenBoardAnim.sln`) stays at the repo root. `docs/images/` holds README-only screenshots/GIFs — not
 app resources, don't confuse with `src/OpenBoardAnim/Resources/` (real compiled-in app assets like
-`App.ico`, `pencil.png`, the `peep-*.svg` characters).
+`App.ico`, `pencil.png`, the `peep-*.svg` characters). `installer/` holds a separate WiX Toolset
+project/solution (`OpenBoardAnim.Setup.sln`) that builds an MSI from a `dotnet publish` of
+`OpenBoardAnim` — deliberately not part of `OpenBoardAnim.sln`, see `installer/README.md`.
 
 ## Solution structure
 

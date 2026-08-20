@@ -1,0 +1,25 @@
+<Project Sdk="WixToolset.Sdk/7.0.0">
+
+  <PropertyGroup>
+    <OutputName>OpenDoodlerSetup</OutputName>
+    <OutputType>Package</OutputType>
+    <!-- WiX v7 requires accepting its Open Source Maintenance Fee EULA to build - free
+         for non-commercial/under-$10k-revenue use (which is us), a monthly fee otherwise.
+         See https://wixtoolset.org/osmf/ and installer/README.md. -->
+    <AcceptEula>wix7</AcceptEula>
+    <!-- No app-wide version scheme exists yet (see CLAUDE.md) - bump this manually for
+         each release, or override with /p:ProductVersion=x.y.z.w. -->
+    <ProductVersion Condition="'$(ProductVersion)' == ''">1.0.0.0</ProductVersion>
+    <!-- Must point at a `dotnet publish` output (see README.md in this folder), not a
+         plain build output - Package.wxs harvests every file under this folder as-is.
+         Override with /p:PublishDir=... to point at a different one. -->
+    <PublishDir Condition="'$(PublishDir)' == ''">..\..\src\OpenBoardAnim\bin\Release\net10.0-windows\win-x64\publish\</PublishDir>
+    <DefineConstants>ProductVersion=$(ProductVersion);PublishDir=$(PublishDir)</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- WixUI_* dialog sets (Package.wxs uses InstallDir_NoLicense). -->
+    <PackageReference Include="WixToolset.UI.wixext" Version="7.0.0" />
+  </ItemGroup>
+
+</Project>

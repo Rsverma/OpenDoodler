@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs" xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui">
+  <Package Name="OpenDoodler"
+           Language="1033"
+           Version="$(var.ProductVersion)"
+           Manufacturer="OpenDoodler"
+           UpgradeCode="1C9AE070-A8CC-4307-94F1-491F439D71C4"
+           InstallerVersion="500"
+           Compressed="yes">
+
+    <!-- Never change UpgradeCode across releases - it's what lets a newer installer
+         detect and remove an older install (see MajorUpgrade below) instead of the two
+         being treated as unrelated products. -->
+    <MajorUpgrade DowngradeErrorMessage="A newer version of OpenDoodler is already installed." />
+
+    <!-- Without this, WiX auto-split the ~150MB self-contained payload across three
+         loose external .cab files sitting next to the .msi - fine for MSI mechanics,
+         bad for handing someone a single downloadable installer. EmbedCab bundles
+         everything into the one .msi file instead. -->
+    <MediaTemplate EmbedCab="yes" />
+
+    <Feature Id="ProductFeature" Title="OpenDoodler">
+      <ComponentGroupRef Id="AppFiles" />
+      <ComponentRef Id="ApplicationShortcut" />
+    </Feature>
+
+    <!-- Extracted from the exe's own embedded icon (OpenBoardAnim.csproj sets
+         ApplicationIcon) rather than shipping a separate .ico source here. -->
+    <Icon Id="AppIcon.exe" SourceFile="$(var.PublishDir)OpenBoardAnim.exe" />
+    <Property Id="ARPPRODUCTICON" Value="AppIcon.exe" />
+    <Property Id="ARPURLINFOABOUT" Value="https://github.com/Rsverma/OpenDoodler" />
+
+    <!-- InstallDir_NoLicense (referenced here in an earlier draft) turned out to not
+         actually be a built-in dialog set shipped in WixToolset.UI.wixext - it was a
+         custom UI authored inside one of the toolset's own test fixtures, which this
+         mistook for a ready-to-use one. WixUI_InstallDir is the real, shipped
+         equivalent; it requires a WixUILicenseRtf variable (see License.rtf). -->
+    <WixVariable Id="WixUILicenseRtf" Value="License.rtf" />
+    <ui:WixUI Id="WixUI_InstallDir" InstallDirectory="INSTALLFOLDER" />
+  </Package>
+
+  <Fragment>
+    <StandardDirectory Id="ProgramFiles6432Folder">
+      <Directory Id="INSTALLFOLDER" Name="OpenDoodler" />
+    </StandardDirectory>
+    <StandardDirectory Id="ProgramMenuFolder" />
+  </Fragment>
+
+  <Fragment>
+    <!-- Harvests every file under PublishDir automatically, preserving its folder
+         structure (so e.g. DLLs\ffmpeg.exe lands at INSTALLFOLDER\DLLs\ffmpeg.exe,
+         matching VideoExporter.cs's AppDomain.CurrentDomain.BaseDirectory-relative
+         lookup). Adding a file to the app never requires touching this installer
+         project - only re-publishing before the next installer build. -->
+    <ComponentGroup Id="AppFiles" Directory="INSTALLFOLDER">
+      <Files Include="$(var.PublishDir)**">
+        <Exclude Files="$(var.PublishDir)**\*.pdb" />
+      </Files>
+    </ComponentGroup>
+  </Fragment>
+
+  <Fragment>
+    <Component Id="ApplicationShortcut" Directory="ProgramMenuFolder" Guid="A96B5202-D96D-4079-95FE-EE2284512E3E">
+      <Shortcut Id="StartMenuShortcut"
+                Name="OpenDoodler"
+                Description="Whiteboard/doodle animation software"
+                Target="[INSTALLFOLDER]OpenBoardAnim.exe"
+                WorkingDirectory="INSTALLFOLDER" />
+      <RemoveFolder Id="RemoveProgramMenuFolder" Directory="ProgramMenuFolder" On="uninstall" />
+      <!-- A shortcut-only component (no File of its own) needs an explicit KeyPath for
+           Windows Installer to track its install state - a per-user registry value,
+           same pattern used for a Start Menu-only shortcut in most WiX installers. -->
+      <RegistryValue Root="HKCU" Key="Software\OpenDoodler" Name="Installed" Type="integer" Value="1" KeyPath="yes" />
+    </Component>
+  </Fragment>
+</Wix>
