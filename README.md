@@ -9,13 +9,23 @@
 <h4 align="center">An open source animation software for White board animation.</h4>
 
 <p align="center">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-AGPL--3.0-blue.svg" alt="License: AGPL-3.0"></a>
+  <a href="https://github.com/Rsverma/OpenDoodler/releases"><img src="https://img.shields.io/github/v/release/Rsverma/OpenDoodler" alt="Latest release"></a>
+</p>
+
+<p align="center">Windows only — built with WPF (.NET 10).</p>
+
+<p align="center">
   <a href="#key-features">Key Features</a> •
-  <a href="#upcoming-features">Upcoming Features</a> •
+  <a href="#wishlist">Wishlist</a> •
   <a href="#how-to-use">How To Use</a> •
+  <a href="#building-from-source">Building From Source</a> •
   <a href="#credits">Credits</a> •
   <a href="#related">Related</a> •
   <a href="#license">License</a>
 </p>
+
+![](https://github.com/Rsverma/OpenDoodler/blob/main/docs/images/Animation.gif)
 
 ## Key Features
 
@@ -30,8 +40,8 @@
 * Project Settings: board type, background music, stroke styling, entrance style, aspect ratio (16:9 / 9:16 / 1:1), and scene transitions
 * In-app preview and MP4 video export (background music and per-scene voiceovers mixed in) with progress reporting and cancellation
 * Keyboard shortcuts for undo/redo, save, new/open project, delete, cut/copy/paste, and nudging the selected graphic(s)
-![](https://github.com/Rsverma/OpenDoodler/blob/main/docs/images/Animation.gif)
-## Upcoming Features
+
+## Wishlist
 * Configurable hand/pen (choose a hand skin, pen color, or turn the hand off entirely)
 * Camera pan/zoom (Ken Burns-style focus moves)
 * Animated GIF export alongside MP4
@@ -39,11 +49,12 @@
 
 ## How To Use
 
-Just want to use the app? See [Installing OpenDoodler](docs/installing.md) for the `.msi`
-installer, and the [User Guide](docs/guide/README.md) for how to use the editor once it's
-installed. The steps below are for building and running it from source instead.
+See [Installing OpenDoodler](docs/installing.md) for the `.msi` installer, and the
+[User Guide](docs/guide/README.md) for how to use the editor once it's installed.
 
-* To clone and run this application, you'll need [Git](https://git-scm.com) and [Visual Studio](https://visualstudio.microsoft.com/) . From your command line:
+## Building From Source
+
+To clone and run this application, you'll need [Git](https://git-scm.com) and [Visual Studio](https://visualstudio.microsoft.com/). From your command line:
 
 ```bash
 # Clone this repository
@@ -55,12 +66,11 @@ $ git clone https://github.com/Rsverma/OpenDoodler.git
 # Set OpenBoardAnim as startup project
 # Launch the application to get started
 ```
-* Launch application & click "Create new project" to start.
-* Click Library on the left of the screen to access svg and text graphics.
-* Click "Manage Library" next to the search bar to import your own svg images, delete ones you
-  no longer need, or clean up invalid graphics.
-![](https://github.com/Rsverma/OpenDoodler/blob/main/docs/images/Steps.png)
-  
+
+## Contributing
+
+Contributions are welcome — feel free to open an issue for bugs/ideas or submit a pull request.
+
 ## Credits
 
 This software uses the following open source packages:
@@ -69,11 +79,11 @@ This software uses the following open source packages:
 
 ## Related
 
-- [RSV Asset Manager](https://github.com/Rsverma/RSVAssetManager) - A minimal Asset Manager application built by RSV Enterprise Solutions.
+- [RSV Asset Manager](https://github.com/Rsverma/RSVAssetManager) - A minimal Asset Manager application, also built by RSV Enterprise Solutions.
 
 ## License
 
-AGPL-3.0 
+[AGPL-3.0](LICENSE)
 
 ---
 <a href="mailto:rsverma333@gmail.com"><img src="https://img.shields.io/badge/gmail-%23DD0031.svg?&style=for-the-badge&logo=gmail&logoColor=white"/></a>
