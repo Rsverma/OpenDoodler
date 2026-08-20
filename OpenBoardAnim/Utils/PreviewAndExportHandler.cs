@@ -54,15 +54,7 @@ namespace OpenBoardAnim.Utils
                 Dictionary<int, double> sceneStartTimes = new();
                 List<(string Path, double Start, double TrimStart, double TrimEnd, int SceneIndex)> rawVoiceoverCues = new();
                 Stopwatch sceneClock = Stopwatch.StartNew();
-                if (isExport)
-                {
-                    exporter = new(canvas, 30, outputVideoPath, project.AudioPath, project.AudioVolume, sceneAudioCues,
-                        project.AudioTrimStart, project.AudioTrimEnd);
-                    exporter.StartCapture();
-                    sceneClock.Restart();
-                }
-                int totalGraphics = project.Scenes.Sum(s => s.Graphics?.Count(g => g.IsVisible) ?? 0);
-                int processedGraphics = 0;
+                const int exportFrameRate = 30;
                 int index = 1;
                 // Excludes the trailing "+" add-scene card either way; PreviewSceneIndex further
                 // narrows this to a single scene for an isolated preview (see
@@ -73,6 +65,28 @@ namespace OpenBoardAnim.Utils
                 {
                     startSceneIndex = previewIndex;
                     endSceneIndex = previewIndex;
+                }
+                if (isExport)
+                {
+                    // Frame count (rather than scene or graphic count) is what actually tracks
+                    // linearly with real capture progress - a single hand-drawn stroke scene can
+                    // take far longer to render than several static ones combined, so counting
+                    // scenes/graphics made the bar jump in uneven lurches. GetEstimatedSceneDurationSeconds
+                    // is the same rough per-scene estimate the timeline already uses; scene
+                    // transitions (~0.6s each) and the trailing 0.5s hold are accounted for too
+                    // so the estimate roughly matches the real capture length.
+                    double estimatedSeconds = 0;
+                    for (int s = startSceneIndex; s <= endSceneIndex; s++)
+                        estimatedSeconds += GetEstimatedSceneDurationSeconds(project.Scenes[s]);
+                    if (sceneTransition != SceneTransition.None)
+                        estimatedSeconds += Math.Max(0, endSceneIndex - startSceneIndex) * 0.6;
+                    estimatedSeconds += 0.5;
+                    int estimatedTotalFrames = Math.Max(1, (int)Math.Round(estimatedSeconds * exportFrameRate));
+
+                    exporter = new(canvas, exportFrameRate, outputVideoPath, project.AudioPath, project.AudioVolume, sceneAudioCues,
+                        project.AudioTrimStart, project.AudioTrimEnd, progress, estimatedTotalFrames);
+                    exporter.StartCapture();
+                    sceneClock.Restart();
                 }
                 for (int i = startSceneIndex; i <= endSceneIndex; i++)
                 {
@@ -219,12 +233,6 @@ namespace OpenBoardAnim.Utils
                             index = canvas.Children.Count;
                         }
 
-                        processedGraphics++;
-                        if (isExport)
-                        {
-                            double pct = totalGraphics > 0 ? processedGraphics / (double)totalGraphics * 80 : 80;
-                            progress?.Report(new ExportProgressInfo(pct, $"Rendering {processedGraphics} of {totalGraphics}..."));
-                        }
                     }
                 }
                 canvas.Children.Remove(hand);

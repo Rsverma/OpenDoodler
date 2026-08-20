@@ -31,6 +31,21 @@ namespace OpenBoardAnim.Utils
         private double _audioTrimEnd;
         private List<SceneAudioCue> _sceneAudioCues;
         private int _frameCount;
+        // Rough estimate (GetEstimatedSceneDurationSeconds * frame rate) of how many frames
+        // this export will end up capturing - used to report progress as a fraction of frames
+        // captured so far rather than scenes/graphics processed, since those don't track real
+        // capture time linearly (a single hand-drawn stroke scene can outlast several static
+        // ones combined).
+        private readonly IProgress<ExportProgressInfo> _progress;
+        private readonly int _estimatedTotalFrames;
+        // Frames captured (OnRendering, live during capture) can outpace frames actually
+        // written to disk (WriteQueuedFramesAsync, a single background consumer) if disk I/O is
+        // the bottleneck - StopCapture then has to sit and wait for that backlog to drain before
+        // ffmpeg can start, since it reads the frame files, not the in-memory queue. _isDraining
+        // gates a second round of progress reporting (70-80%) for exactly that wait, so it isn't
+        // just a stall at whatever percentage capture happened to end on.
+        private int _framesWritten;
+        private volatile bool _isDraining;
         // Measures real elapsed time across the capture. Also the source of each frame's own
         // timestamp (see _frameTimestamps) - a single averaged fps across the whole capture
         // isn't good enough, because real per-frame throughput varies a lot within one export
@@ -54,7 +69,8 @@ namespace OpenBoardAnim.Utils
         private Task _frameWriterTask;
 
         public VideoExporter(Canvas canvas, int frameRate, string outputVideoPath, string audioPath = null, double audioVolumePercent = 100,
-            List<SceneAudioCue> sceneAudioCues = null, double audioTrimStart = 0, double audioTrimEnd = 0)
+            List<SceneAudioCue> sceneAudioCues = null, double audioTrimStart = 0, double audioTrimEnd = 0,
+            IProgress<ExportProgressInfo> progress = null, int estimatedTotalFrames = 0)
         {
             try
             {
@@ -66,6 +82,8 @@ namespace OpenBoardAnim.Utils
                 _audioTrimStart = audioTrimStart;
                 _audioTrimEnd = audioTrimEnd;
                 _sceneAudioCues = sceneAudioCues ?? new List<SceneAudioCue>();
+                _progress = progress;
+                _estimatedTotalFrames = estimatedTotalFrames;
                 _tempImageDir = Path.Combine(Path.GetTempPath(), "WpfAnimationFrames");
                 if (Directory.Exists(_tempImageDir)) Directory.Delete(_tempImageDir, true); // Cleanup
                 Directory.CreateDirectory(_tempImageDir);
@@ -93,6 +111,7 @@ namespace OpenBoardAnim.Utils
             {
                 CompositionTarget.Rendering -= OnRendering;
                 _captureStopwatch?.Stop();
+                _isDraining = true;
                 _frameChannel.Writer.Complete();
                 await _frameWriterTask; // wait for every queued frame to actually land on disk
 
@@ -135,6 +154,22 @@ namespace OpenBoardAnim.Utils
                 _frameTimestamps.Add(_captureStopwatch.Elapsed.TotalSeconds);
                 _frameChannel.Writer.TryWrite((_frameCount, rtb));
                 _frameCount++;
+
+                if (_progress != null && _estimatedTotalFrames > 0)
+                {
+                    // Capped below 70 - actual progress can outrun the rough estimate (a real
+                    // scene often finishes faster/slower than GetEstimatedSceneDurationSeconds
+                    // guessed); 70-80 is reserved for flushing any not-yet-written frame backlog
+                    // to disk (see _isDraining) and 80-100 for the encoding phase in CompileVideo.
+                    double pct = Math.Min(70, _frameCount / (double)_estimatedTotalFrames * 70);
+                    // Once real capture overruns the estimate, "X of ~Y" would show X past Y,
+                    // which reads as broken rather than just an estimate falling short - drop
+                    // the "of ~Y" part in that case instead.
+                    string status = _frameCount <= _estimatedTotalFrames
+                        ? $"Capturing frame {_frameCount} of ~{_estimatedTotalFrames}..."
+                        : $"Capturing frame {_frameCount}...";
+                    _progress.Report(new ExportProgressInfo(pct, status));
+                }
             }
             catch (Exception ex)
             {
@@ -158,6 +193,20 @@ namespace OpenBoardAnim.Utils
                     string framePath = Path.Combine(_tempImageDir, $"frame_{index:D4}.bmp");
                     using var stream = new FileStream(framePath, FileMode.Create);
                     encoder.Save(stream);
+                    _framesWritten++;
+
+                    // Only report once StopCapture has stopped capturing and is waiting on this
+                    // same task to drain the backlog - during live capture, OnRendering's own
+                    // 0-70% reports already track overall progress, and this writer runs
+                    // concurrently the whole time (started back in StartCapture), so reporting
+                    // here too would just make the percentage jump around between two different
+                    // notions of "how far along". _frameCount is fixed by the time draining
+                    // starts (capture has stopped), so it's safe to use as the drain's total.
+                    if (_isDraining && _progress != null && _frameCount > 0)
+                    {
+                        double pct = Math.Min(80, 70 + (_framesWritten / (double)_frameCount) * 10);
+                        _progress.Report(new ExportProgressInfo(pct, $"Saving frame {_framesWritten} of {_frameCount}..."));
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -171,7 +220,10 @@ namespace OpenBoardAnim.Utils
             Process process = null;
             try
             {
-                progress?.Report(new ExportProgressInfo(85, "Encoding video..."));
+                // Starts at 80 (not some arbitrary placeholder like 85) so this can't ever look
+                // like it regresses once ReadEncodingProgressAsync's first real out_time_us=0
+                // reading comes in and reports 80 itself.
+                progress?.Report(new ExportProgressInfo(80, "Encoding video..."));
 
                 string ffmpegPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "DLLs", "ffmpeg.exe");
 
@@ -257,16 +309,28 @@ namespace OpenBoardAnim.Utils
                         $"-r {_frameRate} -c:v libx264 -pix_fmt yuv420p -c:a aac -t {videoDuration} \"{_outputVideoPath}\"";
                 }
 
+                // -progress pipe:1 makes ffmpeg emit machine-readable key=value progress lines
+                // (including out_time_us=<microseconds encoded so far>) to stdout as it works,
+                // instead of only the human-readable stats line on stderr - lets the 80-99%
+                // range advance smoothly through encoding instead of jumping straight from the
+                // 80% report above to 100% once the whole process exits. -nostats suppresses
+                // the stderr stats line, which would otherwise still print (harmless, just
+                // unused - not redirected).
+                arguments = $"-progress pipe:1 -nostats {arguments}";
+
                 var processStartInfo = new ProcessStartInfo
                 {
                     FileName = ffmpegPath,
                     Arguments = arguments,
                     UseShellExecute = false,
-                    CreateNoWindow = true
+                    CreateNoWindow = true,
+                    RedirectStandardOutput = true
                 };
 
                 process = new Process { StartInfo = processStartInfo };
                 process.Start();
+
+                Task progressReaderTask = ReadEncodingProgressAsync(process, progress, videoDurationSeconds, cancellationToken);
 
                 try
                 {
@@ -277,6 +341,10 @@ namespace OpenBoardAnim.Utils
                     if (!process.HasExited)
                         process.Kill();
                     throw;
+                }
+                finally
+                {
+                    await progressReaderTask.ConfigureAwait(false);
                 }
 
                 if (process.ExitCode != 0)
@@ -297,6 +365,42 @@ namespace OpenBoardAnim.Utils
             finally
             {
                 process?.Dispose();
+            }
+        }
+
+        // Reads ffmpeg's `-progress pipe:1` output (a stream of key=value lines, one block per
+        // update) off the redirected stdout and turns each out_time_us= line into an 80-99%
+        // progress report - the encoded output's own timestamp as a fraction of the total video
+        // duration. Runs concurrently with the WaitForExitAsync in CompileVideo, for as long as
+        // ffmpeg keeps the pipe open.
+        private static async Task ReadEncodingProgressAsync(Process process, IProgress<ExportProgressInfo> progress, double videoDurationSeconds, CancellationToken cancellationToken)
+        {
+            if (progress == null) return;
+            try
+            {
+                string line;
+                while ((line = await process.StandardOutput.ReadLineAsync(cancellationToken).ConfigureAwait(false)) != null)
+                {
+                    if (!line.StartsWith("out_time_us="))
+                        continue;
+                    if (!double.TryParse(line.AsSpan("out_time_us=".Length), NumberStyles.Number, CultureInfo.InvariantCulture, out double outTimeUs))
+                        continue;
+
+                    double elapsedSeconds = outTimeUs / 1_000_000.0;
+                    double pct = videoDurationSeconds > 0
+                        ? Math.Clamp(80 + elapsedSeconds / videoDurationSeconds * 20, 80, 99)
+                        : 85;
+                    progress.Report(new ExportProgressInfo(pct, "Encoding video..."));
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                // Export was canceled - the caller kills the process, which closes this pipe and
+                // unblocks ReadLineAsync on its own; nothing further to report.
+            }
+            catch (Exception ex)
+            {
+                Logger.LogWarning($"Failed to read ffmpeg encoding progress: {ex.Message}");
             }
         }
 
