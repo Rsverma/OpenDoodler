@@ -18,7 +18,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- WixUI_* dialog sets (Package.wxs uses InstallDir_NoLicense). -->
+    <!-- WixUI_* dialog sets (Package.wxs uses WixUI_InstallDir). -->
     <PackageReference Include="WixToolset.UI.wixext" Version="7.0.0" />
   </ItemGroup>
 
