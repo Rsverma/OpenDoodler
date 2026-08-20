@@ -24,6 +24,7 @@
         <KeyBinding Key="S" Modifiers="Control" Command="{Binding Navigation.CurrentView.Actions.SaveProjectCommand}"/>
         <KeyBinding Key="Delete" Command="{Binding Navigation.CurrentView.Actions.DeleteItemCommand}"/>
         <KeyBinding Key="C" Modifiers="Control" Command="{Binding Navigation.CurrentView.Actions.CopyGraphicCommand}"/>
+        <KeyBinding Key="X" Modifiers="Control" Command="{Binding Navigation.CurrentView.Actions.CutGraphicCommand}"/>
         <KeyBinding Key="V" Modifiers="Control" Command="{Binding Navigation.CurrentView.Actions.PasteGraphicCommand}"/>
         <KeyBinding Key="Left" Command="{Binding Navigation.CurrentView.Actions.NudgeSelectedGraphicCommand}" CommandParameter="Left"/>
         <KeyBinding Key="Right" Command="{Binding Navigation.CurrentView.Actions.NudgeSelectedGraphicCommand}" CommandParameter="Right"/>
@@ -63,6 +64,7 @@
                         <MenuItem Header="Redo" Icon="{materialDesign:PackIcon Redo}" Command="{Binding RedoCommand}" InputGestureText="Ctrl+Y"/>
                         <Separator/>
                         <MenuItem Header="Copy Graphic" Icon="{materialDesign:PackIcon ContentCopy}" Command="{Binding Navigation.CurrentView.Actions.CopyGraphicCommand}" InputGestureText="Ctrl+C"/>
+                        <MenuItem Header="Cut Graphic" Icon="{materialDesign:PackIcon ContentCut}" Command="{Binding Navigation.CurrentView.Actions.CutGraphicCommand}" InputGestureText="Ctrl+X"/>
                         <MenuItem Header="Paste Graphic" Icon="{materialDesign:PackIcon ContentPaste}" Command="{Binding Navigation.CurrentView.Actions.PasteGraphicCommand}" InputGestureText="Ctrl+V"/>
                     </MenuItem>
                     <MenuItem Header="View">
