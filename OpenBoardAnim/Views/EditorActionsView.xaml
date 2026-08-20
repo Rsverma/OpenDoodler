@@ -156,9 +156,11 @@
                 </ListBox.ItemTemplate>
             </ListBox>
             <StackPanel Orientation="Horizontal" Grid.Row="2" Margin="0 10">
-                <Button Command="{Binding MoveUpCommand}">Move Up</Button>
+                <Button Command="{Binding MoveTopCommand}" ToolTip="Move to Top" Content="{materialDesign:PackIcon ArrowCollapseUp}"/>
+                <Button Margin="5 0 0 0" Command="{Binding MoveUpCommand}">Move Up</Button>
                 <Button Margin="5 0 0 0" Command="{Binding MoveDownCommand}">Move Down</Button>
-                <Button Margin="60 0" Style="{StaticResource ButtonDanger}" Command="{Binding DeleteItemCommand}" ToolTip="Delete Item (Del)" Content="{materialDesign:PackIcon Delete}"/>
+                <Button Margin="5 0 0 0" Command="{Binding MoveBottomCommand}" ToolTip="Move to Bottom" Content="{materialDesign:PackIcon ArrowCollapseDown}"/>
+                <Button Margin="30 0 0 0" Style="{StaticResource ButtonDanger}" Command="{Binding DeleteItemCommand}" ToolTip="Delete Item (Del)" Content="{materialDesign:PackIcon Delete}"/>
             </StackPanel>
         </Grid>
     </Border>

@@ -99,10 +99,14 @@
                             <MenuItem Header="Duplicate" Icon="{materialDesign:PackIcon ContentDuplicate}"
                                       Command="{Binding PlacementTarget.Tag.DuplicateGraphicCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
                             <Separator/>
+                            <MenuItem Header="Move to Top" Icon="{materialDesign:PackIcon ArrowCollapseUp}"
+                                      Command="{Binding PlacementTarget.Tag.MoveTopCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
                             <MenuItem Header="Move Up" Icon="{materialDesign:PackIcon ArrowUpBold}"
                                       Command="{Binding PlacementTarget.Tag.MoveUpCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
                             <MenuItem Header="Move Down" Icon="{materialDesign:PackIcon ArrowDownBold}"
                                       Command="{Binding PlacementTarget.Tag.MoveDownCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                            <MenuItem Header="Move to Bottom" Icon="{materialDesign:PackIcon ArrowCollapseDown}"
+                                      Command="{Binding PlacementTarget.Tag.MoveBottomCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
                             <Separator/>
                             <MenuItem Header="Group" Icon="{materialDesign:PackIcon Group}"
                                       Command="{Binding PlacementTarget.Tag.GroupGraphicsCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>

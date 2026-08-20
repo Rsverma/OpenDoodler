@@ -45,6 +45,8 @@ namespace OpenBoardAnim.ViewModels
                 DeleteItemCommand = new RelayCommand(execute: o => DeleteItem(), canExecute: o => HasSelection);
                 MoveUpCommand = new RelayCommand(execute: o => MoveUp(), canExecute: o => SelectedGraphic != null);
                 MoveDownCommand = new RelayCommand(execute: o => MoveDown(), canExecute: o => SelectedGraphic != null);
+                MoveTopCommand = new RelayCommand(execute: o => MoveTop(), canExecute: o => SelectedGraphic != null);
+                MoveBottomCommand = new RelayCommand(execute: o => MoveBottom(), canExecute: o => SelectedGraphic != null);
                 NudgeSelectedGraphicCommand = new RelayCommand(execute: o => NudgeSelectedGraphic((string)o), canExecute: o => HasSelection);
                 CopyGraphicCommand = new RelayCommand(execute: o => CopySelectedGraphic(), canExecute: o => SelectedGraphic != null);
                 PasteGraphicCommand = new RelayCommand(execute: o => PasteGraphic(), canExecute: o => _copiedGraphic != null && CurrentScene != null);
@@ -133,6 +135,46 @@ namespace OpenBoardAnim.ViewModels
                 if (index < 1) return;
                 CurrentScene.Graphics.RemoveAt(index);
                 CurrentScene.Graphics.Insert(index - 1, model); SelectedGraphic = model;
+            }
+            catch (Exception ex)
+            {
+                if (Logger.LogError(ex, LogAction.LogAndShow))
+                    throw;
+            }
+        }
+
+        // Same "later index paints on top" convention as MoveUp/MoveDown above - jumping
+        // straight to the front/back of the stack instead of one step at a time.
+        private void MoveTop()
+        {
+            try
+            {
+                if (SelectedGraphic == null || CurrentScene == null) return;
+                var model = SelectedGraphic;
+                int index = CurrentScene.Graphics.IndexOf(model);
+                if (index < 0 || index == CurrentScene.Graphics.Count - 1) return;
+                CurrentScene.Graphics.RemoveAt(index);
+                CurrentScene.Graphics.Add(model);
+                SelectedGraphic = model;
+            }
+            catch (Exception ex)
+            {
+                if (Logger.LogError(ex, LogAction.LogAndShow))
+                    throw;
+            }
+        }
+
+        private void MoveBottom()
+        {
+            try
+            {
+                if (SelectedGraphic == null || CurrentScene == null) return;
+                var model = SelectedGraphic;
+                int index = CurrentScene.Graphics.IndexOf(model);
+                if (index <= 0) return;
+                CurrentScene.Graphics.RemoveAt(index);
+                CurrentScene.Graphics.Insert(0, model);
+                SelectedGraphic = model;
             }
             catch (Exception ex)
             {
@@ -675,6 +717,8 @@ namespace OpenBoardAnim.ViewModels
         public ICommand DeleteItemCommand { get; set; }
         public ICommand MoveUpCommand { get; set; }
         public ICommand MoveDownCommand { get; set; }
+        public ICommand MoveTopCommand { get; set; }
+        public ICommand MoveBottomCommand { get; set; }
         public ICommand NudgeSelectedGraphicCommand { get; set; }
         public ICommand CopyGraphicCommand { get; set; }
         public ICommand PasteGraphicCommand { get; set; }
