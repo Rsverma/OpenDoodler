@@ -20,15 +20,16 @@
 ## Key Features
 
 * Launch page to create a new project or pick up a recent one - shown as a thumbnail of its first scene - with unsaved-changes protection and automatic crash recovery from a periodic autosave backup
-* Editor canvas to compose SVG and text graphics, with drag, resize, zoom/pan (plus zoom-to-fit and zoom-to-selection), snapping/alignment guides while dragging, lock-in-place, persistent grouping, a visual layers panel with visibility/lock toggles and drag-to-reorder, multi-select with group move/delete/align, a right-click context menu (copy/cut/duplicate/lock/group/align/delete), and copy/paste across scenes
+* Editor canvas to compose SVG and text graphics, with drag, resize, zoom/pan (plus zoom-to-fit and zoom-to-selection), snapping/alignment guides while dragging, lock-in-place, persistent grouping, a visual layers panel with visibility/lock toggles and drag-to-reorder, multi-select with group move/delete/align, a right-click context menu (copy/cut/duplicate/lock/group/align/move to top/up/down/bottom/delete), and copy/paste across scenes
+* Library Manager to import graphics, delete graphics you no longer need, and clean up any invalid/corrupted graphics from your library
 * Scene-template gallery: built-in starter layouts plus your own saved scenes, inserted as a brand-new scene so picking one never overwrites your current work
 * Stroke-by-stroke hand-drawn animation with configurable stroke color/width, plus Fade In / Pop In as alternate entrance styles
-* Whole-project timeline: scenes sized proportionally to their duration with a draggable, zoomable playhead, drag-to-reorder/duplicate/delete, hard-cut/crossfade/wipe transitions, per-scene voiceover (with trim in/out points and waveform display) layered under project-wide background music, and the ability to preview a single scene in isolation
+* Whole-project timeline: scenes sized proportionally to their duration with a draggable, zoomable playhead, drag-to-reorder/duplicate/delete, hard-cut/crossfade/wipe transitions with configurable duration, per-scene voiceover (with trim in/out points and waveform display) layered under project-wide background music, and the ability to preview a single scene in isolation
 * Undo/redo
 * Light / Dark / System UI theme
 * Project Settings: board type, background music, stroke styling, entrance style, aspect ratio (16:9 / 9:16 / 1:1), and scene transitions
 * In-app preview and MP4 video export (background music and per-scene voiceovers mixed in) with progress reporting and cancellation
-* Keyboard shortcuts for undo/redo, save, new/open project, delete, copy/paste, and nudging the selected graphic(s)
+* Keyboard shortcuts for undo/redo, save, new/open project, delete, cut/copy/paste, and nudging the selected graphic(s)
 ![](https://github.com/Rsverma/OpenDoodler/blob/main/OpenBoardAnim/Resources/Animation.gif)
 ## Upcoming Features
 * Configurable hand/pen (choose a hand skin, pen color, or turn the hand off entirely)
@@ -52,7 +53,8 @@ $ git clone https://github.com/Rsverma/OpenDoodler.git
 ```
 * Launch application & click "Create new project" to start.
 * Click Library on the left of the screen to access svg and text graphics.
-* Click the import button on the right side of the search bar to import your svg images.
+* Click "Manage Library" next to the search bar to import your own svg images, delete ones you
+  no longer need, or clean up invalid graphics.
 ![](https://github.com/Rsverma/OpenDoodler/blob/main/OpenBoardAnim/Resources/Steps.png)
   
 ## Credits
