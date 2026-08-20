@@ -116,6 +116,7 @@ namespace OpenBoardAnim.Models
                     StrokeWidth = Settings.StrokeWidth,
                     EntranceStyle = Settings.EntranceStyle,
                     SceneTransition = Settings.SceneTransition,
+                    TransitionDurationSeconds = Settings.TransitionDurationSeconds,
                     AspectRatio = Settings.AspectRatio
                 },
                 Scenes = Scenes.Select(s => s.Clone()).ToList(),
@@ -207,6 +208,20 @@ namespace OpenBoardAnim.Models
             set
             {
                 _sceneTransition = value;
+                OnPropertyChanged();
+            }
+        }
+
+        // How long the crossfade/wipe overlay animation runs for, in seconds - was hardcoded
+        // to 0.6 in PreviewAndExportHandler.PlaySceneTransition; has no effect when
+        // SceneTransition is None.
+        private double _transitionDurationSeconds = 0.6;
+        public double TransitionDurationSeconds
+        {
+            get { return _transitionDurationSeconds; }
+            set
+            {
+                _transitionDurationSeconds = value;
                 OnPropertyChanged();
             }
         }

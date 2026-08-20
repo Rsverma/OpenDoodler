@@ -66,6 +66,9 @@ namespace OpenBoardAnim.Utils
                     startSceneIndex = previewIndex;
                     endSceneIndex = previewIndex;
                 }
+                // Clamped to a small positive minimum - a zero/negative duration would make
+                // the crossfade/wipe DoubleAnimation below meaningless (or throw).
+                double transitionDurationSeconds = Math.Max(0.05, project.Settings?.TransitionDurationSeconds ?? 0.6);
                 if (isExport)
                 {
                     // Frame count (rather than scene or graphic count) is what actually tracks
@@ -73,13 +76,13 @@ namespace OpenBoardAnim.Utils
                     // take far longer to render than several static ones combined, so counting
                     // scenes/graphics made the bar jump in uneven lurches. GetEstimatedSceneDurationSeconds
                     // is the same rough per-scene estimate the timeline already uses; scene
-                    // transitions (~0.6s each) and the trailing 0.5s hold are accounted for too
-                    // so the estimate roughly matches the real capture length.
+                    // transitions and the trailing 0.5s hold are accounted for too so the
+                    // estimate roughly matches the real capture length.
                     double estimatedSeconds = 0;
                     for (int s = startSceneIndex; s <= endSceneIndex; s++)
                         estimatedSeconds += GetEstimatedSceneDurationSeconds(project.Scenes[s]);
                     if (sceneTransition != SceneTransition.None)
-                        estimatedSeconds += Math.Max(0, endSceneIndex - startSceneIndex) * 0.6;
+                        estimatedSeconds += Math.Max(0, endSceneIndex - startSceneIndex) * transitionDurationSeconds;
                     estimatedSeconds += 0.5;
                     int estimatedTotalFrames = Math.Max(1, (int)Math.Round(estimatedSeconds * exportFrameRate));
 
@@ -91,7 +94,7 @@ namespace OpenBoardAnim.Utils
                 for (int i = startSceneIndex; i <= endSceneIndex; i++)
                 {
                     if (i > startSceneIndex && sceneTransition != SceneTransition.None)
-                        await PlaySceneTransition(canvas, sceneTransition, cancellationToken);
+                        await PlaySceneTransition(canvas, sceneTransition, transitionDurationSeconds, cancellationToken);
                     else
                         canvas.Children.Clear();
 
@@ -390,7 +393,7 @@ namespace OpenBoardAnim.Utils
         // capturing/animating a bitmap snapshot of it - simpler and avoids relying on
         // RenderTargetBitmap producing a usable capture of a canvas that isn't backed by an
         // on-screen HWND during export. Runs in real time so frame-capture records it.
-        private static async Task PlaySceneTransition(Canvas canvas, SceneTransition transition, CancellationToken cancellationToken)
+        private static async Task PlaySceneTransition(Canvas canvas, SceneTransition transition, double durationSeconds, CancellationToken cancellationToken)
         {
             if (canvas.Children.Count == 0)
                 return;
@@ -406,7 +409,7 @@ namespace OpenBoardAnim.Utils
             Canvas.SetZIndex(overlay, 1000);
             canvas.Children.Add(overlay);
 
-            TimeSpan duration = TimeSpan.FromSeconds(0.6);
+            TimeSpan duration = TimeSpan.FromSeconds(durationSeconds);
             Storyboard storyboard = new();
 
             if (transition == SceneTransition.Wipe)

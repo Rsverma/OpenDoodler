@@ -12,6 +12,7 @@
         <utils:HexEqualsThicknessConverter x:Key="HexEqualsThicknessConverter"/>
         <utils:FriendlyEnumConverter x:Key="FriendlyEnumConverter"/>
         <utils:EnumEqualsVisibilityConverter x:Key="EnumEqualsVisibilityConverter"/>
+        <utils:EnumNotEqualsVisibilityConverter x:Key="EnumNotEqualsVisibilityConverter"/>
 
         <Style x:Key="SettingsCardStyle" TargetType="Border">
             <Setter Property="Background" Value="{DynamicResource RegionBrush}"/>
@@ -135,6 +136,13 @@
                     <TextBlock Text="Scene Transitions" Style="{StaticResource SettingsSectionTitleStyle}"/>
                     <TextBlock Text="How the canvas changes when moving from one scene to the next." Style="{StaticResource SettingsHintStyle}"/>
                     <hc:ComboBox x:Name="SceneTransitionComboBox" Width="220" HorizontalAlignment="Left" ItemTemplate="{StaticResource FriendlyEnumItemTemplate}" SelectedItem="{Binding Settings.SceneTransition, Mode=TwoWay}"/>
+                    <StackPanel Orientation="Horizontal" Margin="0 8 0 0"
+                                Visibility="{Binding Settings.SceneTransition, Converter={StaticResource EnumNotEqualsVisibilityConverter}, ConverterParameter=None}">
+                        <TextBlock Text="Duration" VerticalAlignment="Center" Width="55"/>
+                        <hc:NumericUpDown Width="80" Minimum="0.1" Maximum="5" DecimalPlaces="1" ValueFormat="0.0"
+                                          Value="{Binding Settings.TransitionDurationSeconds, Mode=TwoWay}"/>
+                        <TextBlock Margin="6 0 0 0" VerticalAlignment="Center" Text="seconds" FontSize="11" Opacity="0.65"/>
+                    </StackPanel>
                 </StackPanel>
             </Border>
         </StackPanel>
