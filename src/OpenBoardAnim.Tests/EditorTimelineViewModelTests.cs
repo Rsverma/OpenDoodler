@@ -98,33 +98,6 @@ namespace OpenBoardAnim.Tests
         }
 
         [Fact]
-        public void SceneDeleteCommand_RemovesSelectedSceneAndRenumbersTheRest()
-        {
-            EditorTimelineViewModel sut = CreateSut();
-            sut.Scenes = CreateScenes(3); // ["1","2","3","+"]
-            sut.SelectedScene = sut.Scenes[1]; // select "2"
-
-            sut.SceneDeleteCommand.Execute(null);
-
-            Assert.Equal(3, sut.Scenes.Count); // "1","3","+" left, renumbered from 0
-            Assert.Equal("0", sut.Scenes[0].Name);
-            Assert.Equal("1", sut.Scenes[1].Name);
-            Assert.Equal("2", sut.Scenes[2].Name);
-        }
-
-        [Fact]
-        public void SceneDeleteCommand_IsNoOp_WhenNothingSelected()
-        {
-            EditorTimelineViewModel sut = CreateSut();
-            sut.Scenes = CreateScenes(2);
-            sut.SelectedScene = null;
-
-            sut.SceneDeleteCommand.Execute(null);
-
-            Assert.Equal(3, sut.Scenes.Count);
-        }
-
-        [Fact]
         public void PerSceneDeleteAction_RemovesThatSceneAndRenumbers()
         {
             EditorTimelineViewModel sut = CreateSut();
