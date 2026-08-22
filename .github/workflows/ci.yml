@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  build-and-test:
+    # WPF app - the build requires the Windows Desktop workload, so this can't run on
+    # ubuntu/macos runners.
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+          cache: true
+          # No packages.lock.json files in this repo - cache keys off the .csproj package
+          # references instead (setup-dotnet's documented fallback when lock files aren't used).
+          cache-dependency-path: '**/*.csproj'
+
+      - name: Restore
+        run: dotnet restore OpenBoardAnim.sln
+
+      - name: Build
+        run: dotnet build OpenBoardAnim.sln -c Release --no-restore
+
+      - name: Test
+        run: dotnet test tests/OpenBoardAnim.Tests/OpenBoardAnim.Tests.csproj -c Release --no-build --logger "trx;LogFileName=test-results.trx" --results-directory TestResults
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: tests/OpenBoardAnim.Tests/TestResults/*.trx
+          if-no-files-found: warn
