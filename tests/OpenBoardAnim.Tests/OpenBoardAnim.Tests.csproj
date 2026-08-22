@@ -20,9 +20,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\OpenBoardAnim\OpenBoardAnim.csproj" />
-    <ProjectReference Include="..\OpenBoardAnim.Library\OpenBoardAnim.Library.csproj" />
-    <ProjectReference Include="..\OpenBoardAnim.Utilities\OpenBoardAnim.Utilities.csproj" />
+    <ProjectReference Include="..\..\src\OpenBoardAnim\OpenBoardAnim.csproj" />
+    <ProjectReference Include="..\..\src\OpenBoardAnim.Library\OpenBoardAnim.Library.csproj" />
+    <ProjectReference Include="..\..\src\OpenBoardAnim.Utilities\OpenBoardAnim.Utilities.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -30,10 +30,10 @@
          regardless of ISceneRepository mocking) reads these files from
          AppDomain.CurrentDomain.BaseDirectory\Resources - mirrored here from the main app project
          so CacheServiceTests has real files to read instead of throwing FileNotFoundException. -->
-    <None Include="..\OpenBoardAnim\Resources\peep-102.svg" Link="Resources\peep-102.svg" CopyToOutputDirectory="PreserveNewest" />
-    <None Include="..\OpenBoardAnim\Resources\peep-43.svg" Link="Resources\peep-43.svg" CopyToOutputDirectory="PreserveNewest" />
-    <None Include="..\OpenBoardAnim\Resources\peep-61.svg" Link="Resources\peep-61.svg" CopyToOutputDirectory="PreserveNewest" />
-    <None Include="..\OpenBoardAnim\Resources\peep-64.svg" Link="Resources\peep-64.svg" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\..\src\OpenBoardAnim\Resources\peep-102.svg" Link="Resources\peep-102.svg" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\..\src\OpenBoardAnim\Resources\peep-43.svg" Link="Resources\peep-43.svg" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\..\src\OpenBoardAnim\Resources\peep-61.svg" Link="Resources\peep-61.svg" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\..\src\OpenBoardAnim\Resources\peep-64.svg" Link="Resources\peep-64.svg" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>

@@ -22,30 +22,43 @@ src/OpenBoardAnim/bin/Debug/net10.0-windows/OpenBoardAnim.exe
 # EF Core migrations (run from src/OpenBoardAnim.Library/)
 dotnet ef migrations add <Name> --project src/OpenBoardAnim.Library
 dotnet ef database update --project src/OpenBoardAnim.Library
+
+# Run the xUnit test suite
+dotnet test tests/OpenBoardAnim.Tests/OpenBoardAnim.Tests.csproj
 ```
 
-There are no test projects in the solution (no `*.Tests.csproj`) and no lint config — do not invent test/lint
-commands.
+There is no lint config — do not invent lint commands.
 
 ## Repository layout
 
-All buildable source lives under `src/` (three projects, listed below); the solution file
-(`OpenBoardAnim.sln`) stays at the repo root. `docs/images/` holds README-only screenshots/GIFs — not
-app resources, don't confuse with `src/OpenBoardAnim/Resources/` (real compiled-in app assets like
-`App.ico`, `pencil.png`, the `peep-*.svg` characters). `installer/` holds a separate WiX Toolset
-project/solution (`OpenBoardAnim.Setup.sln`) that builds an MSI from a `dotnet publish` of
-`OpenBoardAnim` — deliberately not part of `OpenBoardAnim.sln`, see `installer/README.md`.
+Buildable source lives under `src/` (three projects, listed below); the xUnit test project lives under
+a sibling `tests/` directory instead, since it isn't itself app source. The solution file
+(`OpenBoardAnim.sln`) stays at the repo root and references all four. `docs/images/` holds README-only
+screenshots/GIFs — not app resources, don't confuse with `src/OpenBoardAnim/Resources/` (real
+compiled-in app assets like `App.ico`, `pencil.png`, the `peep-*.svg` characters). `installer/` holds a
+separate WiX Toolset project/solution (`OpenBoardAnim.Setup.sln`) that builds an MSI from a
+`dotnet publish` of `OpenBoardAnim` — deliberately not part of `OpenBoardAnim.sln`, see
+`installer/README.md`.
 
 ## Solution structure
 
-Three projects in `OpenBoardAnim.sln`, all under `src/`:
+Four projects in `OpenBoardAnim.sln`:
 
-- **`OpenBoardAnim`** — the WPF UI app (`net10.0-windows`, `UseWPF=true`). Uses HandyControl and
+- **`src/OpenBoardAnim`** — the WPF UI app (`net10.0-windows`, `UseWPF=true`). Uses HandyControl and
   MaterialDesignThemes for UI, SharpVectors for SVG rendering, `Microsoft.Extensions.DependencyInjection` for DI.
-- **`OpenBoardAnim.Library`** — data layer: EF Core + SQLite (`DataContext`, `Entities/`, `Migrations/`,
+- **`src/OpenBoardAnim.Library`** — data layer: EF Core + SQLite (`DataContext`, `Entities/`, `Migrations/`,
   `Repositories/`).
-- **`OpenBoardAnim.Utilities`** — cross-cutting helpers: Serilog-based logging (`LogWriter.cs`) and
+- **`src/OpenBoardAnim.Utilities`** — cross-cutting helpers: Serilog-based logging (`LogWriter.cs`) and
   `EnumHelper.cs`. No project reference back to the WPF app or Library.
+- **`tests/OpenBoardAnim.Tests`** — xUnit + Moq unit tests (`net10.0-windows`, `UseWPF=true` since it
+  exercises ViewModels/services that reference WPF types like `ICommand`/`MessageBoxResult`). Project
+  references all three `src/` projects. Covers pure logic (`ExportProgressMath`), services against
+  mocked repositories (`CacheService`), and ViewModels with interface-only dependencies
+  (`EditorActionsViewModel`, `EditorCanvasViewModel`, `EditorTimelineViewModel`, `StateSnapshotService`).
+  Deliberately does not cover the WPF rendering pipeline (`GeometryHelper`, `PathAnimationHelper`,
+  `PreviewAndExportHandler`'s animation methods) or anything requiring a live `Application.Current`
+  (`ThemeService`'s `ApplySkin`/`CurrentTheme`) — not economically unit-testable without a much larger
+  rendering-abstraction rearchitecture.
 
 ## Architecture
 
