@@ -15,7 +15,7 @@ namespace OpenBoardAnim.ViewModels
     {
         private INavigationService _navigation;
         private readonly IPubSubService _pubSub;
-        private readonly CacheService _cache;
+        private readonly ICacheService _cache;
         private EditorActionsViewModel actions;
         private readonly DispatcherTimer _snapshotTimer;
         // Periodic disk backup - distinct from _snapshotTimer's in-memory undo/redo stack,
@@ -26,7 +26,7 @@ namespace OpenBoardAnim.ViewModels
 
         public EditorViewModel(INavigationService navigation,
                                IPubSubService pubSub,
-                               CacheService cache,
+                               ICacheService cache,
                                StateSnapshotService stateSnapshotService,
                                EditorActionsViewModel actions,
                                EditorCanvasViewModel canvas,

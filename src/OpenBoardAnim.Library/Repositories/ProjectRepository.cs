@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace OpenBoardAnim.Library.Repositories
 {
-    public class ProjectRepository
+    public class ProjectRepository : IProjectRepository
     {
         private readonly Func<DataContext> _contextFactory;
         public ProjectRepository(Func<DataContext> contextFactory)

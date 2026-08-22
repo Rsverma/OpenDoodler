@@ -16,13 +16,13 @@ namespace OpenBoardAnim.ViewModels
 
         private readonly IPubSubService _pubSub;
         private readonly StateSnapshotService _stateSnapshotService;
-        private readonly CacheService _cache;
+        private readonly ICacheService _cache;
         private readonly EditorActionsViewModel _actions;
         private INavigationService _navigation;
         private string _title;
         private string _userName;
 
-        public MainViewModel(INavigationService navService, IPubSubService pubSub, StateSnapshotService stateSnapshotService, CacheService cache, EditorActionsViewModel actions, ThemeService theme)
+        public MainViewModel(INavigationService navService, IPubSubService pubSub, StateSnapshotService stateSnapshotService, ICacheService cache, EditorActionsViewModel actions, IThemeService theme)
         {
             try
             {
@@ -148,7 +148,7 @@ namespace OpenBoardAnim.ViewModels
         public RelayCommand NewProjectCommand { get; set; }
         public RelayCommand OpenProjectCommand { get; set; }
         public RelayCommand ExitCommand { get; set; }
-        public ThemeService Theme { get; private set; }
+        public IThemeService Theme { get; private set; }
         public INavigationService Navigation
         {
             get => _navigation;

@@ -1,5 +1,4 @@
-﻿using Microsoft.Win32;
-using OpenBoardAnim.Core;
+﻿using OpenBoardAnim.Core;
 using OpenBoardAnim.Models;
 using OpenBoardAnim.Services;
 using OpenBoardAnim.Utilities;
@@ -19,16 +18,18 @@ namespace OpenBoardAnim.ViewModels
     {
         private readonly IPubSubService _pubSub;
         private readonly INavigationService _navigation;
-        private readonly CacheService _cache;
+        private readonly ICacheService _cache;
         private readonly IDialogService _dialog;
+        private readonly IFileDialogService _fileDialog;
+        private readonly IMessageBoxService _messageBox;
         private CancellationTokenSource _exportCts;
         private string _savedProjectJson;
         // In-memory clipboard for graphics - survives switching scenes, so pasting can
         // target a different scene than the one the graphic was copied from.
         private GraphicModelBase _copiedGraphic;
 
-        public EditorActionsViewModel(IPubSubService pubSub, INavigationService navigation, CacheService Cache,
-            IDialogService dialog)
+        public EditorActionsViewModel(IPubSubService pubSub, INavigationService navigation, ICacheService Cache,
+            IDialogService dialog, IFileDialogService fileDialog, IMessageBoxService messageBox)
         {
             try
             {
@@ -37,6 +38,8 @@ namespace OpenBoardAnim.ViewModels
                 _navigation = navigation;
                 _cache = Cache;
                 _dialog = dialog;
+                _fileDialog = fileDialog;
+                _messageBox = messageBox;
                 CloseProjectCommand = new RelayCommand(execute: o => CloseProject(), canExecute: o => true);
                 SaveProjectCommand = new RelayCommand(execute: o => SaveProject(), canExecute: o => Project != null);
                 ExportProjectCommand = new RelayCommand(execute: o => ExportProject(), canExecute: o => !IsExporting);
@@ -504,13 +507,9 @@ namespace OpenBoardAnim.ViewModels
         {
             try
             {
-                SaveFileDialog saveFileDialog = new()
-                {
-                    Filter = "MP4 Video (*.mp4)|*.mp4",
-                    DefaultExt = "mp4",
-                    FileName = string.IsNullOrWhiteSpace(Project?.Title) ? "output.mp4" : $"{Project.Title}.mp4"
-                };
-                if (saveFileDialog.ShowDialog() != true)
+                string defaultFileName = string.IsNullOrWhiteSpace(Project?.Title) ? "output.mp4" : $"{Project.Title}.mp4";
+                string exportPath = _fileDialog.ShowSaveFileDialog("MP4 Video (*.mp4)|*.mp4", "mp4", defaultFileName);
+                if (exportPath == null)
                     return;
 
                 IsExporting = true;
@@ -548,7 +547,7 @@ namespace OpenBoardAnim.ViewModels
                     canvas.Arrange(new Rect(0, 0, canvas.Width, canvas.Height));
                     canvas.UpdateLayout();
                     //window.Show();
-                    await PreviewAndExportHandler.RunAnimationsOnCanvas(Project, canvas, true, progress, saveFileDialog.FileName, _exportCts.Token);
+                    await PreviewAndExportHandler.RunAnimationsOnCanvas(Project, canvas, true, progress, exportPath, _exportCts.Token);
                 }
 
                 Logger.LogMessage("Export complete", LogAction.LogAndShow);
@@ -592,13 +591,10 @@ namespace OpenBoardAnim.ViewModels
                 if (Project == null) return;
                 if (string.IsNullOrEmpty(Project.Path))
                 {
-                    SaveFileDialog saveFileDialog = new()
+                    string savePath = _fileDialog.ShowSaveFileDialog("Project file (*.obap)|*.obap");
+                    if (savePath != null)
                     {
-                        Filter = "Project file (*.obap)|*.obap",
-                    };
-                    if (saveFileDialog.ShowDialog() == true)
-                    {
-                        _cache.SaveNewProject(Project, saveFileDialog.FileName);
+                        _cache.SaveNewProject(Project, savePath);
                     }
                     else
                         return;
@@ -684,7 +680,7 @@ namespace OpenBoardAnim.ViewModels
             if (!HasUnsavedChanges)
                 return true;
 
-            MessageBoxResult result = MessageBox.Show(
+            MessageBoxResult result = _messageBox.Show(
                 "This project has unsaved changes. Save before continuing?",
                 "Unsaved Changes",
                 MessageBoxButton.YesNoCancel,

@@ -13,9 +13,9 @@ namespace OpenBoardAnim.ViewModels
         private BindingList<RecentProjectModel> _recentProjects;
         private INavigationService _navigation;
         private readonly IPubSubService _pubSub;
-        private readonly CacheService _cache;
+        private readonly ICacheService _cache;
 
-        public LaunchViewModel(INavigationService navigation, IPubSubService pubSub,CacheService cache)
+        public LaunchViewModel(INavigationService navigation, IPubSubService pubSub,ICacheService cache)
         {
             try
             {

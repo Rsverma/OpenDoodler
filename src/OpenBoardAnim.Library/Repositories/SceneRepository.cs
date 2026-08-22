@@ -2,7 +2,7 @@ using OpenBoardAnim.Utilities;
 
 namespace OpenBoardAnim.Library.Repositories
 {
-    public class SceneRepository
+    public class SceneRepository : ISceneRepository
     {
         private readonly Func<DataContext> _contextFactory;
 
