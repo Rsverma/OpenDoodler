@@ -22,8 +22,7 @@
   <a href="#how-to-use">How To Use</a> •
   <a href="#building-from-source">Building From Source</a> •
   <a href="#credits">Credits</a> •
-  <a href="#related">Related</a> •
-  <a href="#license">License</a>
+  <a href="#related">Related</a>
 </p>
 
 ![](https://github.com/Rsverma/OpenDoodler/blob/main/docs/images/Animation.gif)
@@ -76,15 +75,17 @@ Contributions are welcome — feel free to open an issue for bugs/ideas or submi
 
 This software uses the following open source packages:
 
-- [Handy Control](https://github.com/HandyOrg/HandyControl)
+- [HandyControl](https://github.com/HandyOrg/HandyControl) - UI controls and theming
+- [MaterialDesignThemes](https://github.com/MaterialDesignInXAML/MaterialDesignInXamlToolkit) - UI controls and theming
+- [SharpVectors](https://github.com/ElinamLLC/SharpVectors) - SVG rendering
+- [NAudio](https://github.com/naudio/NAudio) - audio playback and waveform display
+- [Serilog](https://github.com/serilog/serilog) - logging
+- [Entity Framework Core](https://github.com/dotnet/efcore) (SQLite provider) - local project database
+- [FFmpeg](https://ffmpeg.org/) - bundled for MP4 video export
 
 ## Related
 
 - [RSV Asset Manager](https://github.com/Rsverma/RSVAssetManager) - A minimal Asset Manager application, also built by RSV Enterprise Solutions.
-
-## License
-
-[AGPL-3.0](LICENSE)
 
 ---
 <a href="mailto:rsverma333@gmail.com"><img src="https://img.shields.io/badge/gmail-%23DD0031.svg?&style=for-the-badge&logo=gmail&logoColor=white"/></a>
