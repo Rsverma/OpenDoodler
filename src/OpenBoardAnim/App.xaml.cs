@@ -32,16 +32,18 @@ namespace OpenBoardAnim
 
                 IServiceCollection services = new ServiceCollection();
                 services.AddSingleton<Func<DataContext>>(_ => () => new DataContext());
-                services.AddSingleton<ShapeRepository>();
-                services.AddSingleton<GraphicRepository>();
-                services.AddSingleton<SceneRepository>();
-                services.AddSingleton<ProjectRepository>();
+                services.AddSingleton<IShapeRepository, ShapeRepository>();
+                services.AddSingleton<IGraphicRepository, GraphicRepository>();
+                services.AddSingleton<ISceneRepository, SceneRepository>();
+                services.AddSingleton<IProjectRepository, ProjectRepository>();
                 services.AddSingleton<INavigationService, NavigationService>();
                 services.AddSingleton<IPubSubService, PubSubService>();
                 services.AddSingleton<IDialogService, DialogService>();
-                services.AddSingleton<CacheService>();
+                services.AddSingleton<IFileDialogService, FileDialogService>();
+                services.AddSingleton<IMessageBoxService, MessageBoxService>();
+                services.AddSingleton<ICacheService, CacheService>();
                 services.AddSingleton<StateSnapshotService>();
-                services.AddSingleton<ThemeService>();
+                services.AddSingleton<IThemeService, ThemeService>();
                 services.AddSingleton<MainViewModel>();
                 services.AddTransient<LaunchViewModel>();
                 services.AddSingleton<EditorActionsViewModel>();
@@ -68,7 +70,7 @@ namespace OpenBoardAnim
         {
             try
             {
-                _serviceProvider.GetRequiredService<ThemeService>().ApplySkin();
+                _serviceProvider.GetRequiredService<IThemeService>().ApplySkin();
                 var mainWindow = _serviceProvider.GetRequiredService<MainWindow>();
                 mainWindow.Show();
                 base.OnStartup(e);
@@ -91,7 +93,7 @@ namespace OpenBoardAnim
                 // too if it ticks again before the app closes. Clearing it here, unconditionally,
                 // on every clean exit is what keeps the recovery prompt from firing next launch
                 // for a session that closed normally instead of crashing.
-                _serviceProvider?.GetRequiredService<CacheService>().ClearBackup();
+                _serviceProvider?.GetRequiredService<ICacheService>().ClearBackup();
             }
             catch (Exception ex)
             {

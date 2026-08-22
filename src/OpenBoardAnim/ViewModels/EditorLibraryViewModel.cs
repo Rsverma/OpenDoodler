@@ -15,7 +15,7 @@ namespace OpenBoardAnim.ViewModels
     public class EditorLibraryViewModel : ViewModel
     {
         private IPubSubService _pubSub;
-        private readonly CacheService _cache;
+        private readonly ICacheService _cache;
         private readonly IDialogService _dialog;
         private string _oldSearchText = string.Empty;
         // Tracked purely so "Save Current Scene as Template" knows what to save - Save/Insert
@@ -30,7 +30,7 @@ namespace OpenBoardAnim.ViewModels
         public ICommand CleanupInvalidGraphicsCommand { get; set; }
 
 
-        public EditorLibraryViewModel(IPubSubService pubSub, CacheService cache, IDialogService dialog)
+        public EditorLibraryViewModel(IPubSubService pubSub, ICacheService cache, IDialogService dialog)
         {
             try
             {

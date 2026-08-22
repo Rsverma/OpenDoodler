@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace OpenBoardAnim.Library.Repositories
 {
-    public class ShapeRepository
+    public class ShapeRepository : IShapeRepository
     {
         public List<GraphicEntity> GetAllShapes()
         {

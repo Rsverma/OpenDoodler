@@ -12,12 +12,12 @@ using System.Windows.Media;
 
 namespace OpenBoardAnim.Services
 {
-    public class CacheService
+    public class CacheService : ICacheService
     {
-        private readonly GraphicRepository _gRepo;
-        private readonly SceneRepository _sRepo;
-        private readonly ProjectRepository _pRepo;
-        private readonly ShapeRepository _shRepo;
+        private readonly IGraphicRepository _gRepo;
+        private readonly ISceneRepository _sRepo;
+        private readonly IProjectRepository _pRepo;
+        private readonly IShapeRepository _shRepo;
         private List<GraphicEntity> _graphicEntities;
         public BindingList<RecentProjectModel> RecentProjects { get; set; }
         public ProjectDetails CurrentProject { get; set; }
@@ -25,7 +25,7 @@ namespace OpenBoardAnim.Services
         public BindingList<DrawingModel> AllShapes { get; set; }
         public BindingList<SceneTemplateModel> LoadedSceneTemplates { get; set; }
 
-        public CacheService(GraphicRepository gRepo, SceneRepository sRepo, ProjectRepository pRepo, ShapeRepository shRepo)
+        public CacheService(IGraphicRepository gRepo, ISceneRepository sRepo, IProjectRepository pRepo, IShapeRepository shRepo)
         {
             try
             {

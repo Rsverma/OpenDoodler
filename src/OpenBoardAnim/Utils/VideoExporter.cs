@@ -152,7 +152,7 @@ namespace OpenBoardAnim.Utils
             try
             {
                 double elapsedSeconds = _captureStopwatch.Elapsed.TotalSeconds;
-                if (elapsedSeconds - _lastCapturedSeconds < 1.0 / _frameRate)
+                if (!ExportProgressMath.ShouldCaptureFrame(elapsedSeconds, _lastCapturedSeconds, _frameRate))
                     return;
                 _lastCapturedSeconds = elapsedSeconds;
 
@@ -174,7 +174,7 @@ namespace OpenBoardAnim.Utils
                     // scene often finishes faster/slower than GetEstimatedSceneDurationSeconds
                     // guessed); 70-80 is reserved for flushing any not-yet-written frame backlog
                     // to disk (see _isDraining) and 80-100 for the encoding phase in CompileVideo.
-                    double pct = Math.Min(70, _frameCount / (double)_estimatedTotalFrames * 70);
+                    double pct = ExportProgressMath.CapturePercentage(_frameCount, _estimatedTotalFrames);
                     // Once real capture overruns the estimate, "X of ~Y" would show X past Y,
                     // which reads as broken rather than just an estimate falling short - drop
                     // the "of ~Y" part in that case instead.
@@ -217,7 +217,7 @@ namespace OpenBoardAnim.Utils
                     // starts (capture has stopped), so it's safe to use as the drain's total.
                     if (_isDraining && _progress != null && _frameCount > 0)
                     {
-                        double pct = Math.Min(80, 70 + (_framesWritten / (double)_frameCount) * 10);
+                        double pct = ExportProgressMath.DrainPercentage(_framesWritten, _frameCount);
                         _progress.Report(new ExportProgressInfo(pct, $"Saving frame {_framesWritten} of {_frameCount}..."));
                     }
                 }
@@ -268,7 +268,7 @@ namespace OpenBoardAnim.Utils
                     // input options, so they must sit right before this input's own -i and apply
                     // to each loop iteration, looping just the trimmed segment.
                     string volume = (_audioVolumePercent / 100.0).ToString(CultureInfo.InvariantCulture);
-                    string audioTrimArgs = BuildTrimArgs(_audioTrimStart, _audioTrimEnd);
+                    string audioTrimArgs = ExportProgressMath.BuildTrimArgs(_audioTrimStart, _audioTrimEnd);
                     arguments = $"-y {videoInput} " +
                         $"{audioTrimArgs}-stream_loop -1 -i \"{_audioPath}\" -filter:a \"volume={volume}\" " +
                         $"-map 0:v:0 -map 1:a:0 -r {_frameRate} -c:v libx264 {encodePreset} -pix_fmt yuv420p -c:a aac -t {videoDuration} \"{_outputVideoPath}\"";
@@ -286,7 +286,7 @@ namespace OpenBoardAnim.Utils
 
                     if (hasAudio)
                     {
-                        inputs.Append($"{BuildTrimArgs(_audioTrimStart, _audioTrimEnd)}-stream_loop -1 -i \"{_audioPath}\" ");
+                        inputs.Append($"{ExportProgressMath.BuildTrimArgs(_audioTrimStart, _audioTrimEnd)}-stream_loop -1 -i \"{_audioPath}\" ");
                         string volume = (_audioVolumePercent / 100.0).ToString(CultureInfo.InvariantCulture);
                         filterParts.Add($"[{nextInputIndex}:a]volume={volume}[bg]");
                         mixLabels.Add("[bg]");
@@ -295,7 +295,7 @@ namespace OpenBoardAnim.Utils
 
                     for (int i = 0; i < voiceovers.Count; i++)
                     {
-                        inputs.Append($"{BuildTrimArgs(voiceovers[i].TrimStart, voiceovers[i].TrimEnd)}-i \"{voiceovers[i].Path}\" ");
+                        inputs.Append($"{ExportProgressMath.BuildTrimArgs(voiceovers[i].TrimStart, voiceovers[i].TrimEnd)}-i \"{voiceovers[i].Path}\" ");
                         int delayMs = Math.Max(0, (int)Math.Round(voiceovers[i].StartSeconds * 1000));
                         filterParts.Add($"[{nextInputIndex}:a]adelay={delayMs}:all=1[vo{i}]");
                         mixLabels.Add($"[vo{i}]");
@@ -404,9 +404,7 @@ namespace OpenBoardAnim.Utils
                         continue;
 
                     double elapsedSeconds = outTimeUs / 1_000_000.0;
-                    double pct = videoDurationSeconds > 0
-                        ? Math.Clamp(80 + elapsedSeconds / videoDurationSeconds * 20, 80, 99)
-                        : 85;
+                    double pct = ExportProgressMath.EncodePercentage(elapsedSeconds, videoDurationSeconds);
                     progress.Report(new ExportProgressInfo(pct, "Encoding video..."));
                 }
             }
@@ -430,37 +428,19 @@ namespace OpenBoardAnim.Utils
         private string BuildConcatListFile()
         {
             string listPath = Path.Combine(_tempImageDir, "concat_list.txt");
+            double totalElapsedSeconds = _captureStopwatch?.Elapsed.TotalSeconds ?? 0;
+            List<FrameDurationEntry> entries = ExportProgressMath.BuildFrameDurations(_frameTimestamps, totalElapsedSeconds);
             using (StreamWriter writer = new(listPath, false))
             {
-                for (int i = 0; i < _frameTimestamps.Count; i++)
+                foreach (FrameDurationEntry entry in entries)
                 {
-                    string frameName = $"frame_{i:D4}.bmp";
-                    double duration = i + 1 < _frameTimestamps.Count
-                        ? _frameTimestamps[i + 1] - _frameTimestamps[i]
-                        : Math.Max(0.001, (_captureStopwatch?.Elapsed.TotalSeconds ?? _frameTimestamps[i]) - _frameTimestamps[i]);
-                    writer.WriteLine($"file '{frameName}'");
-                    writer.WriteLine($"duration {duration.ToString("0.000000", CultureInfo.InvariantCulture)}");
+                    writer.WriteLine($"file '{entry.FrameName}'");
+                    writer.WriteLine($"duration {entry.Duration.ToString("0.000000", CultureInfo.InvariantCulture)}");
                 }
-                // The concat demuxer ignores the last entry's own duration line, so without this
-                // the final frame would flash for ~0 seconds instead of holding for its share of
-                // the capture - repeating it is the standard workaround.
                 if (_frameTimestamps.Count > 0)
-                    writer.WriteLine($"file 'frame_{_frameTimestamps.Count - 1:D4}.bmp'");
+                    writer.WriteLine($"file '{ExportProgressMath.LastFrameName(_frameTimestamps.Count)}'");
             }
             return listPath;
-        }
-
-        // Input-level trim (-ss/-t), which must precede the -i it applies to in a multi-input
-        // ffmpeg command. trimEnd of 0 (or not past trimStart) means "no explicit end - keep
-        // whatever -ss already gave us, through the source's natural end".
-        private static string BuildTrimArgs(double trimStart, double trimEnd)
-        {
-            string args = "";
-            if (trimStart > 0)
-                args += $"-ss {trimStart.ToString(CultureInfo.InvariantCulture)} ";
-            if (trimEnd > trimStart)
-                args += $"-t {(trimEnd - trimStart).ToString(CultureInfo.InvariantCulture)} ";
-            return args;
         }
 
         private void CleanupTempFrames()
