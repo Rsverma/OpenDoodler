@@ -40,7 +40,11 @@ namespace OpenBoardAnim
                 services.AddSingleton<IPubSubService, PubSubService>();
                 services.AddSingleton<IDialogService, DialogService>();
                 services.AddSingleton<IFileDialogService, FileDialogService>();
+                services.AddSingleton<IOpenFileDialogService, OpenFileDialogService>();
                 services.AddSingleton<IMessageBoxService, MessageBoxService>();
+                services.AddSingleton<IApplicationService, ApplicationService>();
+                services.AddSingleton<IDispatcherService, DispatcherService>();
+                services.AddSingleton<Func<IAppTimer>>(_ => () => new DispatcherAppTimer());
                 services.AddSingleton<ICacheService, CacheService>();
                 services.AddSingleton<StateSnapshotService>();
                 services.AddSingleton<IThemeService, ThemeService>();

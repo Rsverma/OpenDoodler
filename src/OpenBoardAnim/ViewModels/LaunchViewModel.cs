@@ -14,14 +14,19 @@ namespace OpenBoardAnim.ViewModels
         private INavigationService _navigation;
         private readonly IPubSubService _pubSub;
         private readonly ICacheService _cache;
+        private readonly IMessageBoxService _messageBox;
+        private readonly IDispatcherService _dispatcher;
 
-        public LaunchViewModel(INavigationService navigation, IPubSubService pubSub,ICacheService cache)
+        public LaunchViewModel(INavigationService navigation, IPubSubService pubSub, ICacheService cache,
+            IMessageBoxService messageBox, IDispatcherService dispatcher)
         {
             try
             {
                 Navigation = navigation;
                 _pubSub = pubSub;
                 _cache = cache;
+                _messageBox = messageBox;
+                _dispatcher = dispatcher;
                 CreateNewWindowCommand = new RelayCommand(
                     execute: o => CreateAndLaunchNewProject(),
                     canExecute: o => true);
@@ -36,7 +41,7 @@ namespace OpenBoardAnim.ViewModels
                 // synchronously from here would get clobbered the instant that outer call
                 // finishes and sets CurrentView back to this LaunchViewModel. Posting it to
                 // the dispatcher lets that outer call complete first.
-                Application.Current.Dispatcher.BeginInvoke(new Action(OfferBackupRecovery));
+                _dispatcher.BeginInvoke(OfferBackupRecovery);
             }
             catch (Exception ex)
             {
@@ -54,7 +59,7 @@ namespace OpenBoardAnim.ViewModels
             {
                 if (!_cache.BackupExists()) return;
 
-                MessageBoxResult result = MessageBox.Show(
+                MessageBoxResult result = _messageBox.Show(
                     "OpenDoodler found an autosaved backup from a previous session that wasn't saved. Recover it?",
                     "Recover Unsaved Project",
                     MessageBoxButton.YesNo,
