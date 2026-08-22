@@ -9,6 +9,7 @@
 <h4 align="center">An open source animation software for White board animation.</h4>
 
 <p align="center">
+  <a href="https://github.com/Rsverma/OpenDoodler/actions/workflows/ci.yml"><img src="https://github.com/Rsverma/OpenDoodler/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-AGPL--3.0-blue.svg" alt="License: AGPL-3.0"></a>
   <a href="https://github.com/Rsverma/OpenDoodler/releases"><img src="https://img.shields.io/github/v/release/Rsverma/OpenDoodler" alt="Latest release"></a>
 </p>
