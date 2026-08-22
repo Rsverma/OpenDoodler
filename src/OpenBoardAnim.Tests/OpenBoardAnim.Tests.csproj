@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
+    <PackageReference Include="xunit" Version="2.9.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
+    <PackageReference Include="Moq" Version="4.20.72" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\OpenBoardAnim\OpenBoardAnim.csproj" />
+    <ProjectReference Include="..\OpenBoardAnim.Library\OpenBoardAnim.Library.csproj" />
+    <ProjectReference Include="..\OpenBoardAnim.Utilities\OpenBoardAnim.Utilities.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- BuiltInSceneTemplates.GetAll (invoked unconditionally inside CacheService's constructor,
+         regardless of ISceneRepository mocking) reads these files from
+         AppDomain.CurrentDomain.BaseDirectory\Resources - mirrored here from the main app project
+         so CacheServiceTests has real files to read instead of throwing FileNotFoundException. -->
+    <None Include="..\OpenBoardAnim\Resources\peep-102.svg" Link="Resources\peep-102.svg" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\OpenBoardAnim\Resources\peep-43.svg" Link="Resources\peep-43.svg" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\OpenBoardAnim\Resources\peep-61.svg" Link="Resources\peep-61.svg" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\OpenBoardAnim\Resources\peep-64.svg" Link="Resources\peep-64.svg" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>
