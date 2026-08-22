@@ -33,7 +33,6 @@ namespace OpenBoardAnim.ViewModels
         // Rightmost X the playhead may reach - the end of the last real scene's segment,
         // excluding the trailing "+" add-scene card so dragging can never land on it.
         private double _maxPlayheadX;
-        public ICommand SceneDeleteCommand { get; set; }
         public ICommand ZoomInCommand { get; set; }
         public ICommand ZoomOutCommand { get; set; }
         public ICommand ResetZoomCommand { get; set; }
@@ -44,7 +43,6 @@ namespace OpenBoardAnim.ViewModels
             _dialog = dialog;
             _pubSub.Subscribe(SubTopic.SceneReplaced, SceneReplacedHandler);
             _pubSub.Subscribe(SubTopic.SceneTemplateInserted, SceneTemplateInsertedHandler);
-            SceneDeleteCommand = new RelayCommand(SceneDeleteCommandHandler, o => true);
             ZoomInCommand = new RelayCommand(o => ZoomLevel *= ZoomStep, o => ZoomLevel < MaxZoom - 0.001);
             ZoomOutCommand = new RelayCommand(o => ZoomLevel /= ZoomStep, o => ZoomLevel > MinZoom + 0.001);
             ResetZoomCommand = new RelayCommand(o => ZoomLevel = 1.0, o => Math.Abs(ZoomLevel - 1.0) > 0.001);
@@ -92,36 +90,6 @@ namespace OpenBoardAnim.ViewModels
         }
 
         public string ZoomPercentageText => $"{_zoomLevel * 100:0}%";
-
-        private void SceneDeleteCommandHandler(object obj)
-        {
-            try
-            {
-                try
-                {
-                    if (SelectedScene == null)
-                        return;
-                }
-                catch (Exception ex) { if (Logger.LogError(ex, LogAction.LogAndShow)) throw; }
-                int index = SelectedScene.Index;
-                if (index == 1) SelectedScene = Scenes[index];
-                else SelectedScene = Scenes[index - 2];
-                Scenes.RemoveAt(index - 1);
-                for (int i = 0; i < Scenes.Count; i++)
-                {
-                    SceneModel scene = Scenes[i];
-                    scene.Name = i.ToString();
-                    scene.Index = i;
-                }
-                RecomputeSegments();
-            }
-            catch (Exception ex)
-            {
-                if (Logger.LogError(ex, LogAction.LogAndShow))
-                    throw;
-            }
-        }
-
 
         private void SceneReplacedHandler(object obj)
         {
