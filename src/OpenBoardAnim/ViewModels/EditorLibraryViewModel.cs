@@ -1,5 +1,4 @@
-﻿using Microsoft.Win32;
-using OpenBoardAnim.Core;
+﻿using OpenBoardAnim.Core;
 using OpenBoardAnim.Models;
 using OpenBoardAnim.Services;
 using OpenBoardAnim.Utilities;
@@ -17,6 +16,8 @@ namespace OpenBoardAnim.ViewModels
         private IPubSubService _pubSub;
         private readonly ICacheService _cache;
         private readonly IDialogService _dialog;
+        private readonly IOpenFileDialogService _openFileDialog;
+        private readonly IMessageBoxService _messageBox;
         private string _oldSearchText = string.Empty;
         // Tracked purely so "Save Current Scene as Template" knows what to save - Save/Insert
         // template graphics stay independent of the current on-canvas selection.
@@ -30,13 +31,16 @@ namespace OpenBoardAnim.ViewModels
         public ICommand CleanupInvalidGraphicsCommand { get; set; }
 
 
-        public EditorLibraryViewModel(IPubSubService pubSub, ICacheService cache, IDialogService dialog)
+        public EditorLibraryViewModel(IPubSubService pubSub, ICacheService cache, IDialogService dialog,
+            IOpenFileDialogService openFileDialog, IMessageBoxService messageBox)
         {
             try
             {
                 _pubSub = pubSub;
                 _cache = cache;
                 _dialog = dialog;
+                _openFileDialog = openFileDialog;
+                _messageBox = messageBox;
                 _pubSub.Subscribe(SubTopic.SceneChanged, SceneChangedHandler);
                 Graphics = cache.LoadedGraphics;
                 Shapes = cache.AllShapes;
@@ -114,14 +118,10 @@ namespace OpenBoardAnim.ViewModels
         {
             try
             {
-                OpenFileDialog openFileDialog = new()
+                string[] paths = _openFileDialog.ShowOpenFileDialog("SVG File (*.svg)|*.svg", multiselect: true);
+                if (paths.Length > 0)
                 {
-                    Multiselect = true,
-                    Filter = "SVG File (*.svg)|*.svg",
-                };
-                if (openFileDialog.ShowDialog() == true)
-                {
-                    await _cache.SaveNewGraphics(openFileDialog.FileNames);
+                    await _cache.SaveNewGraphics(paths);
                 }
 
                 Graphics = _cache.LoadedGraphics;
@@ -387,7 +387,7 @@ namespace OpenBoardAnim.ViewModels
             try
             {
                 int removed = _cache.CleanupInvalidGraphics();
-                MessageBox.Show(
+                _messageBox.Show(
                     removed > 0 ? $"Removed {removed} invalid graphic(s) from the library." : "No invalid graphics found.",
                     "Library Cleanup", MessageBoxButton.OK, MessageBoxImage.Information);
             }
