@@ -15,6 +15,7 @@ namespace OpenBoardAnim.Tests
         private readonly Mock<ICacheService> _cache = new();
         private readonly Mock<IMessageBoxService> _messageBox = new();
         private readonly Mock<IDispatcherService> _dispatcher = new();
+        private readonly Mock<IDialogService> _dialog = new();
         private Action _deferredRecoveryCheck;
 
         public LaunchViewModelTests()
@@ -28,7 +29,7 @@ namespace OpenBoardAnim.Tests
         }
 
         private LaunchViewModel CreateSut()
-            => new(_navigation.Object, _pubSub.Object, _cache.Object, _messageBox.Object, _dispatcher.Object);
+            => new(_navigation.Object, _pubSub.Object, _cache.Object, _messageBox.Object, _dispatcher.Object, _dialog.Object);
 
         [Fact]
         public void Constructor_LoadsRecentProjectsFromCache_AndWiresPerItemActions()
@@ -137,14 +138,30 @@ namespace OpenBoardAnim.Tests
         }
 
         [Fact]
-        public void CreateNewWindowCommand_NavigatesAndPublishesANewProject()
+        public void CreateNewWindowCommand_ShowsProjectSettingsPromptFirst()
         {
             LaunchViewModel sut = CreateSut();
 
             sut.CreateNewWindowCommand.Execute(null);
 
+            _dialog.Verify(d => d.ShowDialog(DialogType.NewProject, It.IsAny<NewProjectPromptModel>()), Times.Once);
+            _navigation.Verify(n => n.NavigateTo<EditorViewModel>(), Times.Never); // not until the prompt is confirmed
+        }
+
+        [Fact]
+        public void CreateNewWindowCommand_ConfirmingThePrompt_NavigatesAndPublishesANewProject()
+        {
+            LaunchViewModel sut = CreateSut();
+            NewProjectPromptModel captured = null;
+            _dialog.Setup(d => d.ShowDialog(DialogType.NewProject, It.IsAny<NewProjectPromptModel>()))
+                .Callback<DialogType, NewProjectPromptModel>((_, prompt) => captured = prompt)
+                .Returns(true);
+
+            sut.CreateNewWindowCommand.Execute(null);
+            captured.CreateProject(captured.Project);
+
             _navigation.Verify(n => n.NavigateTo<EditorViewModel>(), Times.Once);
-            _pubSub.Verify(p => p.Publish(SubTopic.ProjectLaunched, It.IsAny<ProjectDetails>()), Times.Once);
+            _pubSub.Verify(p => p.Publish(SubTopic.ProjectLaunched, captured.Project), Times.Once);
         }
     }
 }

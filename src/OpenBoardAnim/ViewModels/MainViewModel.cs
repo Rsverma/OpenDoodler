@@ -18,12 +18,13 @@ namespace OpenBoardAnim.ViewModels
         private readonly EditorActionsViewModel _actions;
         private readonly IOpenFileDialogService _openFileDialog;
         private readonly IApplicationService _application;
+        private readonly IDialogService _dialog;
         private INavigationService _navigation;
         private string _title;
         private string _userName;
 
         public MainViewModel(INavigationService navService, IPubSubService pubSub, StateSnapshotService stateSnapshotService, ICacheService cache, EditorActionsViewModel actions, IThemeService theme,
-            IOpenFileDialogService openFileDialog, IApplicationService application)
+            IOpenFileDialogService openFileDialog, IApplicationService application, IDialogService dialog)
         {
             try
             {
@@ -33,6 +34,7 @@ namespace OpenBoardAnim.ViewModels
                 _actions = actions;
                 _openFileDialog = openFileDialog;
                 _application = application;
+                _dialog = dialog;
                 _actions.PropertyChanged += Actions_PropertyChanged;
                 Theme = theme;
                 Title = AppName;
@@ -98,8 +100,16 @@ namespace OpenBoardAnim.ViewModels
                 if (!_actions.ConfirmDiscardUnsavedChanges())
                     return;
 
-                Navigation.NavigateTo<EditorViewModel>();
-                _pubSub.Publish(SubTopic.ProjectLaunched, new ProjectDetails());
+                NewProjectPromptModel prompt = new()
+                {
+                    Project = new ProjectDetails(),
+                    CreateProject = project =>
+                    {
+                        Navigation.NavigateTo<EditorViewModel>();
+                        _pubSub.Publish(SubTopic.ProjectLaunched, project);
+                    }
+                };
+                _dialog.ShowDialog(DialogType.NewProject, prompt);
             }
             catch (Exception ex)
             {

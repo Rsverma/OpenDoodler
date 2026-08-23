@@ -15,6 +15,7 @@ namespace OpenBoardAnim.Tests
         private readonly Mock<IThemeService> _theme = new();
         private readonly Mock<IOpenFileDialogService> _openFileDialog = new();
         private readonly Mock<IApplicationService> _application = new();
+        private readonly Mock<IDialogService> _dialog = new();
         private readonly StateSnapshotService _stateSnapshotService = new();
 
         // A real EditorActionsViewModel (built from mocked services, same as
@@ -34,7 +35,7 @@ namespace OpenBoardAnim.Tests
 
         private MainViewModel CreateSut()
             => new(_navigation.Object, _pubSub.Object, _stateSnapshotService, _cache.Object, _actions, _theme.Object,
-                _openFileDialog.Object, _application.Object);
+                _openFileDialog.Object, _application.Object, _dialog.Object);
 
         [Fact]
         public void Constructor_NavigatesToLaunchImmediately()
@@ -108,14 +109,30 @@ namespace OpenBoardAnim.Tests
         }
 
         [Fact]
-        public void NewProjectCommand_NavigatesAndPublishesProjectLaunched_WhenNothingUnsaved()
+        public void NewProjectCommand_ShowsProjectSettingsPromptFirst_WhenNothingUnsaved()
         {
             MainViewModel sut = CreateSut();
 
             sut.NewProjectCommand.Execute(null);
 
+            _dialog.Verify(d => d.ShowDialog(DialogType.NewProject, It.IsAny<NewProjectPromptModel>()), Times.Once);
+            _navigation.Verify(n => n.NavigateTo<EditorViewModel>(), Times.Never); // not until the prompt is confirmed
+        }
+
+        [Fact]
+        public void NewProjectCommand_ConfirmingThePrompt_NavigatesAndPublishesProjectLaunched()
+        {
+            MainViewModel sut = CreateSut();
+            NewProjectPromptModel captured = null;
+            _dialog.Setup(d => d.ShowDialog(DialogType.NewProject, It.IsAny<NewProjectPromptModel>()))
+                .Callback<DialogType, NewProjectPromptModel>((_, prompt) => captured = prompt)
+                .Returns(true);
+
+            sut.NewProjectCommand.Execute(null);
+            captured.CreateProject(captured.Project);
+
             _navigation.Verify(n => n.NavigateTo<EditorViewModel>(), Times.Once);
-            _pubSub.Verify(p => p.Publish(SubTopic.ProjectLaunched, It.IsAny<ProjectDetails>()), Times.Once);
+            _pubSub.Verify(p => p.Publish(SubTopic.ProjectLaunched, captured.Project), Times.Once);
         }
 
         [Fact]
@@ -130,7 +147,7 @@ namespace OpenBoardAnim.Tests
 
             sut.NewProjectCommand.Execute(null);
 
-            _navigation.Verify(n => n.NavigateTo<EditorViewModel>(), Times.Never);
+            _dialog.Verify(d => d.ShowDialog(DialogType.NewProject, It.IsAny<NewProjectPromptModel>()), Times.Never);
         }
 
         [Fact]
