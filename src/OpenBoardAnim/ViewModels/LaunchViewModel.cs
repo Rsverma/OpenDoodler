@@ -16,9 +16,10 @@ namespace OpenBoardAnim.ViewModels
         private readonly ICacheService _cache;
         private readonly IMessageBoxService _messageBox;
         private readonly IDispatcherService _dispatcher;
+        private readonly IDialogService _dialog;
 
         public LaunchViewModel(INavigationService navigation, IPubSubService pubSub, ICacheService cache,
-            IMessageBoxService messageBox, IDispatcherService dispatcher)
+            IMessageBoxService messageBox, IDispatcherService dispatcher, IDialogService dialog)
         {
             try
             {
@@ -27,6 +28,7 @@ namespace OpenBoardAnim.ViewModels
                 _cache = cache;
                 _messageBox = messageBox;
                 _dispatcher = dispatcher;
+                _dialog = dialog;
                 CreateNewWindowCommand = new RelayCommand(
                     execute: o => CreateAndLaunchNewProject(),
                     canExecute: o => true);
@@ -132,8 +134,16 @@ namespace OpenBoardAnim.ViewModels
         {
             try
             {
-                Navigation.NavigateTo<EditorViewModel>();
-                _pubSub.Publish(SubTopic.ProjectLaunched, new ProjectDetails());
+                NewProjectPromptModel prompt = new()
+                {
+                    Project = new ProjectDetails(),
+                    CreateProject = project =>
+                    {
+                        Navigation.NavigateTo<EditorViewModel>();
+                        _pubSub.Publish(SubTopic.ProjectLaunched, project);
+                    }
+                };
+                _dialog.ShowDialog(DialogType.NewProject, prompt);
             }
             catch (Exception ex)
             {

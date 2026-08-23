@@ -1,0 +1,22 @@
+<UserControl x:Class="OpenBoardAnim.Views.NewProjectView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:local="clr-namespace:OpenBoardAnim.Views"
+             mc:Ignorable="d"
+             d:DesignWidth="480">
+    <!--
+        Reuses ProjectSettingsView (the same live-bound settings editor shown from within an
+        already-open project) rather than duplicating its cards - just adds an explicit
+        Create/Cancel footer, since here the settings belong to a project that doesn't exist
+        yet and needs a deliberate confirm step.
+    -->
+    <DockPanel LastChildFill="True">
+        <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right" Margin="20 0 20 16">
+            <Button Content="Cancel" Click="Cancel_Click"/>
+            <Button Margin="10 0 0 0" Style="{StaticResource ButtonPrimary}" Content="Create Project" Click="Create_Click"/>
+        </StackPanel>
+        <local:ProjectSettingsView DataContext="{Binding Project}"/>
+    </DockPanel>
+</UserControl>
