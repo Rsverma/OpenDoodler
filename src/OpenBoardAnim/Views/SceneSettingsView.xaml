@@ -4,9 +4,11 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:hc="https://handyorg.github.io/handycontrol"
+             xmlns:utils="clr-namespace:OpenBoardAnim.Utils"
              mc:Ignorable="d"
-             d:DesignHeight="260" d:DesignWidth="420">
+             d:DesignHeight="420" d:DesignWidth="420">
     <UserControl.Resources>
+        <utils:CountToVisibilityConverter x:Key="CountToVisibilityConverter"/>
         <Style x:Key="SettingsCardStyle" TargetType="Border">
             <Setter Property="Background" Value="{DynamicResource RegionBrush}"/>
             <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
@@ -40,6 +42,42 @@
                     <hc:NumericUpDown Width="70" Minimum="0" DecimalPlaces="1" ValueFormat="0.0" Value="{Binding VoiceoverTrimEnd, Mode=TwoWay}"
                                       ToolTip="Seconds from the start of the file. 0 = play to the end."/>
                 </StackPanel>
+            </StackPanel>
+        </Border>
+
+        <Border Style="{StaticResource SettingsCardStyle}">
+            <StackPanel>
+                <TextBlock Text="Camera Effects" Style="{StaticResource SettingsSectionTitleStyle}"/>
+                <TextBlock Text="Pan/zoom moves that play in order during this scene. Add one from the canvas selection, via the Actions panel or the right-click menu." Style="{StaticResource SettingsHintStyle}"/>
+                <TextBlock Text="No camera effects yet." FontSize="12" FontStyle="Italic" Opacity="0.65"
+                           Visibility="{Binding CameraEffects.Count, Converter={StaticResource CountToVisibilityConverter}, ConverterParameter=Invert}"/>
+                <ItemsControl ItemsSource="{Binding CameraEffects}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0 0 0 1" Padding="0 6">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding StartZoom, StringFormat={}{0:0.0}x}" FontSize="12"/>
+                                        <TextBlock Text=" → " FontSize="12"/>
+                                        <TextBlock Text="{Binding EndZoom, StringFormat={}{0:0.0}x}" FontSize="12"/>
+                                        <TextBlock Text="," FontSize="12" Margin="0 0 4 0"/>
+                                        <TextBlock Text="{Binding StartTime, StringFormat={}{0:0.0}s}" FontSize="12"/>
+                                        <TextBlock Text="–" FontSize="12"/>
+                                        <TextBlock Text="{Binding EndTime, StringFormat={}{0:0.0}s}" FontSize="12"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                        <Button Content="Edit" Command="{Binding EditEffectCommand}"/>
+                                        <Button Margin="6 0 0 0" Style="{StaticResource ButtonDanger}" Content="Delete" Command="{Binding DeleteEffectCommand}"/>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
             </StackPanel>
         </Border>
     </StackPanel>

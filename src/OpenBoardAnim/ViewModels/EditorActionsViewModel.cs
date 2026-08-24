@@ -35,6 +35,10 @@ namespace OpenBoardAnim.ViewModels
             {
                 _pubSub = pubSub;
                 pubSub.Subscribe(SubTopic.SceneChanged, SceneChangedHandler);
+                // "Add Camera Effect" can also be triggered from the timeline's scene right-click
+                // menu (EditorTimelineViewModel, a sibling view-model with no direct reference
+                // here) - routed through the pub/sub mediator rather than a direct VM reference.
+                pubSub.Subscribe(SubTopic.CameraEffectRequested, o => { if (o is SceneModel scene) AddCameraEffect(scene); });
                 _navigation = navigation;
                 _cache = Cache;
                 _dialog = dialog;
@@ -67,6 +71,7 @@ namespace OpenBoardAnim.ViewModels
                 AlignMiddleCommand = new RelayCommand(execute: o => AlignMiddle(), canExecute: o => GetSelectedGraphicsOrFallback().Count >= 2);
                 LaunchSceneSettingsCommand = new RelayCommand(execute: o => LaunchSceneSettings(), canExecute: o => CurrentScene != null);
                 LaunchProjectSettingsCommand = new RelayCommand(execute: o => LaunchProjectSettings(), canExecute: o => true);
+                AddCameraEffectCommand = new RelayCommand(execute: o => AddCameraEffect(CurrentScene), canExecute: o => CurrentScene != null);
             }
             catch (Exception ex)
             {
@@ -101,6 +106,114 @@ namespace OpenBoardAnim.ViewModels
                     throw;
             }
 
+        }
+
+        // Wires the Edit/Delete delegates on every camera effect in a scene - these are plain
+        // (non-serialized) Action fields, so a scene freshly loaded from disk or cloned needs
+        // them re-wired before its effects list is usable, same as SceneTemplateModel/
+        // RecentProjectModel elsewhere in this app.
+        private void WireCameraEffectDelegates(SceneModel scene)
+        {
+            if (scene?.CameraEffects == null) return;
+            foreach (CameraEffectModel effect in scene.CameraEffects)
+            {
+                // Closes over scene rather than relying on CurrentScene at invocation time -
+                // these can be triggered (e.g. via the timeline's camera-effects layer) for a
+                // scene other than whichever one is currently open in the editor.
+                effect.EditEffect = e => EditCameraEffect(scene, e);
+                effect.DeleteEffect = e => DeleteCameraEffect(scene, e);
+            }
+        }
+
+        // Takes the target scene explicitly rather than always using CurrentScene - the timeline's
+        // scene right-click menu can request this for whichever scene was clicked, which isn't
+        // necessarily the one currently open in the editor.
+        private void AddCameraEffect(SceneModel scene)
+        {
+            try
+            {
+                if (scene == null || Project?.Settings == null) return;
+                double editorWidth = Project.Settings.EditorWidth;
+                double editorHeight = Project.Settings.EditorHeight;
+                // Defaults to starting right after whatever's already in the scene, rather than
+                // always at 0s, so adding a second/third effect doesn't silently overlap the first.
+                double defaultStart = scene.CameraEffects.Count > 0 ? scene.CameraEffects.Max(e => e.EndTime) : 0;
+                // Default rectangles are half the canvas's width/height (Zoom 2.0). Start is
+                // centered; End sits in the bottom-right corner (its own bottom-right corner
+                // touching the canvas's), so a fresh effect already shows a visible pan+zoom
+                // instead of two identical full-canvas rectangles stacked on top of each other.
+                const double defaultZoom = 2.0;
+                CameraEffectModel effect = new()
+                {
+                    StartFocusX = editorWidth / 2,
+                    StartFocusY = editorHeight / 2,
+                    StartZoom = defaultZoom,
+                    EndFocusX = editorWidth * 0.75,
+                    EndFocusY = editorHeight * 0.75,
+                    EndZoom = defaultZoom,
+                    StartTime = defaultStart,
+                    EndTime = defaultStart + 2.0
+                };
+                CameraEffectPromptModel prompt = new()
+                {
+                    Effect = effect,
+                    SceneSnapshot = PreviewAndExportHandler.RenderSceneSnapshot(Project, Project.Scenes.IndexOf(scene)),
+                    EditorWidth = Project.Settings.EditorWidth,
+                    EditorHeight = Project.Settings.EditorHeight,
+                    SaveEffect = saved =>
+                    {
+                        scene.CameraEffects.Add(saved);
+                        WireCameraEffectDelegates(scene);
+                    }
+                };
+                _dialog.ShowDialog(DialogType.CameraEffect, prompt);
+            }
+            catch (Exception ex)
+            {
+                if (Logger.LogError(ex, LogAction.LogAndShow))
+                    throw;
+            }
+        }
+
+        private void EditCameraEffect(SceneModel scene, CameraEffectModel effect)
+        {
+            try
+            {
+                if (scene == null || Project?.Settings == null) return;
+                CameraEffectPromptModel prompt = new()
+                {
+                    Effect = effect.Clone(),
+                    SceneSnapshot = PreviewAndExportHandler.RenderSceneSnapshot(Project, Project.Scenes.IndexOf(scene)),
+                    EditorWidth = Project.Settings.EditorWidth,
+                    EditorHeight = Project.Settings.EditorHeight,
+                    SaveEffect = saved =>
+                    {
+                        int index = scene.CameraEffects.IndexOf(effect);
+                        if (index < 0) return;
+                        scene.CameraEffects[index] = saved;
+                        WireCameraEffectDelegates(scene);
+                    }
+                };
+                _dialog.ShowDialog(DialogType.CameraEffect, prompt);
+            }
+            catch (Exception ex)
+            {
+                if (Logger.LogError(ex, LogAction.LogAndShow))
+                    throw;
+            }
+        }
+
+        private void DeleteCameraEffect(SceneModel scene, CameraEffectModel effect)
+        {
+            try
+            {
+                scene?.CameraEffects.Remove(effect);
+            }
+            catch (Exception ex)
+            {
+                if (Logger.LogError(ex, LogAction.LogAndShow))
+                    throw;
+            }
         }
 
         // Canvas z-order is unchanged: later index still paints on top (WPF's natural
@@ -576,6 +689,7 @@ namespace OpenBoardAnim.ViewModels
             {
                 SceneModel scene = (SceneModel)obj;
                 CurrentScene = scene;
+                WireCameraEffectDelegates(scene);
             }
             catch (Exception ex)
             {
@@ -705,6 +819,13 @@ namespace OpenBoardAnim.ViewModels
             set
             {
                 _project = value;
+                // The timeline's camera-effects layer shows every scene's effects at once, not
+                // just whichever one is CurrentScene, so their Edit/Delete delegates (see
+                // WireCameraEffectDelegates) need wiring up front for the whole project rather
+                // than lazily as each scene happens to get selected.
+                if (_project?.Scenes != null)
+                    foreach (SceneModel scene in _project.Scenes)
+                        WireCameraEffectDelegates(scene);
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(HasUnsavedChanges));
             }
@@ -736,6 +857,7 @@ namespace OpenBoardAnim.ViewModels
         public ICommand PreviewProjectCommand { get; set; }
         public ICommand LaunchSceneSettingsCommand { get; set; }
         public ICommand LaunchProjectSettingsCommand { get; set; }
+        public ICommand AddCameraEffectCommand { get; set; }
         private SceneModel _currentScene;
 
         public SceneModel CurrentScene

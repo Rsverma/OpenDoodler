@@ -27,6 +27,12 @@ namespace OpenBoardAnim.Utils
             try
             {
                 if (project == null) return;
+                // A zoomed-in camera effect would otherwise render past the canvas's own bounds
+                // in the live preview (Canvas doesn't clip by default) - export is unaffected
+                // either way since RenderTargetBitmap already clips to its fixed pixel size.
+                canvas.ClipToBounds = true;
+                double cameraViewportWidth = project.Settings?.EditorWidth ?? 0;
+                double cameraViewportHeight = project.Settings?.EditorHeight ?? 0;
                 EntranceStyle entranceStyle = project.Settings?.EntranceStyle ?? EntranceStyle.HandDrawn;
                 SceneTransition sceneTransition = project.Settings?.SceneTransition ?? SceneTransition.None;
                 Brush strokeBrush = Brushes.Black;
@@ -98,6 +104,13 @@ namespace OpenBoardAnim.Utils
                     else
                         canvas.Children.Clear();
 
+                    // RenderTransform is a canvas-level property that Children.Clear() doesn't
+                    // touch - reset it every scene (camera effects or not) so a previous scene's
+                    // pan/zoom end-state can't bleed into this one.
+                    ScaleTransform cameraScale = new(1, 1);
+                    TranslateTransform cameraTranslate = new(0, 0);
+                    canvas.RenderTransform = new TransformGroup { Children = { cameraScale, cameraTranslate } };
+
                     if (entranceStyle == EntranceStyle.HandDrawn)
                     {
                         canvas.Children.Add(hand);
@@ -134,6 +147,8 @@ namespace OpenBoardAnim.Utils
                         }
                     }
 
+                    async Task PlayGraphicsAsync()
+                    {
                     for (int j = 0; j < scene.Graphics.Count; j++)
                     {
                         cancellationToken.ThrowIfCancellationRequested();
@@ -237,6 +252,11 @@ namespace OpenBoardAnim.Utils
                         }
 
                     }
+                    }
+
+                    Task graphicsTask = PlayGraphicsAsync();
+                    Task cameraTask = PlayCameraEffectsAsync(scene, cameraScale, cameraTranslate, cameraViewportWidth, cameraViewportHeight, cancellationToken);
+                    await Task.WhenAll(graphicsTask, cameraTask);
                 }
                 canvas.Children.Remove(hand);
                 await Task.Delay(500, cancellationToken);
@@ -366,7 +386,14 @@ namespace OpenBoardAnim.Utils
         public static double GetEstimatedSceneDurationSeconds(SceneModel scene)
         {
             if (scene?.Graphics == null) return 0;
-            return scene.Graphics.Where(g => g.IsVisible).Sum(g => g.Delay + g.Duration);
+            double graphicsTotal = scene.Graphics.Where(g => g.IsVisible).Sum(g => g.Delay + g.Duration);
+            // Camera effects run as a second, concurrent timeline (see PlayCameraEffectsAsync) -
+            // the scene's real duration is whichever of the two actually runs longer. Effects are
+            // keyed by absolute EndTime now, so the camera timeline's length is just the latest one.
+            double cameraTotal = scene.CameraEffects != null && scene.CameraEffects.Count > 0
+                ? scene.CameraEffects.Max(e => e.EndTime)
+                : 0;
+            return Math.Max(graphicsTotal, cameraTotal);
         }
 
         // Live playback (preview) has no equivalent to ffmpeg's -t, so a trimmed clip's end is
@@ -474,6 +501,53 @@ namespace OpenBoardAnim.Utils
             // see PlaySceneTransition for why that event isn't trustworthy here.
             storyboard.Begin();
             await Task.Delay(duration, cancellationToken);
+        }
+
+        // Plays a scene's camera-effects layer (SceneModel.CameraEffects), sorted by StartTime
+        // (absolute seconds from the scene's start - not list/add order), concurrently with the
+        // scene's graphic entrance animations - see the call site in RunAnimationsOnCanvas.
+        // Before the first effect's StartTime, between effects, and after the last one's EndTime,
+        // the camera simply holds wherever it last landed, since nothing touches scale/translate
+        // during those gaps. Runs in real time, awaited via Task.Delay rather than
+        // Storyboard.Completed, for the same export-capture-safety reason as PlaySceneTransition
+        // and AnimateElementEntrance above.
+        private static async Task PlayCameraEffectsAsync(SceneModel scene, ScaleTransform scale, TranslateTransform translate, double viewportWidth, double viewportHeight, CancellationToken cancellationToken)
+        {
+            if (scene?.CameraEffects == null || viewportWidth <= 0 || viewportHeight <= 0) return;
+
+            double elapsed = 0;
+            foreach (CameraEffectModel effect in scene.CameraEffects.OrderBy(e => e.StartTime))
+            {
+                await Task.Delay(TimeSpan.FromSeconds(Math.Max(0, effect.StartTime - elapsed)), cancellationToken);
+                elapsed = effect.StartTime;
+
+                CameraTransform start = CameraTransformMath.ComputeTransform(effect.StartFocusX, effect.StartFocusY, effect.StartZoom, viewportWidth, viewportHeight);
+                CameraTransform end = CameraTransformMath.ComputeTransform(effect.EndFocusX, effect.EndFocusY, effect.EndZoom, viewportWidth, viewportHeight);
+
+                TimeSpan duration = TimeSpan.FromSeconds(Math.Max(effect.EndTime - effect.StartTime, 0.01));
+
+                // Animate scale/translate directly on the Transform objects (Transform
+                // implements IAnimatable) rather than via a Storyboard.SetTarget(...)+Begin() -
+                // these two Transforms are standalone Freezables (children of a TransformGroup,
+                // never a named/rooted element), and a fresh Storyboard re-targeting them on
+                // every effect in this loop was not reliably driving their values; direct
+                // BeginAnimation is the standard technique for animating a detached Freezable
+                // and needs no target/property-path resolution at all. Each call's explicit
+                // From (start.Scale/TranslateX/Y) makes the earlier "snap to start" assignment
+                // unnecessary - BeginAnimation establishes that starting value itself.
+                DoubleAnimation scaleXAnimation = new(start.Scale, end.Scale, duration) { FillBehavior = FillBehavior.HoldEnd };
+                DoubleAnimation scaleYAnimation = new(start.Scale, end.Scale, duration) { FillBehavior = FillBehavior.HoldEnd };
+                DoubleAnimation translateXAnimation = new(start.TranslateX, end.TranslateX, duration) { FillBehavior = FillBehavior.HoldEnd };
+                DoubleAnimation translateYAnimation = new(start.TranslateY, end.TranslateY, duration) { FillBehavior = FillBehavior.HoldEnd };
+
+                scale.BeginAnimation(ScaleTransform.ScaleXProperty, scaleXAnimation);
+                scale.BeginAnimation(ScaleTransform.ScaleYProperty, scaleYAnimation);
+                translate.BeginAnimation(TranslateTransform.XProperty, translateXAnimation);
+                translate.BeginAnimation(TranslateTransform.YProperty, translateYAnimation);
+
+                await Task.Delay(duration, cancellationToken);
+                elapsed = effect.EndTime;
+            }
         }
     }
 }

@@ -14,7 +14,8 @@ namespace OpenBoardAnim.Services
         PreviewProject,
         SaveSceneTemplate,
         LibraryManager,
-        NewProject
+        NewProject,
+        CameraEffect
     }
     public interface IDialogService
     {
@@ -45,6 +46,7 @@ namespace OpenBoardAnim.Services
                     DialogType.SaveSceneTemplate => new SaveSceneTemplateView { DataContext = model },
                     DialogType.LibraryManager => new LibraryManagerView { DataContext = model },
                     DialogType.NewProject => new NewProjectView { DataContext = model },
+                    DialogType.CameraEffect => new CameraEffectView { DataContext = model },
                     _ => (object)model
                 };
 
@@ -61,6 +63,7 @@ namespace OpenBoardAnim.Services
                         DialogType.SaveSceneTemplate => "Save Scene as Template",
                         DialogType.LibraryManager => "Library Manager",
                         DialogType.NewProject => "New Project",
+                        DialogType.CameraEffect => "Camera Effect",
                         _ => "OpenDoodler"
                     }
                 };
@@ -76,7 +79,8 @@ namespace OpenBoardAnim.Services
                     dialog.ResizeMode = ResizeMode.NoResize;
                 }
                 else if (dialogType == DialogType.ProjectSettings || dialogType == DialogType.SceneSettings ||
-                         dialogType == DialogType.SaveSceneTemplate || dialogType == DialogType.NewProject)
+                         dialogType == DialogType.SaveSceneTemplate || dialogType == DialogType.NewProject ||
+                         dialogType == DialogType.CameraEffect)
                 {
                     // Settings content is a fixed-width, compact stack of cards (one of
                     // which - Stroke - can disappear entirely) - size to it directly
