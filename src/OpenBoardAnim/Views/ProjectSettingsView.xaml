@@ -7,7 +7,7 @@
              xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
              xmlns:utils="clr-namespace:OpenBoardAnim.Utils"
              mc:Ignorable="d"
-             d:DesignHeight="450" d:DesignWidth="600">
+             d:DesignHeight="450" d:DesignWidth="780">
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisConverter"/>
         <utils:HexEqualsThicknessConverter x:Key="HexEqualsThicknessConverter"/>
@@ -23,14 +23,10 @@
             <Setter Property="Padding" Value="14 10"/>
             <Setter Property="Margin" Value="0 0 0 8"/>
         </Style>
+        <!-- The label that leads every row - fixed width so controls line up across cards. -->
         <Style x:Key="SettingsSectionTitleStyle" TargetType="TextBlock" BasedOn="{StaticResource TextBlockSubTitle}">
-            <Setter Property="Margin" Value="0 0 0 2"/>
-        </Style>
-        <Style x:Key="SettingsHintStyle" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="11"/>
-            <Setter Property="Opacity" Value="0.65"/>
-            <Setter Property="TextWrapping" Value="Wrap"/>
-            <Setter Property="Margin" Value="0 0 0 6"/>
+            <Setter Property="Width" Value="130"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
         </Style>
         <Style x:Key="ColorSwatchButtonStyle" TargetType="Button">
             <Setter Property="Width" Value="22"/>
@@ -45,6 +41,20 @@
             </Setter>
         </Style>
         <!--
+            HandyControl's global skin (see App.xaml) supplies its own implicit Button Style,
+            which - like the Thumb/Background issue worked around elsewhere in this app - fixes
+            the button's chrome AND its Height as separate Setters. Overriding just Template (via
+            this) replaces the chrome, but Height is a different property with its own Setter in
+            that same implicit Style, so it still wins unless a LOCAL Height is also set on the
+            Button itself (Width="Auto" Height="Auto" at each use site, since a local value always
+            beats a Style Setter even when the value is "auto-size") - Template alone wasn't
+            enough, which is why the picker tiles stayed pinned to HandyControl's default button
+            height even after this ContentPresenter swap.
+        -->
+        <ControlTemplate x:Key="TileButtonTemplate" TargetType="Button">
+            <ContentPresenter/>
+        </ControlTemplate>
+        <!--
             hc:ComboBox's nice bordered/themed look comes from its own implicit default style
             (matched by control type) - a Style targeting the plain ComboBox base type would
             replace that template outright instead of layering on top of it, so the shared
@@ -56,80 +66,75 @@
     </UserControl.Resources>
 
     <ScrollViewer VerticalScrollBarVisibility="Auto">
-        <StackPanel Margin="20" Width="440" HorizontalAlignment="Center" VerticalAlignment="Top">
+        <StackPanel Margin="20" Width="760" HorizontalAlignment="Center" VerticalAlignment="Top">
             <Border Style="{StaticResource SettingsCardStyle}" Margin="0 8 0 8">
                 <StackPanel>
-                    <TextBlock Text="Background Music" Style="{StaticResource SettingsSectionTitleStyle}"/>
-                    <TextBlock Text="Play a music track underneath the whole project." Style="{StaticResource SettingsHintStyle}"/>
-                    <StackPanel Orientation="Horizontal">
-                        <Button Click="BrowseAudio_Click">Choose File...</Button>
-                        <Button Margin="10 0 0 0" Style="{StaticResource ButtonDanger}" Click="ClearAudio_Click" ToolTip="Remove Music" Content="{materialDesign:PackIcon Close}"/>
-                    </StackPanel>
-                    <TextBlock Margin="0 6 0 0" Text="{Binding AudioPath, TargetNullValue='No music selected'}" ToolTip="{Binding AudioPath}" TextTrimming="CharacterEllipsis" FontSize="12" FontStyle="Italic"/>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="Background Music" Style="{StaticResource SettingsSectionTitleStyle}"/>
+                        <Button Grid.Column="1" Click="BrowseAudio_Click">Choose File...</Button>
+                        <Button Grid.Column="2" Margin="10 0 0 0" Style="{StaticResource ButtonDanger}" Click="ClearAudio_Click" ToolTip="Remove Music" Content="{materialDesign:PackIcon Close}"/>
+                        <TextBlock Grid.Column="3" Margin="10 0 0 0" VerticalAlignment="Center" Text="{Binding AudioPath, TargetNullValue='No music selected'}" ToolTip="{Binding AudioPath}" TextTrimming="CharacterEllipsis" FontSize="12" FontStyle="Italic"/>
+                    </Grid>
                     <StackPanel Orientation="Horizontal" Margin="0 8 0 0">
-                        <TextBlock Text="Volume" VerticalAlignment="Center" Width="55"/>
-                        <Slider Width="180" Minimum="0" Maximum="100" VerticalAlignment="Center" Value="{Binding AudioVolume, Mode=TwoWay}"/>
-                        <TextBlock Margin="10 0 0 0" VerticalAlignment="Center" Text="{Binding AudioVolume, StringFormat={}{0:0}%}"/>
-                    </StackPanel>
-                    <StackPanel Orientation="Horizontal" Margin="0 6 0 0">
-                        <TextBlock Text="Trim" VerticalAlignment="Center" Width="55"/>
-                        <TextBlock Text="Start" VerticalAlignment="Center" FontSize="11" Margin="0 0 4 0"/>
+                        <TextBlock Text="Volume" Width="130" VerticalAlignment="Center"/>
+                        <Slider Width="150" Minimum="0" Maximum="100" VerticalAlignment="Center" Value="{Binding AudioVolume, Mode=TwoWay}"/>
+                        <TextBlock Margin="8 0 20 0" VerticalAlignment="Center" Width="34" Text="{Binding AudioVolume, StringFormat={}{0:0}%}"/>
+                        <TextBlock Text="Trim" VerticalAlignment="Center" Margin="0 0 6 0"/>
                         <hc:NumericUpDown Width="65" Minimum="0" DecimalPlaces="1" ValueFormat="0.0" Value="{Binding AudioTrimStart, Mode=TwoWay}"/>
-                        <TextBlock Text="End" VerticalAlignment="Center" FontSize="11" Margin="10 0 4 0"/>
+                        <TextBlock Text="to" VerticalAlignment="Center" Margin="6 0 6 0" FontSize="11" Opacity="0.65"/>
                         <hc:NumericUpDown Width="65" Minimum="0" DecimalPlaces="1" ValueFormat="0.0" Value="{Binding AudioTrimEnd, Mode=TwoWay}"
                                           ToolTip="Seconds from the start of the file. 0 = play to the end."/>
-                        <TextBlock Margin="6 0 0 0" VerticalAlignment="Center" Text="seconds" FontSize="11" Opacity="0.65"/>
+                        <TextBlock Margin="6 0 0 0" VerticalAlignment="Center" Text="sec" FontSize="11" Opacity="0.65"/>
                     </StackPanel>
                 </StackPanel>
             </Border>
 
             <Border Style="{StaticResource SettingsCardStyle}">
-                <StackPanel>
+                <StackPanel Orientation="Horizontal">
                     <TextBlock Text="Entrance Style" Style="{StaticResource SettingsSectionTitleStyle}"/>
-                    <TextBlock Text="How each graphic appears on screen when it's added to a scene." Style="{StaticResource SettingsHintStyle}"/>
-                    <hc:ComboBox x:Name="EntranceStyleComboBox" Width="220" HorizontalAlignment="Left" ItemTemplate="{StaticResource FriendlyEnumItemTemplate}" SelectedItem="{Binding Settings.EntranceStyle, Mode=TwoWay}"/>
+                    <hc:ComboBox x:Name="EntranceStyleComboBox" Width="220" ItemTemplate="{StaticResource FriendlyEnumItemTemplate}" SelectedItem="{Binding Settings.EntranceStyle, Mode=TwoWay}"/>
                 </StackPanel>
             </Border>
 
             <Border Style="{StaticResource SettingsCardStyle}" Visibility="{Binding Settings.EntranceStyle, Converter={StaticResource EnumEqualsVisibilityConverter}, ConverterParameter=HandDrawn}">
-                <StackPanel>
+                <StackPanel Orientation="Horizontal">
                     <TextBlock Text="Stroke" Style="{StaticResource SettingsSectionTitleStyle}"/>
-                    <TextBlock Text="Pen color and thickness used for the hand-drawn animation." Style="{StaticResource SettingsHintStyle}"/>
-                    <StackPanel Orientation="Horizontal">
-                        <Border BorderBrush="Black" CornerRadius="4" Padding="2" Margin="0 0 6 0" BorderThickness="{Binding Settings.StrokeColorHex, Converter={StaticResource HexEqualsThicknessConverter}, ConverterParameter=#FF000000}">
-                            <Button Style="{StaticResource ColorSwatchButtonStyle}" Background="#FF000000" Tag="#FF000000" Click="StrokeColor_Click"/>
-                        </Border>
-                        <Border BorderBrush="Black" CornerRadius="4" Padding="2" Margin="0 0 6 0" BorderThickness="{Binding Settings.StrokeColorHex, Converter={StaticResource HexEqualsThicknessConverter}, ConverterParameter=#FFE53935}">
-                            <Button Style="{StaticResource ColorSwatchButtonStyle}" Background="#FFE53935" Tag="#FFE53935" Click="StrokeColor_Click"/>
-                        </Border>
-                        <Border BorderBrush="Black" CornerRadius="4" Padding="2" Margin="0 0 6 0" BorderThickness="{Binding Settings.StrokeColorHex, Converter={StaticResource HexEqualsThicknessConverter}, ConverterParameter=#FF1E88E5}">
-                            <Button Style="{StaticResource ColorSwatchButtonStyle}" Background="#FF1E88E5" Tag="#FF1E88E5" Click="StrokeColor_Click"/>
-                        </Border>
-                        <Border BorderBrush="Black" CornerRadius="4" Padding="2" Margin="0 0 6 0" BorderThickness="{Binding Settings.StrokeColorHex, Converter={StaticResource HexEqualsThicknessConverter}, ConverterParameter=#FF43A047}">
-                            <Button Style="{StaticResource ColorSwatchButtonStyle}" Background="#FF43A047" Tag="#FF43A047" Click="StrokeColor_Click"/>
-                        </Border>
-                        <Border BorderBrush="Black" CornerRadius="4" Padding="2" Margin="0 0 6 0" BorderThickness="{Binding Settings.StrokeColorHex, Converter={StaticResource HexEqualsThicknessConverter}, ConverterParameter=#FFFB8C00}">
-                            <Button Style="{StaticResource ColorSwatchButtonStyle}" Background="#FFFB8C00" Tag="#FFFB8C00" Click="StrokeColor_Click"/>
-                        </Border>
-                        <Border BorderBrush="Black" CornerRadius="4" Padding="2" Margin="0 0 6 0" BorderThickness="{Binding Settings.StrokeColorHex, Converter={StaticResource HexEqualsThicknessConverter}, ConverterParameter=#FF8E24AA}">
-                            <Button Style="{StaticResource ColorSwatchButtonStyle}" Background="#FF8E24AA" Tag="#FF8E24AA" Click="StrokeColor_Click"/>
-                        </Border>
-                        <Border BorderBrush="Black" CornerRadius="4" Padding="2" BorderThickness="{Binding Settings.StrokeColorHex, Converter={StaticResource HexEqualsThicknessConverter}, ConverterParameter=#FF6D4C41}">
-                            <Button Style="{StaticResource ColorSwatchButtonStyle}" Background="#FF6D4C41" Tag="#FF6D4C41" Click="StrokeColor_Click"/>
-                        </Border>
-                    </StackPanel>
-                    <StackPanel Orientation="Horizontal" Margin="0 8 0 0">
-                        <TextBlock Text="Width" VerticalAlignment="Center" Width="55"/>
-                        <hc:NumericUpDown Width="100" Minimum="1" Maximum="20" Style="{StaticResource NumericUpDownPlus}" Value="{Binding Settings.StrokeWidth, Mode=TwoWay}"/>
-                    </StackPanel>
+                    <Border BorderBrush="Black" CornerRadius="4" Padding="2" Margin="0 0 6 0" BorderThickness="{Binding Settings.StrokeColorHex, Converter={StaticResource HexEqualsThicknessConverter}, ConverterParameter=#FF000000}">
+                        <Button Style="{StaticResource ColorSwatchButtonStyle}" Background="#FF000000" Tag="#FF000000" Click="StrokeColor_Click"/>
+                    </Border>
+                    <Border BorderBrush="Black" CornerRadius="4" Padding="2" Margin="0 0 6 0" BorderThickness="{Binding Settings.StrokeColorHex, Converter={StaticResource HexEqualsThicknessConverter}, ConverterParameter=#FFE53935}">
+                        <Button Style="{StaticResource ColorSwatchButtonStyle}" Background="#FFE53935" Tag="#FFE53935" Click="StrokeColor_Click"/>
+                    </Border>
+                    <Border BorderBrush="Black" CornerRadius="4" Padding="2" Margin="0 0 6 0" BorderThickness="{Binding Settings.StrokeColorHex, Converter={StaticResource HexEqualsThicknessConverter}, ConverterParameter=#FF1E88E5}">
+                        <Button Style="{StaticResource ColorSwatchButtonStyle}" Background="#FF1E88E5" Tag="#FF1E88E5" Click="StrokeColor_Click"/>
+                    </Border>
+                    <Border BorderBrush="Black" CornerRadius="4" Padding="2" Margin="0 0 6 0" BorderThickness="{Binding Settings.StrokeColorHex, Converter={StaticResource HexEqualsThicknessConverter}, ConverterParameter=#FF43A047}">
+                        <Button Style="{StaticResource ColorSwatchButtonStyle}" Background="#FF43A047" Tag="#FF43A047" Click="StrokeColor_Click"/>
+                    </Border>
+                    <Border BorderBrush="Black" CornerRadius="4" Padding="2" Margin="0 0 6 0" BorderThickness="{Binding Settings.StrokeColorHex, Converter={StaticResource HexEqualsThicknessConverter}, ConverterParameter=#FFFB8C00}">
+                        <Button Style="{StaticResource ColorSwatchButtonStyle}" Background="#FFFB8C00" Tag="#FFFB8C00" Click="StrokeColor_Click"/>
+                    </Border>
+                    <Border BorderBrush="Black" CornerRadius="4" Padding="2" Margin="0 0 6 0" BorderThickness="{Binding Settings.StrokeColorHex, Converter={StaticResource HexEqualsThicknessConverter}, ConverterParameter=#FF8E24AA}">
+                        <Button Style="{StaticResource ColorSwatchButtonStyle}" Background="#FF8E24AA" Tag="#FF8E24AA" Click="StrokeColor_Click"/>
+                    </Border>
+                    <Border BorderBrush="Black" CornerRadius="4" Padding="2" Margin="0 0 6 0" BorderThickness="{Binding Settings.StrokeColorHex, Converter={StaticResource HexEqualsThicknessConverter}, ConverterParameter=#FF6D4C41}">
+                        <Button Style="{StaticResource ColorSwatchButtonStyle}" Background="#FF6D4C41" Tag="#FF6D4C41" Click="StrokeColor_Click"/>
+                    </Border>
+                    <TextBlock Text="Width" VerticalAlignment="Center" Margin="16 0 6 0"/>
+                    <hc:NumericUpDown Width="70" Minimum="1" Maximum="20" Style="{StaticResource NumericUpDownPlus}" Value="{Binding Settings.StrokeWidth, Mode=TwoWay}"/>
                 </StackPanel>
             </Border>
 
-            <Border Style="{StaticResource SettingsCardStyle}">
-                <StackPanel>
-                    <TextBlock Text="Export Presets" Style="{StaticResource SettingsSectionTitleStyle}"/>
-                    <TextBlock Text="One-click sizing for popular platforms - sets the canvas shape used by the editor, preview, and exported video. Pick Custom to choose a raw aspect ratio." Style="{StaticResource SettingsHintStyle}"/>
-                    <ItemsControl x:Name="ExportPresetsItemsControl">
+            <Border Style="{StaticResource SettingsCardStyle}" Visibility="{Binding Settings.EntranceStyle, Converter={StaticResource EnumEqualsVisibilityConverter}, ConverterParameter=HandDrawn}">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Hand" Style="{StaticResource SettingsSectionTitleStyle}" VerticalAlignment="Top" Margin="0,6,0,0"/>
+                    <ItemsControl x:Name="HandStylesItemsControl">
                         <ItemsControl.ItemsPanel>
                             <ItemsPanelTemplate>
                                 <WrapPanel/>
@@ -137,24 +142,8 @@
                         </ItemsControl.ItemsPanel>
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <!--
-                                    A DataTrigger Setter on the Button itself (e.g. Background) is
-                                    silently ignored - HandyControl's global skin (see App.xaml)
-                                    supplies its own Button ControlTemplate that doesn't honor a
-                                    plain Background/Foreground setter, the same issue already
-                                    worked around elsewhere in this app (CameraEffectView's
-                                    PlainThumbTemplate). Highlighting the wrapping Border instead
-                                    mirrors EditorTimelineView.xaml's SceneCardBorderStyle, which
-                                    uses this exact IsSelected-driven BorderBrush/BorderThickness
-                                    pattern successfully.
-                                -->
+                                <!-- Same IsSelected-driven Border highlight as the Export Presets tiles below - see that card's comment for why. -->
                                 <Border CornerRadius="4" Margin="0 0 6 6">
-                                    <!--
-                                        BorderThickness/BorderBrush must be set as Style Setters
-                                        here, not as local attributes on this Border - a local
-                                        value always outranks a Style/DataTrigger Setter for the
-                                        same property, which silently no-ops the trigger below.
-                                    -->
                                     <Border.Style>
                                         <Style TargetType="Border">
                                             <Setter Property="BorderThickness" Value="1"/>
@@ -167,34 +156,101 @@
                                             </Style.Triggers>
                                         </Style>
                                     </Border.Style>
-                                    <Button Padding="10 6" Click="ExportPreset_Click" Tag="{Binding}">
+                                    <!--
+                                        93x120 - all four hand PNGs are now cropped to the same
+                                        840x1080 (7:9) aspect ratio (see HandStyleOptions), so the
+                                        box matches that ratio exactly instead of approximating it,
+                                        no letterboxing needed for any of them.
+                                    -->
+                                    <Button Padding="6" Width="Auto" Height="Auto" Cursor="Hand" Template="{StaticResource TileButtonTemplate}" Click="HandStyle_Click" Tag="{Binding}">
                                         <StackPanel>
-                                            <TextBlock Text="{Binding Name}" FontSize="12" HorizontalAlignment="Center"/>
-                                            <TextBlock FontSize="10" Opacity="0.65" HorizontalAlignment="Center" Visibility="{Binding HasResolution, Converter={StaticResource BoolToVisConverter}}">
-                                                <Run Text="{Binding Preset.Width, Mode=OneWay}"/><Run Text="x"/><Run Text="{Binding Preset.Height, Mode=OneWay}"/>
-                                            </TextBlock>
+                                            <Border Width="93" Height="120" Background="White" CornerRadius="4" Visibility="{Binding HasThumbnail, Converter={StaticResource BoolToVisConverter}}">
+                                                <Image Source="{Binding ThumbnailUri}" Stretch="Uniform" Margin="6"/>
+                                            </Border>
+                                            <Border Width="93" Height="120" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="4"
+                                                    Visibility="{Binding HasNoThumbnail, Converter={StaticResource BoolToVisConverter}}">
+                                                <TextBlock Text="No Hand" FontSize="10" TextAlignment="Center" TextWrapping="Wrap" VerticalAlignment="Center" Opacity="0.65"/>
+                                            </Border>
+                                            <TextBlock Text="{Binding Name}" FontSize="11" HorizontalAlignment="Center" Margin="0 4 0 0"/>
                                         </StackPanel>
                                     </Button>
                                 </Border>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
-                    <hc:ComboBox x:Name="AspectRatioComboBox" Width="220" HorizontalAlignment="Left" Margin="0 8 0 0" Visibility="Collapsed"
-                                 ItemTemplate="{StaticResource FriendlyEnumItemTemplate}" SelectedItem="{Binding Settings.AspectRatio, Mode=TwoWay}"/>
                 </StackPanel>
             </Border>
 
             <Border Style="{StaticResource SettingsCardStyle}">
                 <StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="Export Presets" Style="{StaticResource SettingsSectionTitleStyle}" VerticalAlignment="Top" Margin="0,6,0,0"/>
+                        <ItemsControl x:Name="ExportPresetsItemsControl">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel/>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <!--
+                                        A DataTrigger Setter on the Button itself (e.g. Background) is
+                                        silently ignored - HandyControl's global skin (see App.xaml)
+                                        supplies its own Button ControlTemplate that doesn't honor a
+                                        plain Background/Foreground setter, the same issue already
+                                        worked around elsewhere in this app (CameraEffectView's
+                                        PlainThumbTemplate). Highlighting the wrapping Border instead
+                                        mirrors EditorTimelineView.xaml's SceneCardBorderStyle, which
+                                        uses this exact IsSelected-driven BorderBrush/BorderThickness
+                                        pattern successfully.
+                                    -->
+                                    <Border CornerRadius="4" Margin="0 0 6 6">
+                                        <!--
+                                            BorderThickness/BorderBrush must be set as Style Setters
+                                            here, not as local attributes on this Border - a local
+                                            value always outranks a Style/DataTrigger Setter for the
+                                            same property, which silently no-ops the trigger below.
+                                        -->
+                                        <Border.Style>
+                                            <Style TargetType="Border">
+                                                <Setter Property="BorderThickness" Value="1"/>
+                                                <Setter Property="BorderBrush" Value="Transparent"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                                        <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}"/>
+                                                        <Setter Property="BorderThickness" Value="2"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Border.Style>
+                                        <Button Padding="10 6" Width="Auto" Height="Auto" Cursor="Hand" Template="{StaticResource TileButtonTemplate}" Click="ExportPreset_Click" Tag="{Binding}">
+                                            <StackPanel>
+                                                <TextBlock Text="{Binding Name}" FontSize="12" HorizontalAlignment="Center"/>
+                                                <TextBlock FontSize="10" Opacity="0.65" HorizontalAlignment="Center" Visibility="{Binding HasResolution, Converter={StaticResource BoolToVisConverter}}">
+                                                    <Run Text="{Binding Preset.Width, Mode=OneWay}"/><Run Text="x"/><Run Text="{Binding Preset.Height, Mode=OneWay}"/>
+                                                </TextBlock>
+                                            </StackPanel>
+                                        </Button>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                    <hc:ComboBox x:Name="AspectRatioComboBox" Width="220" HorizontalAlignment="Left" Margin="130 8 0 0" Visibility="Collapsed"
+                                 ItemTemplate="{StaticResource FriendlyEnumItemTemplate}" SelectedItem="{Binding Settings.AspectRatio, Mode=TwoWay}"/>
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource SettingsCardStyle}">
+                <StackPanel Orientation="Horizontal">
                     <TextBlock Text="Scene Transitions" Style="{StaticResource SettingsSectionTitleStyle}"/>
-                    <TextBlock Text="How the canvas changes when moving from one scene to the next." Style="{StaticResource SettingsHintStyle}"/>
-                    <hc:ComboBox x:Name="SceneTransitionComboBox" Width="220" HorizontalAlignment="Left" ItemTemplate="{StaticResource FriendlyEnumItemTemplate}" SelectedItem="{Binding Settings.SceneTransition, Mode=TwoWay}"/>
-                    <StackPanel Orientation="Horizontal" Margin="0 8 0 0"
+                    <hc:ComboBox x:Name="SceneTransitionComboBox" Width="180" ItemTemplate="{StaticResource FriendlyEnumItemTemplate}" SelectedItem="{Binding Settings.SceneTransition, Mode=TwoWay}"/>
+                    <StackPanel Orientation="Horizontal" Margin="16 0 0 0"
                                 Visibility="{Binding Settings.SceneTransition, Converter={StaticResource EnumNotEqualsVisibilityConverter}, ConverterParameter=None}">
-                        <TextBlock Text="Duration" VerticalAlignment="Center" Width="55"/>
-                        <hc:NumericUpDown Width="80" Minimum="0.1" Maximum="5" DecimalPlaces="1" ValueFormat="0.0"
+                        <TextBlock Text="Duration" VerticalAlignment="Center" Margin="0 0 6 0"/>
+                        <hc:NumericUpDown Width="70" Minimum="0.1" Maximum="5" DecimalPlaces="1" ValueFormat="0.0"
                                           Value="{Binding Settings.TransitionDurationSeconds, Mode=TwoWay}"/>
-                        <TextBlock Margin="6 0 0 0" VerticalAlignment="Center" Text="seconds" FontSize="11" Opacity="0.65"/>
+                        <TextBlock Margin="6 0 0 0" VerticalAlignment="Center" Text="sec" FontSize="11" Opacity="0.65"/>
                     </StackPanel>
                 </StackPanel>
             </Border>

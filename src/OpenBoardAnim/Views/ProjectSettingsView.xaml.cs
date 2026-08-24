@@ -15,9 +15,11 @@ namespace OpenBoardAnim.Views
     /// </summary>
     public partial class ProjectSettingsView : UserControl
     {
-        // Built once per view instance (not bound straight to the shared ExportPresets.All) so
-        // IsSelected reflects only this view - see ExportPresetPickerItem.
+        // Built once per view instance (not bound straight to the shared ExportPresets.All /
+        // HandStyleOptions.All) so IsSelected reflects only this view - see
+        // ExportPresetPickerItem/HandStylePickerItem.
         private readonly List<ExportPresetPickerItem> _presetItems;
+        private readonly List<HandStylePickerItem> _handStyleItems;
 
         public ProjectSettingsView()
         {
@@ -30,6 +32,11 @@ namespace OpenBoardAnim.Views
             _presetItems.Add(new ExportPresetPickerItem { Name = "Custom" });
             ExportPresetsItemsControl.ItemsSource = _presetItems;
 
+            _handStyleItems = HandStyleOptions.All
+                .Select(o => new HandStylePickerItem { Name = o.Name, Style = o.Style, ThumbnailUri = o.ThumbnailUri })
+                .ToList();
+            HandStylesItemsControl.ItemsSource = _handStyleItems;
+
             DataContextChanged += ProjectSettingsView_DataContextChanged;
         }
 
@@ -39,11 +46,17 @@ namespace OpenBoardAnim.Views
         // brand-new project defaults to Widescreen16x9 (see ProjectSettings.AspectRatio), whose
         // first matching preset is YouTube - satisfying "YouTube selected by default" without
         // hardcoding an index, while still reflecting a reopened project's actual saved setting.
+        // Also highlights the hand style matching the project's current HandStyle (an exact 1:1
+        // mapping, no ambiguity like AspectRatio has).
         private void ProjectSettingsView_DataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
         {
             if (DataContext is not ProjectDetails project) return;
             ExportPresetPickerItem match = _presetItems.FirstOrDefault(p => p.Preset?.AspectRatio == project.Settings.AspectRatio);
             SelectPreset(match ?? _presetItems.Last());
+
+            HandStylePickerItem handMatch = _handStyleItems.FirstOrDefault(h => h.Style == project.Settings.HandStyle);
+            if (handMatch != null)
+                SelectHandStyle(handMatch);
         }
 
         private void SelectPreset(ExportPresetPickerItem item)
@@ -63,6 +76,29 @@ namespace OpenBoardAnim.Views
                 SelectPreset(item);
                 if (item.Preset != null)
                     project.Settings.AspectRatio = item.Preset.AspectRatio;
+            }
+            catch (Exception ex)
+            {
+                if (Logger.LogError(ex, LogAction.LogAndShow))
+                    throw;
+            }
+        }
+
+        private void SelectHandStyle(HandStylePickerItem item)
+        {
+            foreach (HandStylePickerItem h in _handStyleItems)
+                h.IsSelected = false;
+            item.IsSelected = true;
+        }
+
+        private void HandStyle_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                if (DataContext is not ProjectDetails project) return;
+                if (sender is not Button button || button.Tag is not HandStylePickerItem item) return;
+                SelectHandStyle(item);
+                project.Settings.HandStyle = item.Style;
             }
             catch (Exception ex)
             {

@@ -141,6 +141,19 @@ namespace OpenBoardAnim.Models
         PopIn
     }
 
+    // Which cursor image (if any) draws alongside a HandDrawn entrance's stroke-by-stroke reveal
+    // - has no effect for FadeIn/PopIn, which never show a hand at all. None keeps the
+    // stroke-by-stroke draw animation itself but hides the cursor image, decoupling "how strokes
+    // reveal" (EntranceStyle) from "what draws them" (this).
+    public enum HandStyle
+    {
+        LightSkin,
+        DarkSkin,
+        Cartoon,
+        ScrapBook,
+        None
+    }
+
     public enum AspectRatioPreset
     {
         Widescreen16x9,
@@ -197,6 +210,20 @@ namespace OpenBoardAnim.Models
             set
             {
                 _entranceStyle = value;
+                OnPropertyChanged();
+            }
+        }
+
+        // Defaults to LightSkin, not None - it's the same image every existing project already
+        // shows (see HandStyleOptions), so a project saved before this setting existed keeps
+        // looking exactly the same after loading.
+        private HandStyle _handStyle = HandStyle.LightSkin;
+        public HandStyle HandStyle
+        {
+            get { return _handStyle; }
+            set
+            {
+                _handStyle = value;
                 OnPropertyChanged();
             }
         }
