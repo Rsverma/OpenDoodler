@@ -76,7 +76,7 @@ namespace OpenBoardAnim.Models
         public int Scenes
         {
             get { return _scenes; }
-            set { _scenes = value; }
+            set { _scenes = value; OnPropertyChanged(); }
         }
 
     }

@@ -5,6 +5,7 @@ namespace OpenBoardAnim.Library.Repositories
         List<ProjectEntity> GetRecentProjects();
         void SaveNewProject(ProjectEntity entity);
         void UpdateExistingProject(ProjectEntity entity);
+        void UpdateProjectMetadata(string filePath, int sceneCount, DateTime latestLaunchTime);
         void DeleteProject(int projectID);
     }
 }

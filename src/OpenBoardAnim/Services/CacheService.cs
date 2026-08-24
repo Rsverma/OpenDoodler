@@ -98,18 +98,22 @@ namespace OpenBoardAnim.Services
                 project.Path = filePath;
                 project.Title = Path.GetFileNameWithoutExtension(project.Path);
                 File.WriteAllText(filePath, JsonSerializer.Serialize(project));
+                // project.Scenes always has a trailing "+" add-scene card appended (see
+                // ProjectDetails's constructor) that isn't a real scene - same convention
+                // PreviewAndExportHandler/EditorTimelineViewModel already exclude it under.
+                int realSceneCount = project.Scenes.Count - 1;
                 _pRepo.SaveNewProject(new ProjectEntity
                 {
                     Title = project.Title,
                     CreatedOn = project.CreatedOn,
                     FilePath = project.Path,
                     LatestLaunchTime = DateTime.Now,
-                    SceneCount = project.Scenes.Count,
+                    SceneCount = realSceneCount,
                 });
                 RecentProjects.Insert(0, new RecentProjectModel
                 {
                     Title = project.Title,
-                    Scenes = project.Scenes.Count,
+                    Scenes = realSceneCount,
                     CreatedOn = project.CreatedOn,
                     FilePath = project.Path,
                     LatestLaunchTime = DateTime.Now,
@@ -371,6 +375,18 @@ namespace OpenBoardAnim.Services
             try
             {
                 File.WriteAllText(project.Path, JsonSerializer.Serialize(project));
+
+                // See the same "+" add-scene card note in SaveNewProject.
+                int realSceneCount = project.Scenes.Count - 1;
+                DateTime now = DateTime.Now;
+                _pRepo.UpdateProjectMetadata(project.Path, realSceneCount, now);
+
+                RecentProjectModel recent = RecentProjects.FirstOrDefault(p => p.FilePath == project.Path);
+                if (recent != null)
+                {
+                    recent.Scenes = realSceneCount;
+                    recent.LatestLaunchTime = now;
+                }
             }
             catch (Exception ex)
             {

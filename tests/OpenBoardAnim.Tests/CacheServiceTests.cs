@@ -147,6 +147,32 @@ namespace OpenBoardAnim.Tests
         }
 
         [Fact]
+        public void UpdateExistingProject_SyncsSceneCount_ToRepositoryAndRecentProjectsList()
+        {
+            string path = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid()}.obap");
+            _pRepo.Setup(r => r.GetRecentProjects()).Returns([
+                new ProjectEntity { ProjectID = 1, Title = "My Project", FilePath = path, CreatedOn = DateTime.Now, LatestLaunchTime = DateTime.Now, SceneCount = 1 }
+            ]);
+            CacheService sut = CreateSut();
+            // 3 real scenes plus the trailing "+" add-scene card every ProjectDetails.Scenes
+            // list carries (see ProjectDetails's constructor) - the count synced out should
+            // exclude that card, same as PreviewAndExportHandler/EditorTimelineViewModel do.
+            ProjectDetails project = new() { Path = path, Title = "My Project", Scenes = [new SceneModel(), new SceneModel(), new SceneModel(), new SceneModel { Name = "+" }] };
+
+            try
+            {
+                sut.UpdateExistingProject(project);
+
+                _pRepo.Verify(r => r.UpdateProjectMetadata(path, 3, It.IsAny<DateTime>()), Times.Once);
+                Assert.Equal(3, Assert.Single(sut.RecentProjects).Scenes);
+            }
+            finally
+            {
+                File.Delete(path);
+            }
+        }
+
+        [Fact]
         public void SaveSceneAsTemplate_AddsTemplateAndReloadsGallery()
         {
             _sRepo.SetupSequence(r => r.GetAllTemplates())

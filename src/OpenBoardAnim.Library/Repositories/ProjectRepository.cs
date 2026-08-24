@@ -59,6 +59,26 @@ namespace OpenBoardAnim.Library.Repositories
             }
         }
 
+        public void UpdateProjectMetadata(string filePath, int sceneCount, DateTime latestLaunchTime)
+        {
+            try
+            {
+                using var context = _contextFactory();
+                ProjectEntity project = context.Projects.FirstOrDefault(p => p.FilePath == filePath);
+                if (project != null)
+                {
+                    project.SceneCount = sceneCount;
+                    project.LatestLaunchTime = latestLaunchTime;
+                    context.SaveChanges();
+                }
+            }
+            catch (Exception ex)
+            {
+                if (Logger.LogError(ex, LogAction.LogAndThrow))
+                    throw;
+            }
+        }
+
         public void DeleteProject(int projectID)
         {
             try
