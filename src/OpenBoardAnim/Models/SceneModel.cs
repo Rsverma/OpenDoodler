@@ -12,6 +12,7 @@ namespace OpenBoardAnim.Models
         public SceneModel()
         {
             Graphics = new BindingList<GraphicModelBase>();
+            CameraEffects = new BindingList<CameraEffectModel>();
             ReplaceSceneCommand = new RelayCommand(ReplaceSceneCommandHandler, canExecute: o => true);
             SceneLeftCommand = new RelayCommand(SceneLeftCommandHandler, canExecute: o => true);
             SceneRightCommand = new RelayCommand(SceneRightCommandHandler, canExecute: o => true);
@@ -59,6 +60,7 @@ namespace OpenBoardAnim.Models
                 VoiceoverPath = VoiceoverPath,
                 VoiceoverTrimStart = VoiceoverTrimStart,
                 VoiceoverTrimEnd = VoiceoverTrimEnd,
+                CameraEffects = new BindingList<CameraEffectModel>(CameraEffects.Select(e => e.Clone()).ToList()),
             };
         }
 
@@ -117,6 +119,22 @@ namespace OpenBoardAnim.Models
             set
             {
                 _graphics = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private BindingList<CameraEffectModel> _cameraEffects;
+        public BindingList<CameraEffectModel> CameraEffects
+        {
+            get { return _cameraEffects; }
+            set
+            {
+                _cameraEffects = value;
+                // BindingList<T> only raises ListChanged, not PropertyChanged, so a binding to
+                // CameraEffects.Count (the timeline badge) wouldn't refresh on add/remove without
+                // this - re-raising CameraEffects itself forces WPF to re-walk the binding path.
+                if (_cameraEffects != null)
+                    _cameraEffects.ListChanged += (s, e) => OnPropertyChanged(nameof(CameraEffects));
                 OnPropertyChanged();
             }
         }

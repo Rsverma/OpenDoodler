@@ -1,4 +1,5 @@
 using OpenBoardAnim.Core;
+using System.ComponentModel;
 
 namespace OpenBoardAnim.Models
 {
@@ -7,6 +8,7 @@ namespace OpenBoardAnim.Models
     public class SceneTimelineSegment : ObservableObject
     {
         public SceneModel Scene { get; set; }
+        public BindingList<CameraEffectTimelineBlock> CameraEffectBlocks { get; set; } = new();
 
         private double _x;
         public double X

@@ -29,6 +29,7 @@
         </DataTemplate>
         <utils:ResizeConverter x:Key="ResizeConverter"/>
         <utils:NullToVisibilityConverter x:Key="NullToVisibilityConverter"/>
+        <utils:CountToVisibilityConverter x:Key="CountToVisibilityConverter"/>
         <utils:SubtractHalfConverter x:Key="SubtractHalfConverter"/>
         <BooleanToVisibilityConverter x:Key="BoolToVisConverter"/>
 
@@ -56,7 +57,7 @@
             </StackPanel>
             <ScrollViewer x:Name="TimelineScrollViewer" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" Margin="10 4 10 16"
                           PreviewMouseWheel="TimelineScrollViewer_PreviewMouseWheel">
-            <Canvas Width="{Binding TotalWidth}" Height="134">
+            <Canvas Width="{Binding TotalWidth}" Height="150">
                 <!-- Voiceover layer: one bar per scene, above the cards, only visible for scenes that have one set -->
                 <ItemsControl ItemsSource="{Binding Segments}" Canvas.Left="0" Canvas.Top="0">
                     <ItemsControl.ItemsPanel>
@@ -87,8 +88,54 @@
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
 
+                <!-- Camera effects layer: one strip per scene, showing each effect's position/duration within it -->
+                <ItemsControl ItemsSource="{Binding Segments}" Canvas.Left="0" Canvas.Top="20">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <Canvas IsItemsHost="True"/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemContainerStyle>
+                        <Style TargetType="ContentPresenter">
+                            <Setter Property="Canvas.Left" Value="{Binding X}"/>
+                            <Setter Property="Canvas.Top" Value="0"/>
+                        </Style>
+                    </ItemsControl.ItemContainerStyle>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="{x:Type models:SceneTimelineSegment}">
+                            <Canvas Width="{Binding Width}" Height="16"
+                                    Visibility="{Binding Scene.CameraEffects.Count, Converter={StaticResource CountToVisibilityConverter}}">
+                                <ItemsControl ItemsSource="{Binding CameraEffectBlocks}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <Canvas/>
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemContainerStyle>
+                                        <Style TargetType="ContentPresenter">
+                                            <Setter Property="Canvas.Left" Value="{Binding X}"/>
+                                        </Style>
+                                    </ItemsControl.ItemContainerStyle>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate DataType="{x:Type models:CameraEffectTimelineBlock}">
+                                            <Border Width="{Binding Width}" Height="16" CornerRadius="3" Background="#FF1E88E5"
+                                                    ToolTip="{Binding ToolTipText}" Cursor="Hand">
+                                                <Border.InputBindings>
+                                                    <MouseBinding MouseAction="LeftDoubleClick" Command="{Binding Effect.EditEffectCommand}"/>
+                                                </Border.InputBindings>
+                                                <materialDesign:PackIcon Kind="Video" Width="10" Height="10" Foreground="White"
+                                                                          HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </Canvas>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
                 <!-- Background music layer: one bar spanning every real scene, below the cards -->
-                <Border Canvas.Left="0" Canvas.Top="116" Width="{Binding RealContentWidth}" Height="18" CornerRadius="4" Background="#FF43A047"
+                <Border Canvas.Left="0" Canvas.Top="132" Width="{Binding RealContentWidth}" Height="18" CornerRadius="4" Background="#FF43A047"
                         Visibility="{Binding Project.AudioPath, Converter={StaticResource NullToVisibilityConverter}}"
                         ToolTip="{Binding Project.AudioPath}" ClipToBounds="True">
                     <Grid>
@@ -103,7 +150,7 @@
                 <!-- AllowDrop/DragOver/Drop here (not on each card) so a card dropped anywhere
                      within another card's bounds still resolves to that card via DataContext
                      hit-testing in the Drop handler - simpler than tracking per-card drop zones. -->
-                <ItemsControl ItemsSource="{Binding Segments}" Canvas.Left="0" Canvas.Top="22"
+                <ItemsControl ItemsSource="{Binding Segments}" Canvas.Left="0" Canvas.Top="38"
                               AllowDrop="True" DragOver="ScenesItemsControl_DragOver" Drop="ScenesItemsControl_Drop">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
@@ -163,12 +210,20 @@
                                                                   Foreground="Black"
                                                                   ToolTip="This scene has a voiceover"
                                                                   Visibility="{Binding Scene.VoiceoverPath, Converter={StaticResource NullToVisibilityConverter}}"/>
+                                        <materialDesign:PackIcon Kind="Video" Width="14" Height="14" Margin="0 0 22 4"
+                                                                  HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                                                                  Foreground="Black"
+                                                                  ToolTip="This scene has camera effects"
+                                                                  Visibility="{Binding Scene.CameraEffects.Count, Converter={StaticResource CountToVisibilityConverter}}"/>
                                     </Grid>
                                 </Grid>
                                 <Border.ContextMenu>
                                     <ContextMenu Width="170">
                                         <MenuItem Header="Preview Scene" Icon="{materialDesign:PackIcon Play}"
                                                   Command="{Binding PlacementTarget.Tag.PreviewSceneCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                  CommandParameter="{Binding Scene}"/>
+                                        <MenuItem Header="Add Camera Effect" Icon="{materialDesign:PackIcon Video}"
+                                                  Command="{Binding PlacementTarget.Tag.AddCameraEffectCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                                                   CommandParameter="{Binding Scene}"/>
                                         <Separator />
                                         <MenuItem Header="Move Left" Icon="{materialDesign:PackIcon arrowleft}" Command="{Binding Scene.SceneLeftCommand}"/>
@@ -188,7 +243,7 @@
                 </ItemsControl>
 
                 <Thumb Canvas.Left="{Binding PlayheadX, Converter={StaticResource SubtractHalfConverter}, ConverterParameter=12}"
-                       Canvas.Top="0" Width="12" Height="134" Cursor="SizeWE"
+                       Canvas.Top="0" Width="12" Height="150" Cursor="SizeWE"
                        DragDelta="Playhead_DragDelta" DragCompleted="Playhead_DragCompleted"
                        ToolTip="Drag to jump between scenes">
                     <Thumb.Template>

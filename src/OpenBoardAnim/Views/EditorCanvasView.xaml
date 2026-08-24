@@ -113,6 +113,9 @@
                             <MenuItem Header="Ungroup" Icon="{materialDesign:PackIcon Ungroup}"
                                       Command="{Binding PlacementTarget.Tag.UngroupGraphicsCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
                             <Separator/>
+                            <MenuItem Header="Add Camera Effect" Icon="{materialDesign:PackIcon Video}"
+                                      Command="{Binding PlacementTarget.Tag.AddCameraEffectCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                            <Separator/>
                             <MenuItem Header="Align">
                                 <MenuItem Header="Align Left" Icon="{materialDesign:PackIcon AlignHorizontalLeft}"
                                           Command="{Binding PlacementTarget.Tag.AlignLeftCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>

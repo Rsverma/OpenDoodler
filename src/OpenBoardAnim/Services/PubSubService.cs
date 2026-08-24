@@ -11,7 +11,8 @@ namespace OpenBoardAnim.Services
         GraphicAdded,
         ProjectLaunched,
         ProjectExporting,
-        ProjectStateRestored
+        ProjectStateRestored,
+        CameraEffectRequested
     }
 
     public interface IPubSubService

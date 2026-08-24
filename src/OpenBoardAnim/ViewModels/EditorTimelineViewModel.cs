@@ -37,6 +37,7 @@ namespace OpenBoardAnim.ViewModels
         public ICommand ZoomOutCommand { get; set; }
         public ICommand ResetZoomCommand { get; set; }
         public ICommand PreviewSceneCommand { get; set; }
+        public ICommand AddCameraEffectCommand { get; set; }
         public EditorTimelineViewModel(IPubSubService pubSub, IDialogService dialog)
         {
             _pubSub = pubSub;
@@ -47,6 +48,12 @@ namespace OpenBoardAnim.ViewModels
             ZoomOutCommand = new RelayCommand(o => ZoomLevel /= ZoomStep, o => ZoomLevel > MinZoom + 0.001);
             ResetZoomCommand = new RelayCommand(o => ZoomLevel = 1.0, o => Math.Abs(ZoomLevel - 1.0) > 0.001);
             PreviewSceneCommand = new RelayCommand(o => PreviewScene(o as SceneModel), canExecute: o => Project != null);
+            // The actual "add" logic lives on EditorActionsViewModel (a sibling view-model with
+            // no direct reference here) - routed through the pub/sub mediator, same as
+            // SubTopic.SceneChanged, rather than reaching across view-models directly.
+            AddCameraEffectCommand = new RelayCommand(
+                o => { if (o is SceneModel scene) _pubSub.Publish(SubTopic.CameraEffectRequested, scene); },
+                canExecute: o => Project != null);
             Segments = new BindingList<SceneTimelineSegment>();
         }
 
@@ -233,23 +240,44 @@ namespace OpenBoardAnim.ViewModels
         // scene's segment stale until something else happened to trigger a recompute (a scene
         // switch, reorder, or relaunching the app to reload the project from scratch). Wiring
         // directly to each graphic's own PropertyChanged closes that gap without needing every
-        // duration-editing call site to know about the timeline.
+        // duration-editing call site to know about the timeline. Also wires the scene's camera
+        // effects the same way, since GetEstimatedDurationSeconds now factors those in too.
         private void WireGraphicsNotifications(SceneModel scene)
         {
-            if (scene?.Graphics == null) return;
-            scene.Graphics.ListChanged += (s, e) =>
+            if (scene?.Graphics != null)
             {
-                if (e.ListChangedType == ListChangedType.ItemAdded && e.NewIndex >= 0 && e.NewIndex < scene.Graphics.Count)
-                    scene.Graphics[e.NewIndex].PropertyChanged += GraphicPropertyChangedHandler;
-                RecomputeSegments();
-            };
-            foreach (GraphicModelBase graphic in scene.Graphics)
-                graphic.PropertyChanged += GraphicPropertyChangedHandler;
+                scene.Graphics.ListChanged += (s, e) =>
+                {
+                    if (e.ListChangedType == ListChangedType.ItemAdded && e.NewIndex >= 0 && e.NewIndex < scene.Graphics.Count)
+                        scene.Graphics[e.NewIndex].PropertyChanged += GraphicPropertyChangedHandler;
+                    RecomputeSegments();
+                };
+                foreach (GraphicModelBase graphic in scene.Graphics)
+                    graphic.PropertyChanged += GraphicPropertyChangedHandler;
+            }
+
+            if (scene?.CameraEffects != null)
+            {
+                scene.CameraEffects.ListChanged += (s, e) =>
+                {
+                    if (e.ListChangedType == ListChangedType.ItemAdded && e.NewIndex >= 0 && e.NewIndex < scene.CameraEffects.Count)
+                        scene.CameraEffects[e.NewIndex].PropertyChanged += CameraEffectPropertyChangedHandler;
+                    RecomputeSegments();
+                };
+                foreach (CameraEffectModel effect in scene.CameraEffects)
+                    effect.PropertyChanged += CameraEffectPropertyChangedHandler;
+            }
         }
 
         private void GraphicPropertyChangedHandler(object sender, PropertyChangedEventArgs e)
         {
             if (e.PropertyName == nameof(GraphicModelBase.Delay) || e.PropertyName == nameof(GraphicModelBase.Duration))
+                RecomputeSegments();
+        }
+
+        private void CameraEffectPropertyChangedHandler(object sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(CameraEffectModel.StartTime) || e.PropertyName == nameof(CameraEffectModel.EndTime))
                 RecomputeSegments();
         }
 
@@ -288,13 +316,15 @@ namespace OpenBoardAnim.ViewModels
                 double x = 0;
                 foreach (SceneModel scene in _scenes)
                 {
-                    double width = Math.Max(MinSegmentWidth, GetEstimatedDurationSeconds(scene) * PixelsPerSecond);
+                    double sceneDuration = GetEstimatedDurationSeconds(scene);
+                    double width = Math.Max(MinSegmentWidth, sceneDuration * PixelsPerSecond);
                     Segments.Add(new SceneTimelineSegment
                     {
                         Scene = scene,
                         X = x,
                         Width = width,
-                        IsSelected = scene == _selectedScene
+                        IsSelected = scene == _selectedScene,
+                        CameraEffectBlocks = new BindingList<CameraEffectTimelineBlock>(BuildCameraEffectBlocks(scene, width, sceneDuration))
                     });
                     x += width + SegmentGap;
                 }
@@ -311,10 +341,38 @@ namespace OpenBoardAnim.ViewModels
             }
         }
 
+        // Pixel position/width of each camera effect within its scene's own segment, directly
+        // from its absolute StartTime/EndTime (seconds from the scene's start).
+        private static List<CameraEffectTimelineBlock> BuildCameraEffectBlocks(SceneModel scene, double segmentWidth, double sceneDuration)
+        {
+            List<CameraEffectTimelineBlock> blocks = new();
+            if (scene?.CameraEffects == null || sceneDuration <= 0) return blocks;
+
+            // segmentWidth may be floored by MinSegmentWidth, so the scene's actual
+            // seconds-to-pixels ratio can differ from the timeline's global PixelsPerSecond -
+            // using the effective ratio keeps blocks from overflowing the card.
+            double pixelsPerSecond = segmentWidth / sceneDuration;
+            foreach (CameraEffectModel effect in scene.CameraEffects.OrderBy(e => e.StartTime))
+            {
+                double blockX = effect.StartTime * pixelsPerSecond;
+                double blockWidth = Math.Max(4, (effect.EndTime - effect.StartTime) * pixelsPerSecond);
+                blocks.Add(new CameraEffectTimelineBlock { X = blockX, Width = blockWidth, Effect = effect });
+            }
+            return blocks;
+        }
+
         private static double GetEstimatedDurationSeconds(SceneModel scene)
         {
-            if (scene?.Graphics == null || scene.Graphics.Count == 0) return 0;
-            return scene.Graphics.Sum(g => g.Delay + g.Duration);
+            if (scene == null) return 0;
+            double graphicsTotal = scene.Graphics?.Sum(g => g.Delay + g.Duration) ?? 0;
+            // Camera effects run as a second, concurrent timeline (see
+            // PreviewAndExportHandler.PlayCameraEffectsAsync) - a scene's real duration is
+            // whichever of the two actually runs longer. Effects are keyed by absolute EndTime,
+            // so the camera timeline's length is just the latest one.
+            double cameraTotal = scene.CameraEffects != null && scene.CameraEffects.Count > 0
+                ? scene.CameraEffects.Max(e => e.EndTime)
+                : 0;
+            return Math.Max(graphicsTotal, cameraTotal);
         }
 
         private void UpdateSelectionState()
