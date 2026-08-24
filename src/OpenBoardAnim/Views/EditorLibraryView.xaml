@@ -154,7 +154,8 @@
                                         </DataTemplate>
                                     </ListBox.ItemTemplate>
                                 </ListBox>
-                                <Button Grid.Row="1" Command="{Binding LoadMoreGraphicsCommand}">Load More..</Button>
+                                <Button Grid.Row="1" Command="{Binding LoadMoreGraphicsCommand}"
+                                        Visibility="{Binding CanLoadMoreGraphics, Converter={StaticResource BoolToVisConverter}}">Load More..</Button>
                             </Grid>
                         </ScrollViewer>
                         

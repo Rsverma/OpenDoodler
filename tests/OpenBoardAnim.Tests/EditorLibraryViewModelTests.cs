@@ -102,6 +102,53 @@ namespace OpenBoardAnim.Tests
         }
 
         [Fact]
+        public void Constructor_FullPageLoaded_CanLoadMoreGraphicsIsTrue()
+        {
+            BindingList<DrawingModel> fullPage = new(Enumerable.Range(1, 20).Select(i => new DrawingModel { ID = i }).ToList());
+            _cache.SetupGet(c => c.LoadedGraphics).Returns(fullPage);
+
+            EditorLibraryViewModel sut = CreateSut();
+
+            Assert.True(sut.CanLoadMoreGraphics);
+        }
+
+        [Fact]
+        public void Constructor_PartialPageLoaded_CanLoadMoreGraphicsIsFalse()
+        {
+            _cache.SetupGet(c => c.LoadedGraphics).Returns(new BindingList<DrawingModel>([new DrawingModel { ID = 1 }]));
+
+            EditorLibraryViewModel sut = CreateSut();
+
+            Assert.False(sut.CanLoadMoreGraphics);
+        }
+
+        [Fact]
+        public void LoadMoreGraphicsCommand_PartialPageReturned_CanLoadMoreGraphicsBecomesFalse()
+        {
+            BindingList<DrawingModel> fullPage = new(Enumerable.Range(1, 20).Select(i => new DrawingModel { ID = i }).ToList());
+            _cache.SetupGet(c => c.LoadedGraphics).Returns(fullPage);
+            EditorLibraryViewModel sut = CreateSut();
+            Assert.True(sut.CanLoadMoreGraphics);
+            _cache.Setup(c => c.GetGraphics("", 20)).Returns([new DrawingModel { ID = 21 }]);
+
+            sut.LoadMoreGraphicsCommand.Execute(null);
+
+            Assert.False(sut.CanLoadMoreGraphics);
+        }
+
+        [Fact]
+        public void SearchGraphicsCommand_FullPageReturned_CanLoadMoreGraphicsIsTrue()
+        {
+            EditorLibraryViewModel sut = CreateSut();
+            _cache.Setup(c => c.GetGraphics("cat", 0)).Returns(Enumerable.Range(1, 20).Select(i => new DrawingModel { ID = i }).ToList());
+            sut.SearchText = "cat";
+
+            sut.SearchGraphicsCommand.Execute(null);
+
+            Assert.True(sut.CanLoadMoreGraphics);
+        }
+
+        [Fact]
         public async Task ImportGraphicsCommand_SavesPickedFiles_AndReloadsGraphics()
         {
             EditorLibraryViewModel sut = CreateSut();

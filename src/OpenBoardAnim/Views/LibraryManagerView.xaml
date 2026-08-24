@@ -8,6 +8,9 @@
              xmlns:models="clr-namespace:OpenBoardAnim.Models"
              mc:Ignorable="d"
              d:DesignHeight="600" d:DesignWidth="950">
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisConverter"/>
+    </UserControl.Resources>
     <!--
         Bound directly to EditorLibraryViewModel (passed in as-is when opening this dialog -
         see EditorLibraryViewModel.ManageLibraryHandler) rather than a dedicated ViewModel,
@@ -72,7 +75,8 @@
                         </DataTemplate>
                     </ListBox.ItemTemplate>
                 </ListBox>
-                <Button Grid.Row="1" Margin="0 6 0 0" Command="{Binding LoadMoreGraphicsCommand}" Content="Load More.."/>
+                <Button Grid.Row="1" Margin="0 6 0 0" Command="{Binding LoadMoreGraphicsCommand}" Content="Load More.."
+                        Visibility="{Binding CanLoadMoreGraphics, Converter={StaticResource BoolToVisConverter}}"/>
             </Grid>
         </ScrollViewer>
     </Grid>
