@@ -9,6 +9,7 @@
              mc:Ignorable="d"
              d:DesignHeight="450" d:DesignWidth="600">
     <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisConverter"/>
         <utils:HexEqualsThicknessConverter x:Key="HexEqualsThicknessConverter"/>
         <utils:FriendlyEnumConverter x:Key="FriendlyEnumConverter"/>
         <utils:EnumEqualsVisibilityConverter x:Key="EnumEqualsVisibilityConverter"/>
@@ -126,9 +127,60 @@
 
             <Border Style="{StaticResource SettingsCardStyle}">
                 <StackPanel>
-                    <TextBlock Text="Aspect Ratio" Style="{StaticResource SettingsSectionTitleStyle}"/>
-                    <TextBlock Text="Canvas shape used by the editor, preview, and exported video." Style="{StaticResource SettingsHintStyle}"/>
-                    <hc:ComboBox x:Name="AspectRatioComboBox" Width="220" HorizontalAlignment="Left" ItemTemplate="{StaticResource FriendlyEnumItemTemplate}" SelectedItem="{Binding Settings.AspectRatio, Mode=TwoWay}"/>
+                    <TextBlock Text="Export Presets" Style="{StaticResource SettingsSectionTitleStyle}"/>
+                    <TextBlock Text="One-click sizing for popular platforms - sets the canvas shape used by the editor, preview, and exported video. Pick Custom to choose a raw aspect ratio." Style="{StaticResource SettingsHintStyle}"/>
+                    <ItemsControl x:Name="ExportPresetsItemsControl">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <!--
+                                    A DataTrigger Setter on the Button itself (e.g. Background) is
+                                    silently ignored - HandyControl's global skin (see App.xaml)
+                                    supplies its own Button ControlTemplate that doesn't honor a
+                                    plain Background/Foreground setter, the same issue already
+                                    worked around elsewhere in this app (CameraEffectView's
+                                    PlainThumbTemplate). Highlighting the wrapping Border instead
+                                    mirrors EditorTimelineView.xaml's SceneCardBorderStyle, which
+                                    uses this exact IsSelected-driven BorderBrush/BorderThickness
+                                    pattern successfully.
+                                -->
+                                <Border CornerRadius="4" Margin="0 0 6 6">
+                                    <!--
+                                        BorderThickness/BorderBrush must be set as Style Setters
+                                        here, not as local attributes on this Border - a local
+                                        value always outranks a Style/DataTrigger Setter for the
+                                        same property, which silently no-ops the trigger below.
+                                    -->
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Setter Property="BorderThickness" Value="1"/>
+                                            <Setter Property="BorderBrush" Value="Transparent"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                                    <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}"/>
+                                                    <Setter Property="BorderThickness" Value="2"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <Button Padding="10 6" Click="ExportPreset_Click" Tag="{Binding}">
+                                        <StackPanel>
+                                            <TextBlock Text="{Binding Name}" FontSize="12" HorizontalAlignment="Center"/>
+                                            <TextBlock FontSize="10" Opacity="0.65" HorizontalAlignment="Center" Visibility="{Binding HasResolution, Converter={StaticResource BoolToVisConverter}}">
+                                                <Run Text="{Binding Preset.Width, Mode=OneWay}"/><Run Text="x"/><Run Text="{Binding Preset.Height, Mode=OneWay}"/>
+                                            </TextBlock>
+                                        </StackPanel>
+                                    </Button>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <hc:ComboBox x:Name="AspectRatioComboBox" Width="220" HorizontalAlignment="Left" Margin="0 8 0 0" Visibility="Collapsed"
+                                 ItemTemplate="{StaticResource FriendlyEnumItemTemplate}" SelectedItem="{Binding Settings.AspectRatio, Mode=TwoWay}"/>
                 </StackPanel>
             </Border>
 
