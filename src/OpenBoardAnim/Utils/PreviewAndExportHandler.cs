@@ -34,6 +34,7 @@ namespace OpenBoardAnim.Utils
                 double cameraViewportWidth = project.Settings?.EditorWidth ?? 0;
                 double cameraViewportHeight = project.Settings?.EditorHeight ?? 0;
                 EntranceStyle entranceStyle = project.Settings?.EntranceStyle ?? EntranceStyle.HandDrawn;
+                HandStyle handStyle = project.Settings?.HandStyle ?? HandStyle.LightSkin;
                 SceneTransition sceneTransition = project.Settings?.SceneTransition ?? SceneTransition.None;
                 Brush strokeBrush = Brushes.Black;
                 try
@@ -44,10 +45,13 @@ namespace OpenBoardAnim.Utils
                 catch (FormatException) { /* keep default black on an unparsable hex value */ }
                 double strokeWidth = project.Settings != null && project.Settings.StrokeWidth > 0 ? project.Settings.StrokeWidth : 1;
 
-                Image hand = new()
-                {
-                    Source = new BitmapImage(new Uri("pack://application:,,,/Resources/pencil.png"))
-                };
+                // ThumbnailUri is null for HandStyle.None - hand stays a sourceless, never-added
+                // Image in that case (see the HandDrawn branch below), harmlessly passed through
+                // to PathAnimationHelper regardless since it only ever moves/transforms it.
+                string handImageUri = HandStyleOptions.All.FirstOrDefault(o => o.Style == handStyle)?.ThumbnailUri;
+                Image hand = new();
+                if (handImageUri != null)
+                    hand.Source = new BitmapImage(new Uri(handImageUri));
                 // Cues collected as scenes start, in real (wall-clock) time - handed to the
                 // exporter so it can delay each voiceover clip into place when muxing, since
                 // export doesn't play audio live (frame capture is visual-only). Populated after
@@ -113,10 +117,15 @@ namespace OpenBoardAnim.Utils
 
                     if (entranceStyle == EntranceStyle.HandDrawn)
                     {
-                        canvas.Children.Add(hand);
-                        Canvas.SetLeft(hand, 0);
-                        Canvas.SetTop(hand, 1150);
-                        Canvas.SetZIndex(hand, 1);
+                        // HandStyle.None keeps the stroke-by-stroke draw animation (still driven
+                        // below via PathAnimationHelper) but skips showing the cursor image itself.
+                        if (handStyle != HandStyle.None)
+                        {
+                            canvas.Children.Add(hand);
+                            Canvas.SetLeft(hand, 0);
+                            Canvas.SetTop(hand, 1150);
+                            Canvas.SetZIndex(hand, 1);
+                        }
                         index = canvas.Children.Count;
                     }
                     SceneModel scene = project.Scenes[i];
