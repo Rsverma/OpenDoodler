@@ -13,6 +13,10 @@ namespace OpenBoardAnim.ViewModels
 {
     public class EditorLibraryViewModel : ViewModel
     {
+        // Must match GraphicRepository's own page size (its GetAllGraphics overloads both
+        // Take(20)) - a fetched batch smaller than this means the library has no more graphics
+        // left to load, which is what hides the "Load More.." button.
+        private const int GraphicsPageSize = 20;
         private IPubSubService _pubSub;
         private readonly ICacheService _cache;
         private readonly IDialogService _dialog;
@@ -43,6 +47,7 @@ namespace OpenBoardAnim.ViewModels
                 _messageBox = messageBox;
                 _pubSub.Subscribe(SubTopic.SceneChanged, SceneChangedHandler);
                 Graphics = cache.LoadedGraphics;
+                CanLoadMoreGraphics = Graphics.Count >= GraphicsPageSize;
                 Shapes = cache.AllShapes;
                 foreach (var graphic in Graphics)
                 {
@@ -84,6 +89,7 @@ namespace OpenBoardAnim.ViewModels
                     model.DeleteGraphic = DeleteGraphicHandler;
                     Graphics.Add(model);
                 }
+                CanLoadMoreGraphics = drawingModels.Count >= GraphicsPageSize;
             }
             catch (Exception ex)
             {
@@ -106,6 +112,7 @@ namespace OpenBoardAnim.ViewModels
                     model.DeleteGraphic = DeleteGraphicHandler;
                     Graphics.Add(model);
                 }
+                CanLoadMoreGraphics = drawingModels.Count >= GraphicsPageSize;
             }
             catch (Exception ex)
             {
@@ -125,6 +132,7 @@ namespace OpenBoardAnim.ViewModels
                 }
 
                 Graphics = _cache.LoadedGraphics;
+                CanLoadMoreGraphics = Graphics.Count >= GraphicsPageSize;
                 foreach (var graphic in Graphics)
                 {
                     graphic.AddGraphic = AddGraphicHandler;
@@ -135,6 +143,18 @@ namespace OpenBoardAnim.ViewModels
             {
                 if (Logger.LogError(ex, LogAction.LogAndShow))
                     throw;
+            }
+        }
+
+        private bool _canLoadMoreGraphics = true;
+
+        public bool CanLoadMoreGraphics
+        {
+            get { return _canLoadMoreGraphics; }
+            set
+            {
+                _canLoadMoreGraphics = value;
+                OnPropertyChanged();
             }
         }
 
