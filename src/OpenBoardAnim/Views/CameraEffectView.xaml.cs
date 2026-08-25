@@ -33,6 +33,7 @@ namespace OpenBoardAnim.Views
         public CameraEffectView()
         {
             InitializeComponent();
+            EasingComboBox.ItemsSource = EnumHelper.EnumerateEnum<CameraEasing>();
             Loaded += CameraEffectView_Loaded;
         }
 

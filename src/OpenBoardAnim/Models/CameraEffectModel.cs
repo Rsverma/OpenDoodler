@@ -1,4 +1,5 @@
 using OpenBoardAnim.Core;
+using OpenBoardAnim.Utilities;
 using System;
 using System.Text.Json.Serialization;
 using System.Windows.Input;
@@ -40,6 +41,12 @@ namespace OpenBoardAnim.Models
         private double _endTime = 2.0;
         public double EndTime { get => _endTime; set { _endTime = value; OnPropertyChanged(); } }
 
+        // How this move's progress is remapped before interpolating start->end - see
+        // CameraTransformMath.ApplyEasing. Defaults to Linear, the only curve this move ever had
+        // before easing existed, so an already-saved effect keeps playing exactly as before.
+        private CameraEasing _easing = CameraEasing.Linear;
+        public CameraEasing Easing { get => _easing; set { _easing = value; OnPropertyChanged(); } }
+
         public CameraEffectModel Clone()
         {
             return new CameraEffectModel
@@ -51,7 +58,8 @@ namespace OpenBoardAnim.Models
                 EndFocusY = EndFocusY,
                 EndZoom = EndZoom,
                 StartTime = StartTime,
-                EndTime = EndTime
+                EndTime = EndTime,
+                Easing = Easing
             };
         }
 

@@ -348,10 +348,11 @@ namespace OpenBoardAnim.Utils
                 // and needs no target/property-path resolution at all. Each call's explicit
                 // From (start.Scale/TranslateX/Y) makes an earlier "snap to start" assignment
                 // unnecessary - BeginAnimation establishes that starting value itself.
-                DoubleAnimation scaleXAnimation = new(start.Scale, end.Scale, duration) { FillBehavior = FillBehavior.HoldEnd };
-                DoubleAnimation scaleYAnimation = new(start.Scale, end.Scale, duration) { FillBehavior = FillBehavior.HoldEnd };
-                DoubleAnimation translateXAnimation = new(start.TranslateX, end.TranslateX, duration) { FillBehavior = FillBehavior.HoldEnd };
-                DoubleAnimation translateYAnimation = new(start.TranslateY, end.TranslateY, duration) { FillBehavior = FillBehavior.HoldEnd };
+                IEasingFunction easingFunction = ToEasingFunction(effect.Easing);
+                DoubleAnimation scaleXAnimation = new(start.Scale, end.Scale, duration) { FillBehavior = FillBehavior.HoldEnd, EasingFunction = easingFunction };
+                DoubleAnimation scaleYAnimation = new(start.Scale, end.Scale, duration) { FillBehavior = FillBehavior.HoldEnd, EasingFunction = easingFunction };
+                DoubleAnimation translateXAnimation = new(start.TranslateX, end.TranslateX, duration) { FillBehavior = FillBehavior.HoldEnd, EasingFunction = easingFunction };
+                DoubleAnimation translateYAnimation = new(start.TranslateY, end.TranslateY, duration) { FillBehavior = FillBehavior.HoldEnd, EasingFunction = easingFunction };
 
                 scale.BeginAnimation(ScaleTransform.ScaleXProperty, scaleXAnimation);
                 scale.BeginAnimation(ScaleTransform.ScaleYProperty, scaleYAnimation);
@@ -362,5 +363,18 @@ namespace OpenBoardAnim.Utils
                 elapsed = effect.EndTime;
             }
         }
+
+        // QuadraticEase's per-EasingMode curve is exactly the formula ExportRenderHandler's
+        // CameraTransformMath.ApplyEasing hand-computes for the same CameraEasing value (verified
+        // against QuadraticEase.EaseInCore(t) = t*t) - using it here keeps preview and export
+        // pixel-identical without either side depending on the other's animation system. Null for
+        // Linear, WPF's own DoubleAnimation default.
+        private static IEasingFunction ToEasingFunction(CameraEasing easing) => easing switch
+        {
+            CameraEasing.EaseIn => new QuadraticEase { EasingMode = EasingMode.EaseIn },
+            CameraEasing.EaseOut => new QuadraticEase { EasingMode = EasingMode.EaseOut },
+            CameraEasing.EaseInOut => new QuadraticEase { EasingMode = EasingMode.EaseInOut },
+            _ => null
+        };
     }
 }

@@ -237,6 +237,7 @@ namespace OpenBoardAnim.Utils
             public double EndTranslateX;
             public double StartTranslateY;
             public double EndTranslateY;
+            public CameraEasing Easing;
         }
 
         // Builds one scene's full visual timeline (every graphic's stroke/entrance windows, every
@@ -383,7 +384,8 @@ namespace OpenBoardAnim.Utils
                         StartTranslateX = start.TranslateX,
                         EndTranslateX = end.TranslateX,
                         StartTranslateY = start.TranslateY,
-                        EndTranslateY = end.TranslateY
+                        EndTranslateY = end.TranslateY,
+                        Easing = effect.Easing
                     });
                     cameraTotal = Math.Max(cameraTotal, effect.EndTime);
                 }
@@ -510,11 +512,12 @@ namespace OpenBoardAnim.Utils
             }
 
             double fraction = active.Duration > 0 ? Math.Clamp((t - active.Start) / active.Duration, 0, 1) : 1;
-            double currentScale = Lerp(active.StartScale, active.EndScale, fraction);
+            double eased = CameraTransformMath.ApplyEasing(fraction, active.Easing);
+            double currentScale = Lerp(active.StartScale, active.EndScale, eased);
             scale.ScaleX = currentScale;
             scale.ScaleY = currentScale;
-            translate.X = Lerp(active.StartTranslateX, active.EndTranslateX, fraction);
-            translate.Y = Lerp(active.StartTranslateY, active.EndTranslateY, fraction);
+            translate.X = Lerp(active.StartTranslateX, active.EndTranslateX, eased);
+            translate.Y = Lerp(active.StartTranslateY, active.EndTranslateY, eased);
         }
 
         private static double Lerp(double from, double to, double fraction) => from + (to - from) * fraction;
