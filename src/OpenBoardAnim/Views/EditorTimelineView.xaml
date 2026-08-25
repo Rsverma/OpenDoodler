@@ -302,6 +302,46 @@
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
 
+                <!-- Scene-to-scene transition markers, filling the gap between two adjacent
+                     scene cards - only present at a boundary whose effective transition (this
+                     scene's own override, or the project default if it inherits) isn't None.
+                     Width is sized to TransitionDurationSeconds at the current zoom (see
+                     EditorTimelineViewModel.RecomputeSegments), the same way a scene card's own
+                     width stands in for its estimated duration. -->
+                <ItemsControl ItemsSource="{Binding TransitionBlocks}" Canvas.Left="0" Canvas.Top="91">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <Canvas IsItemsHost="True"/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemContainerStyle>
+                        <Style TargetType="ContentPresenter">
+                            <Setter Property="Canvas.Left" Value="{Binding X}"/>
+                            <Setter Property="Canvas.Top" Value="0"/>
+                        </Style>
+                    </ItemsControl.ItemContainerStyle>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="{x:Type models:SceneTransitionTimelineBlock}">
+                            <!-- Orange marks a scene's own override; blue-gray marks a transition
+                                 that's simply inheriting the project's default. -->
+                            <Border Width="{Binding Width}" Height="{Binding Height}" CornerRadius="10" ToolTip="{Binding ToolTipText}">
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="Background" Value="#FFFF9800"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsOverride}" Value="False">
+                                                <Setter Property="Background" Value="#FF546E7A"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                                <materialDesign:PackIcon Kind="SwapHorizontal" Width="13" Height="13" Foreground="White"
+                                                          HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
                 <Thumb Canvas.Left="{Binding PlayheadX, Converter={StaticResource SubtractHalfConverter}, ConverterParameter=12}"
                        Canvas.Top="0" Width="12" Height="{Binding TimelineCanvasHeight}" Cursor="SizeWE"
                        DragDelta="Playhead_DragDelta" DragCompleted="Playhead_DragCompleted"

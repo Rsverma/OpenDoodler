@@ -92,8 +92,9 @@ namespace OpenBoardAnim.Utils
                     double estimatedSeconds = 0;
                     for (int s = startSceneIndex; s <= endSceneIndex; s++)
                         estimatedSeconds += GetEstimatedSceneDurationSeconds(project.Scenes[s]);
-                    if (sceneTransition != SceneTransition.None)
-                        estimatedSeconds += Math.Max(0, endSceneIndex - startSceneIndex) * transitionDurationSeconds;
+                    for (int s = startSceneIndex; s < endSceneIndex; s++)
+                        if (GetEffectiveTransition(project.Scenes[s], sceneTransition) != SceneTransition.None)
+                            estimatedSeconds += transitionDurationSeconds;
                     estimatedSeconds += 0.5;
                     int estimatedTotalFrames = Math.Max(1, (int)Math.Round(estimatedSeconds * exportFrameRate));
 
@@ -104,8 +105,11 @@ namespace OpenBoardAnim.Utils
                 }
                 for (int i = startSceneIndex; i <= endSceneIndex; i++)
                 {
-                    if (i > startSceneIndex && sceneTransition != SceneTransition.None)
-                        await PlaySceneTransition(canvas, sceneTransition, transitionDurationSeconds, cancellationToken);
+                    SceneTransition boundaryTransition = i > startSceneIndex
+                        ? GetEffectiveTransition(project.Scenes[i - 1], sceneTransition)
+                        : SceneTransition.None;
+                    if (boundaryTransition != SceneTransition.None)
+                        await PlaySceneTransition(canvas, boundaryTransition, transitionDurationSeconds, cancellationToken);
                     else
                         canvas.Children.Clear();
 
@@ -444,6 +448,21 @@ namespace OpenBoardAnim.Utils
             };
             timer.Start();
             return timer;
+        }
+
+        // Resolves a scene's outgoing transition: its own TransitionOverride if set to
+        // anything but Inherit, otherwise the project-wide default. Shared by the playback loop
+        // and the export progress estimate above, and by EditorTimelineViewModel's timeline
+        // marker so the badge shown there always matches what actually plays.
+        public static SceneTransition GetEffectiveTransition(SceneModel precedingScene, SceneTransition projectDefault)
+        {
+            return precedingScene?.TransitionOverride switch
+            {
+                SceneTransitionOverride.None => SceneTransition.None,
+                SceneTransitionOverride.Crossfade => SceneTransition.Crossfade,
+                SceneTransitionOverride.Wipe => SceneTransition.Wipe,
+                _ => projectDefault
+            };
         }
 
         // Plays a hard-cut alternative between the outgoing (fully-drawn) scene and the
