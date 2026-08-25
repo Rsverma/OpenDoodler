@@ -27,6 +27,45 @@
                 </Setter.Value>
             </Setter>
         </Style>
+        <!-- HandyControl's implicit ToggleButton style doesn't give IsChecked a visible highlight
+             on its own (same "own ControlTemplate needed to see a state change" issue as the
+             Border-highlight/tile-Height fixes elsewhere in this app) - this bypasses it with a
+             plain Border whose Background/BorderBrush react to IsChecked directly. -->
+        <Style x:Key="FormatToggleButtonStyle" TargetType="ToggleButton">
+            <Setter Property="Width" Value="28"/>
+            <Setter Property="Height" Value="24"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <!-- The bypassed ControlTemplate below has no themed chrome of its own to supply a
+                 Foreground, so without this the Content (a plain "B"/"I" string or a child
+                 TextBlock, both of which inherit Foreground rather than setting it) fell back to
+                 the WPF default of black regardless of theme. -->
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToggleButton">
+                        <Border x:Name="border" CornerRadius="3" BorderThickness="1" BorderBrush="Transparent" Background="Transparent">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="{DynamicResource PrimaryBrush}"/>
+                                <Setter TargetName="border" Property="BorderBrush" Value="{DynamicResource PrimaryBrush}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <!-- Style.Triggers (not ControlTemplate.Triggers) so this can set the
+                     ToggleButton's own Foreground DP directly - the Border in the template above
+                     has no Foreground property to target. White keeps the "B"/"I"/"U"/"S" glyph
+                     readable once the Background switches to the (typically saturated) accent
+                     PrimaryBrush above. -->
+                <Trigger Property="IsChecked" Value="True">
+                    <Setter Property="Foreground" Value="White"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
         <!-- Non-interactive (no move/resize thumbs) content-only template, just for rendering a
              read-only thumbnail preview of a template's graphics - same technique the timeline's
              own scene cards already use. -->
@@ -195,14 +234,32 @@
                             <RowDefinition Height="auto" />
                             <RowDefinition Height="auto" />
                             <RowDefinition Height="auto" />
-                            <RowDefinition Height="*" />
                         </Grid.RowDefinitions>
                         <TextBlock Margin="5 5 2 5" Text="Text" VerticalAlignment="Center"/>
                         <TextBlock Margin="5 5 2 5" Text="Font Family" Grid.Row="1" VerticalAlignment="Center"/>
                         <TextBlock Margin="5 5 2 5" Text="Font Style" Grid.Row="2" VerticalAlignment="Center"/>
                         <TextBlock Margin="5 5 2 5" Text="Color" Grid.Row="3" VerticalAlignment="Center"/>
                         <TextBlock Margin="5 5 2 5" Text="Font Size" Grid.Row="4" VerticalAlignment="Center"/>
-                        <hc:TextBox Margin="5 5 2 5" Grid.Column="1" hc:InfoElement.Placeholder="Enter Text to display" Text="{Binding RawText}"/>
+                        <StackPanel Margin="5 5 2 5" Grid.Column="1">
+                            <StackPanel Orientation="Horizontal" Margin="0 0 0 4">
+                                <ToggleButton x:Name="boldToggle" Style="{StaticResource FormatToggleButtonStyle}" Content="B" FontWeight="Bold" Click="BoldToggle_Click"/>
+                                <ToggleButton x:Name="italicToggle" Style="{StaticResource FormatToggleButtonStyle}" Margin="4 0 0 0" Content="I" FontStyle="Italic" Click="ItalicToggle_Click"/>
+                                <ToggleButton x:Name="underlineToggle" Style="{StaticResource FormatToggleButtonStyle}" Margin="4 0 0 0" Click="UnderlineToggle_Click">
+                                    <TextBlock Text="U" TextDecorations="Underline"/>
+                                </ToggleButton>
+                                <ToggleButton x:Name="strikethroughToggle" Style="{StaticResource FormatToggleButtonStyle}" Margin="4 0 0 0" Click="StrikethroughToggle_Click">
+                                    <TextBlock Text="S" TextDecorations="Strikethrough"/>
+                                </ToggleButton>
+                            </StackPanel>
+                            <RichTextBox x:Name="textRichTextBox" Height="60" AcceptsReturn="True"
+                                         VerticalScrollBarVisibility="Auto"
+                                         FontFamily="{Binding SelectedFontFamily}"
+                                         FontStyle="{Binding SelectedTypeFace.Style}"
+                                         FontWeight="{Binding SelectedTypeFace.Weight}"
+                                         FontSize="{Binding FontSize}"
+                                         SelectionChanged="TextRichTextBox_SelectionChanged"
+                                         TextChanged="TextRichTextBox_TextChanged"/>
+                        </StackPanel>
                         <hc:ComboBox x:Name="fontSelector" Margin="5 5 2 5" Grid.Column="1" Grid.Row="1"
                                      ItemsSource="{x:Static Fonts.SystemFontFamilies}" SelectedItem="{Binding SelectedFontFamily}"/>
                         <hc:ComboBox x:Name="typefaceSelector" Margin="5 5 2 5" Grid.Column="1" Grid.Row="2"
@@ -233,29 +290,9 @@
                         </StackPanel>
                         <StackPanel Grid.Column="1" Grid.Row="4" Orientation="Horizontal" Margin="5 5 2 5">
                             <hc:NumericUpDown x:Name="sizeSelector" Minimum="1" Value="{Binding FontSize}"/>
-                            <CheckBox Content="Underline" Margin="10 0 0 0" VerticalAlignment="Center" IsChecked="{Binding IsUnderline}"/>
                         </StackPanel>
                         <Button Margin="5 5 2 5" Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="5" Style="{DynamicResource ButtonPrimary}"
-                                 Command="{Binding AddTextCommand}" Content ="Add Text"/>
-                        <TextBlock Margin="5 5 2 5" Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="6"
-                                   FontFamily="{Binding SelectedItem.Source, ElementName=fontSelector}"
-                                   FontStretch="{Binding SelectedItem.Stretch, ElementName=typefaceSelector}"
-                                   FontStyle="{Binding SelectedItem.Style, ElementName=typefaceSelector}"
-                                   FontWeight="{Binding SelectedItem.Weight, ElementName=typefaceSelector}"
-                                   Text="Sample"
-                                   FontSize="{Binding Value, ElementName=sizeSelector}"
-                                   Foreground="{Binding SelectedTextColor}"
-                                   HorizontalAlignment="Center">
-                            <TextBlock.Style>
-                                <Style TargetType="TextBlock">
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding IsUnderline}" Value="True">
-                                            <Setter Property="TextDecorations" Value="{x:Static TextDecorations.Underline}"/>
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </TextBlock.Style>
-                        </TextBlock>
+                                 Command="{Binding AddTextCommand}" Click="AddText_Click" Content ="Add Text"/>
                     </Grid>
                 </hc:TabItem>
                 <hc:TabItem Header="{materialDesign:PackIcon music}" ToolTip="Audio">

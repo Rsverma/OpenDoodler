@@ -9,6 +9,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Documents;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
@@ -192,16 +193,7 @@ namespace OpenBoardAnim.Utils
                         }
                         else if (graphic is TextModel text)
                         {
-                            element = new TextBlock()
-                            {
-                                Text = text.RawText,
-                                Foreground = text.SelectedColor,
-                                FontFamily = text.SelectedFontFamily,
-                                FontSize = text.SelectedFontSize,
-                                FontStyle = text.SelectedFontStyle,
-                                FontWeight = text.SelectedFontWeight,
-                                TextDecorations = text.IsUnderline ? TextDecorations.Underline : null
-                            };
+                            element = BuildTextBlock(text);
                             // Same rationale as the DrawingModel branch above - scale from the
                             // text's natural (unscaled) geometry bounds to its current
                             // Height/Width so a canvas resize is reflected here too, since
@@ -345,6 +337,46 @@ namespace OpenBoardAnim.Utils
             return bitmap;
         }
 
+        // Builds the settled (non-hand-drawn-stroke) visual for a text graphic - shared by the
+        // entrance-animation branch above and BuildStaticElement below, since both need the exact
+        // same per-block bold/italic rendering. TextModel.TextGeometry (used for the hand-drawn
+        // stroke animation itself) already bakes the same per-run formatting in via
+        // GeometryHelper.ConvertTextToGeometry, so this only needs to match it for the TextBlock
+        // shown once strokes finish (or immediately, for Fade In / Pop In entrance styles).
+        private static TextBlock BuildTextBlock(TextModel text)
+        {
+            TextDecorationCollection baseDecorations = GeometryHelper.BuildDecorations(text.IsUnderline, text.IsStrikethrough);
+            TextBlock textBlock = new()
+            {
+                Foreground = text.SelectedColor,
+                FontFamily = text.SelectedFontFamily,
+                FontSize = text.SelectedFontSize,
+                FontStyle = text.SelectedFontStyle,
+                FontWeight = text.SelectedFontWeight,
+                TextDecorations = baseDecorations.Count > 0 ? baseDecorations : null
+            };
+            string rawText = text.RawText ?? string.Empty;
+            if (text.FormatRuns == null || text.FormatRuns.Count == 0)
+            {
+                textBlock.Text = rawText;
+            }
+            else
+            {
+                foreach (TextFormatRun run in text.FormatRuns)
+                {
+                    if (run.Length <= 0) continue;
+                    TextDecorationCollection runDecorations = GeometryHelper.BuildDecorations(run.IsUnderline, run.IsStrikethrough);
+                    textBlock.Inlines.Add(new Run(rawText.Substring(run.Start, run.Length))
+                    {
+                        FontWeight = run.IsBold ? FontWeights.Bold : FontWeights.Normal,
+                        FontStyle = run.IsItalic ? FontStyles.Italic : FontStyles.Normal,
+                        TextDecorations = runDecorations.Count > 0 ? runDecorations : null
+                    });
+                }
+            }
+            return textBlock;
+        }
+
         // The same final-state (non-hand-drawn) visual construction as the entrance-animation
         // branch above, factored out separately rather than shared - that branch is also
         // responsible for building the hand-drawn stroke geometry and driving the entrance
@@ -364,16 +396,7 @@ namespace OpenBoardAnim.Utils
             }
             if (graphic is TextModel text)
             {
-                TextBlock element = new()
-                {
-                    Text = text.RawText,
-                    Foreground = text.SelectedColor,
-                    FontFamily = text.SelectedFontFamily,
-                    FontSize = text.SelectedFontSize,
-                    FontStyle = text.SelectedFontStyle,
-                    FontWeight = text.SelectedFontWeight,
-                    TextDecorations = text.IsUnderline ? TextDecorations.Underline : null
-                };
+                TextBlock element = BuildTextBlock(text);
                 Rect textBounds = text.TextGeometry?.Bounds ?? Rect.Empty;
                 double textScale = !textBounds.IsEmpty && textBounds.Width > 0 && textBounds.Height > 0
                     ? Math.Min(text.Width / textBounds.Width, text.Height / textBounds.Height)

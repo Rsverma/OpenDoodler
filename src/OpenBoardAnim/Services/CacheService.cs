@@ -80,7 +80,7 @@ namespace OpenBoardAnim.Services
                             d.ImgDrawingGroup = GeometryHelper.GetPathGeometryFromSVG(d.SVGText);
                         else if (g is TextModel t)
                             t.TextGeometry = GeometryHelper.ConvertTextToGeometry(t.RawText, t.SelectedFontFamily,
-                                t.SelectedFontStyle, t.SelectedFontWeight, t.SelectedFontSize, t.IsUnderline);
+                                t.SelectedFontStyle, t.SelectedFontWeight, t.SelectedFontSize, t.IsUnderline, t.IsStrikethrough, t.FormatRuns);
                     }
                 }
             }
@@ -152,7 +152,7 @@ namespace OpenBoardAnim.Services
                         d.ImgDrawingGroup = GeometryHelper.GetPathGeometryFromSVG(d.SVGText);
                     else if (g is TextModel t)
                         t.TextGeometry = GeometryHelper.ConvertTextToGeometry(t.RawText, t.SelectedFontFamily,
-                            t.SelectedFontStyle, t.SelectedFontWeight, t.SelectedFontSize, t.IsUnderline);
+                            t.SelectedFontStyle, t.SelectedFontWeight, t.SelectedFontSize, t.IsUnderline, t.IsStrikethrough, t.FormatRuns);
                 }
                 return new SceneTemplateModel
                 {
