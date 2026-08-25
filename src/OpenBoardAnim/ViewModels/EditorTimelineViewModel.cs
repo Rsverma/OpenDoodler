@@ -47,9 +47,6 @@ namespace OpenBoardAnim.ViewModels
         private readonly IPubSubService _pubSub;
         private readonly IDialogService _dialog;
         private SceneModel _addScene;
-        // Rightmost X the playhead may reach - the end of the last real scene's segment,
-        // excluding the trailing "+" add-scene card so dragging can never land on it.
-        private double _maxPlayheadX;
         public ICommand ZoomInCommand { get; set; }
         public ICommand ZoomOutCommand { get; set; }
         public ICommand ResetZoomCommand { get; set; }
@@ -266,17 +263,6 @@ namespace OpenBoardAnim.ViewModels
         }
         private BindingList<SceneTransitionTimelineBlock> _transitionBlocks;
 
-        private double _playheadX;
-        public double PlayheadX
-        {
-            get { return _playheadX; }
-            set
-            {
-                _playheadX = value;
-                OnPropertyChanged();
-            }
-        }
-
         private void UpdateBindings(BindingList<SceneModel> value)
         {
             try
@@ -446,9 +432,8 @@ namespace OpenBoardAnim.ViewModels
                 }
                 TotalWidth = Math.Max(x, MinSegmentWidth);
                 SceneTimelineSegment lastRealSegment = Segments.LastOrDefault(s => s.Scene != _addScene);
-                _maxPlayheadX = lastRealSegment != null ? lastRealSegment.X + lastRealSegment.Width : 0;
-                RealContentWidth = Math.Max(_maxPlayheadX, MinSegmentWidth);
-                UpdatePlayheadPosition();
+                double lastRealSegmentEnd = lastRealSegment != null ? lastRealSegment.X + lastRealSegment.Width : 0;
+                RealContentWidth = Math.Max(lastRealSegmentEnd, MinSegmentWidth);
                 RecomputeTimeRuler();
             }
             catch (Exception ex)
@@ -524,40 +509,6 @@ namespace OpenBoardAnim.ViewModels
         {
             foreach (SceneTimelineSegment segment in Segments)
                 segment.IsSelected = segment.Scene == _selectedScene;
-            UpdatePlayheadPosition();
-        }
-
-        private void UpdatePlayheadPosition()
-        {
-            SceneTimelineSegment segment = Segments.FirstOrDefault(s => s.Scene == _selectedScene);
-            PlayheadX = segment != null ? segment.X + segment.Width / 2 : 0;
-        }
-
-        // Live-updates the playhead's visual position while the user is dragging it, without
-        // changing the selected scene yet - that only happens once the drag ends.
-        public void MovePlayheadPreview(double deltaX)
-        {
-            PlayheadX = Math.Clamp(PlayheadX + deltaX, 0, _maxPlayheadX);
-        }
-
-        // Snaps the playhead to whichever real scene (excluding the trailing "+" add-scene
-        // card) its dropped position is closest to, and selects it.
-        public void CommitPlayheadPosition()
-        {
-            try
-            {
-                List<SceneTimelineSegment> candidates = Segments.Where(s => s.Scene != _addScene).ToList();
-                if (candidates.Count == 0) return;
-                SceneTimelineSegment nearest = candidates
-                    .OrderBy(s => Math.Abs((s.X + s.Width / 2) - PlayheadX))
-                    .First();
-                SelectedScene = nearest.Scene;
-            }
-            catch (Exception ex)
-            {
-                if (Logger.LogError(ex, LogAction.LogAndShow))
-                    throw;
-            }
         }
 
         private void AddNewScene()
