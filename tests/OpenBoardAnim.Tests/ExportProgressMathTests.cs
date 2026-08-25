@@ -5,25 +5,6 @@ namespace OpenBoardAnim.Tests
 {
     public class ExportProgressMathTests
     {
-        [Fact]
-        public void ShouldCaptureFrame_ReturnsFalse_WhenWithinFrameWindow()
-        {
-            // 30fps -> ~0.0333s per frame; 0.02s since the last capture isn't enough yet.
-            Assert.False(ExportProgressMath.ShouldCaptureFrame(1.02, 1.00, 30));
-        }
-
-        [Fact]
-        public void ShouldCaptureFrame_ReturnsTrue_WhenElapsedMeetsThreshold()
-        {
-            Assert.True(ExportProgressMath.ShouldCaptureFrame(1.0333334, 1.00, 30));
-        }
-
-        [Fact]
-        public void ShouldCaptureFrame_ReturnsTrue_OnExactThreshold()
-        {
-            Assert.True(ExportProgressMath.ShouldCaptureFrame(1.0 + 1.0 / 30, 1.0, 30));
-        }
-
         [Theory]
         [InlineData(0, 100, 0)]
         [InlineData(50, 100, 35)]

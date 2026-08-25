@@ -2,7 +2,6 @@ using OpenBoardAnim.Models;
 using OpenBoardAnim.Utilities;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -12,17 +11,32 @@ using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
+using System.Windows.Threading;
 
 namespace OpenBoardAnim.Utils
 {
     // Video export capture. Split from PreviewPlaybackHandler deliberately - both used to live
     // in one isExport-branching method, but that made every preview-only tweak a risk to export
-    // and vice versa. This file owns export's animation-timing code (currently identical in
-    // spirit to preview's - real-time Storyboards played out while VideoExporter samples the
-    // canvas) and is free to move to a deterministic, non-realtime frame clock later without
-    // PreviewPlaybackHandler ever needing to change.
+    // and vice versa.
+    //
+    // Unlike preview (which plays real-time WPF Storyboards while VideoExporter samples whatever
+    // is on screen whenever CompositionTarget.Rendering fires), export is fully deterministic and
+    // does NOT use WPF's Storyboard/Clock system at all: an earlier version drove a paused,
+    // controllable Storyboard via Seek() per frame, but Seek doesn't reliably flush into the
+    // property system before an off-screen RenderTargetBitmap.Render() reads it (it depends on
+    // WPF's own composition tick, which nothing here was actually forcing) - every captured frame
+    // in a scene came out identical, frozen on the scene's first frame. Instead, every property
+    // this needs (stroke reveal, hand position, camera pan/zoom, entrance opacity/scale) is
+    // computed analytically for the exact virtual time of each frame and set directly - no clock,
+    // nothing to defer, so there's nothing that can silently not-yet-apply. Two public WPF APIs
+    // keep this exact rather than an approximation of the original animations: PathGeometry.
+    // GetPointAtFractionLength (the same primitive MatrixAnimationUsingPath used internally) for
+    // hand tracking, and IEasingFunction.Ease(double) so BackEase's curve isn't reimplemented.
     public class ExportRenderHandler
     {
+        private const double EndHoldSeconds = 0.5;
+        private static readonly IEasingFunction PopInEase = new BackEase { EasingMode = EasingMode.EaseOut };
+
         public static async Task ExportAsync(ProjectDetails project, Canvas canvas, IProgress<ExportProgressInfo> progress = null, string outputVideoPath = null, CancellationToken cancellationToken = default)
         {
             VideoExporter exporter = null;
@@ -44,30 +58,17 @@ namespace OpenBoardAnim.Utils
                 catch (FormatException) { /* keep default black on an unparsable hex value */ }
                 double strokeWidth = project.Settings != null && project.Settings.StrokeWidth > 0 ? project.Settings.StrokeWidth : 1;
 
-                // ThumbnailUri is null for HandStyle.None - hand stays a sourceless, never-added
-                // Image in that case (see the HandDrawn branch below), harmlessly passed through
-                // to ExportPathAnimationHelper regardless since it only ever moves/transforms it.
                 string handImageUri = HandStyleOptions.All.FirstOrDefault(o => o.Style == handStyle)?.ThumbnailUri;
                 Image hand = new();
                 if (handImageUri != null)
                     hand.Source = new BitmapImage(new Uri(handImageUri));
-                // Cues collected as scenes start, in real (wall-clock) time - handed to the
-                // exporter so it can delay each voiceover clip into place when muxing, since
-                // export doesn't play audio live (frame capture is visual-only). Populated after
-                // the loop below (see rawVoiceoverCues) once every scene's start time is known,
-                // so each voiceover can be capped to not bleed into the next scene.
+
                 List<SceneAudioCue> sceneAudioCues = new();
-                // Keyed by scene loop index rather than a plain sequential list, so a null scene
-                // (skipped via `continue` before it gets an entry) can't shift the alignment
-                // between this and each raw cue's SceneIndex below.
                 Dictionary<int, double> sceneStartTimes = new();
                 List<(string Path, double Start, double TrimStart, double TrimEnd, int SceneIndex)> rawVoiceoverCues = new();
-                Stopwatch sceneClock = Stopwatch.StartNew();
+                double virtualClock = 0;
                 const int exportFrameRate = 30;
-                int index = 1;
-                // Excludes the trailing "+" add-scene card either way; PreviewSceneIndex further
-                // narrows this to a single scene for an isolated preview instead of always
-                // starting from scene 1.
+
                 int startSceneIndex = 0;
                 int endSceneIndex = project.Scenes.Count - 2;
                 if (project.PreviewSceneIndex is int previewIndex && previewIndex >= 0 && previewIndex <= endSceneIndex)
@@ -75,30 +76,20 @@ namespace OpenBoardAnim.Utils
                     startSceneIndex = previewIndex;
                     endSceneIndex = previewIndex;
                 }
-                // Clamped to a small positive minimum - a zero/negative duration would make
-                // the crossfade/wipe DoubleAnimation below meaningless (or throw).
                 double transitionDurationSeconds = Math.Max(0.05, project.Settings?.TransitionDurationSeconds ?? 0.6);
 
-                // Frame count (rather than scene or graphic count) is what actually tracks
-                // linearly with real capture progress - a single hand-drawn stroke scene can
-                // take far longer to render than several static ones combined, so counting
-                // scenes/graphics made the bar jump in uneven lurches. GetEstimatedSceneDurationSeconds
-                // is the same rough per-scene estimate the timeline already uses; scene
-                // transitions and the trailing 0.5s hold are accounted for too so the estimate
-                // roughly matches the real capture length.
                 double estimatedSeconds = 0;
                 for (int s = startSceneIndex; s <= endSceneIndex; s++)
                     estimatedSeconds += SceneRenderHelpers.GetEstimatedSceneDurationSeconds(project.Scenes[s]);
                 for (int s = startSceneIndex; s < endSceneIndex; s++)
                     if (SceneRenderHelpers.GetEffectiveTransition(project.Scenes[s], sceneTransition) != SceneTransition.None)
                         estimatedSeconds += transitionDurationSeconds;
-                estimatedSeconds += 0.5;
+                estimatedSeconds += EndHoldSeconds;
                 int estimatedTotalFrames = Math.Max(1, (int)Math.Round(estimatedSeconds * exportFrameRate));
 
                 exporter = new(canvas, exportFrameRate, outputVideoPath, project.AudioPath, project.AudioVolume, sceneAudioCues,
                     project.AudioTrimStart, project.AudioTrimEnd, progress, estimatedTotalFrames);
                 exporter.StartCapture();
-                sceneClock.Restart();
 
                 for (int i = startSceneIndex; i <= endSceneIndex; i++)
                 {
@@ -106,149 +97,51 @@ namespace OpenBoardAnim.Utils
                         ? SceneRenderHelpers.GetEffectiveTransition(project.Scenes[i - 1], sceneTransition)
                         : SceneTransition.None;
                     if (boundaryTransition != SceneTransition.None)
-                        await PlaySceneTransition(canvas, boundaryTransition, transitionDurationSeconds, cancellationToken);
+                    {
+                        await RunTransitionAsync(canvas, boundaryTransition, transitionDurationSeconds, exporter, exportFrameRate, cancellationToken);
+                        virtualClock += transitionDurationSeconds;
+                    }
                     else
+                    {
                         canvas.Children.Clear();
+                    }
 
-                    // RenderTransform is a canvas-level property that Children.Clear() doesn't
-                    // touch - reset it every scene (camera effects or not) so a previous scene's
-                    // pan/zoom end-state can't bleed into this one.
                     ScaleTransform cameraScale = new(1, 1);
                     TranslateTransform cameraTranslate = new(0, 0);
                     canvas.RenderTransform = new TransformGroup { Children = { cameraScale, cameraTranslate } };
 
-                    if (entranceStyle == EntranceStyle.HandDrawn)
+                    bool showHand = entranceStyle == EntranceStyle.HandDrawn && handStyle != HandStyle.None;
+                    if (showHand)
                     {
-                        // HandStyle.None keeps the stroke-by-stroke draw animation (still driven
-                        // below via ExportPathAnimationHelper) but skips showing the cursor image itself.
-                        if (handStyle != HandStyle.None)
-                        {
-                            canvas.Children.Add(hand);
-                            Canvas.SetLeft(hand, 0);
-                            Canvas.SetTop(hand, 1150);
-                            Canvas.SetZIndex(hand, 1);
-                        }
-                        index = canvas.Children.Count;
+                        canvas.Children.Add(hand);
+                        Canvas.SetLeft(hand, 0);
+                        Canvas.SetTop(hand, 1150);
+                        Canvas.SetZIndex(hand, 1);
+                        hand.RenderTransform = new MatrixTransform();
                     }
+
                     SceneModel scene = project.Scenes[i];
                     if (scene == null) continue;
 
                     bool hasVoiceover = !string.IsNullOrWhiteSpace(scene.VoiceoverPath) && System.IO.File.Exists(scene.VoiceoverPath);
-                    double sceneStart = sceneClock.Elapsed.TotalSeconds;
-                    sceneStartTimes[i] = sceneStart;
+                    sceneStartTimes[i] = virtualClock;
                     if (hasVoiceover)
-                        rawVoiceoverCues.Add((scene.VoiceoverPath, sceneStart, scene.VoiceoverTrimStart, scene.VoiceoverTrimEnd, i));
+                        rawVoiceoverCues.Add((scene.VoiceoverPath, virtualClock, scene.VoiceoverTrimStart, scene.VoiceoverTrimEnd, i));
 
-                    async Task PlayGraphicsAsync()
-                    {
-                    for (int j = 0; j < scene.Graphics.Count; j++)
-                    {
-                        cancellationToken.ThrowIfCancellationRequested();
-                        GraphicModelBase graphic = scene.Graphics[j];
-                        // A hidden layer contributes nothing to the animation sequence - not
-                        // even its own Delay - so the next visible graphic just waits for its
-                        // own configured delay as normal, as if the hidden one weren't there.
-                        if (!graphic.IsVisible) continue;
-                        await Task.Delay((int)graphic.Delay * 1000, cancellationToken);
-                        Geometry geometry = null;
-                        UIElement element = null;
-                        if (graphic is DrawingModel drawing)
-                        {
-                            DrawingGroup drawingGroup = drawing.ImgDrawingGroup.Clone();
-                            // Scale from the drawing's own untransformed bounds to its current
-                            // Height/Width - the same values the canvas resize handle edits -
-                            // rather than the separately-tracked ResizeRatio, which only reflects
-                            // the scale delta of the most recent resize gesture (not the
-                            // cumulative scale from the drawing's natural size) once a graphic has
-                            // been resized more than once.
-                            Rect drawingBounds = drawingGroup.Bounds;
-                            double drawingScale = drawingBounds.Width > 0 && drawingBounds.Height > 0
-                                ? Math.Min(drawing.Width / drawingBounds.Width, drawing.Height / drawingBounds.Height)
-                                : 1;
-                            drawingGroup.Transform = new ScaleTransform(drawingScale, drawingScale);
-                            element = new Image
-                            {
-                                Source = new DrawingImage(drawingGroup)
-                            };
-                            if (entranceStyle == EntranceStyle.HandDrawn)
-                                geometry = GeometryHelper.ConvertToGeometry(drawingGroup);
-                        }
-                        else if (graphic is TextModel text)
-                        {
-                            element = SceneRenderHelpers.BuildTextBlock(text);
-                            // Same rationale as the DrawingModel branch above - scale from the
-                            // text's natural (unscaled) geometry bounds to its current
-                            // Height/Width so a canvas resize is reflected here too, since
-                            // TextBlock rendering otherwise has no relationship to those at all.
-                            Rect textBounds = text.TextGeometry?.Bounds ?? Rect.Empty;
-                            double textScale = !textBounds.IsEmpty && textBounds.Width > 0 && textBounds.Height > 0
-                                ? Math.Min(text.Width / textBounds.Width, text.Height / textBounds.Height)
-                                : 1;
-                            if (textScale != 1)
-                                element.RenderTransform = new ScaleTransform(textScale, textScale);
-                            if (entranceStyle == EntranceStyle.HandDrawn)
-                            {
-                                geometry = text.TextGeometry?.Clone();
-                                if (geometry != null)
-                                    geometry.Transform = new ScaleTransform(textScale, textScale);
-                            }
-                        }
-
-                        if (entranceStyle == EntranceStyle.HandDrawn && geometry != null)
-                        {
-                            PathGeometry pathGeometry = geometry.GetFlattenedPathGeometry();
-                            List<PathGeometry> pathGeometries = GeometryHelper.GenerateMultiplePaths(pathGeometry, graphic is DrawingModel);
-                            List<Path> paths = [];
-                            foreach (var geo in pathGeometries)
-                            {
-                                paths.Add(new Path
-                                {
-                                    Data = geo,
-                                    Stroke = strokeBrush,
-                                    StrokeThickness = strokeWidth
-                                });
-                            }
-                            var example = new ExportPathAnimationHelper(canvas, paths, graphic, hand);
-                            example.AnimatePathOnCanvas();
-                            // ExportPathAnimationHelper isn't cancellation-aware internally (it
-                            // completes tcs.Task via a Storyboard callback) - WaitAsync stops
-                            // *waiting* as soon as the token fires without needing that, so
-                            // Play/Close doesn't have to sit through a whole stroke animation
-                            // (previously the biggest reason cancelling only took effect after
-                            // roughly a full scene's worth of drawing).
-                            await example.tcs.Task.WaitAsync(cancellationToken);
-
-                            if (element != null)
-                            {
-                                canvas.Children.Add(element);
-                                Canvas.SetLeft(element, graphic.X);
-                                Canvas.SetTop(element, graphic.Y);
-                                int count = canvas.Children.Count - index - 1;
-                                canvas.Children.RemoveRange(index, count);
-                                index = canvas.Children.Count;
-                            }
-                        }
-                        else if (element != null)
-                        {
-                            await AnimateElementEntrance(canvas, element, graphic, entranceStyle, cancellationToken);
-                            index = canvas.Children.Count;
-                        }
-
-                    }
-                    }
-
-                    Task graphicsTask = PlayGraphicsAsync();
-                    Task cameraTask = PlayCameraEffectsAsync(scene, cameraScale, cameraTranslate, cameraViewportWidth, cameraViewportHeight, cancellationToken);
-                    await Task.WhenAll(graphicsTask, cameraTask);
+                    double sceneDuration = await RunSceneAsync(canvas, scene, entranceStyle, hand, showHand, strokeBrush, strokeWidth,
+                        cameraScale, cameraTranslate, cameraViewportWidth, cameraViewportHeight, exporter, exportFrameRate, cancellationToken);
+                    virtualClock += sceneDuration;
                 }
                 canvas.Children.Remove(hand);
-                await Task.Delay(500, cancellationToken);
 
-                // Cap each voiceover to the following scene's start time so it can't bleed into
-                // a scene it doesn't belong to - adelay only controls when a clip starts, not
-                // when it stops, so without this a voiceover longer than its own scene (or with
-                // no explicit trim end) would keep playing over whatever comes next. The last
-                // scene has no following start time to cap against, so it's left uncapped.
+                int holdFrameCount = Math.Max(1, (int)Math.Round(EndHoldSeconds * exportFrameRate));
+                for (int f = 0; f < holdFrameCount; f++)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    exporter.CaptureFrame();
+                    await YieldToUiAsync(canvas);
+                }
+
                 foreach (var raw in rawVoiceoverCues)
                 {
                     double effectiveTrimEnd = raw.TrimEnd;
@@ -277,13 +170,10 @@ namespace OpenBoardAnim.Utils
             }
         }
 
-        // Plays a hard-cut alternative between the outgoing (fully-drawn) scene and the
-        // incoming (blank) one: lays a plain white rectangle over the existing content and
-        // animates it in (fading in, or wiping across) to obscure the old scene, rather than
-        // capturing/animating a bitmap snapshot of it - simpler and avoids relying on
-        // RenderTargetBitmap producing a usable capture of a canvas that isn't backed by an
-        // on-screen HWND during export. Runs in real time so frame-capture records it.
-        private static async Task PlaySceneTransition(Canvas canvas, SceneTransition transition, double durationSeconds, CancellationToken cancellationToken)
+        // Plays a hard-cut alternative between the outgoing (fully-drawn) scene and the incoming
+        // (blank) one: a plain white rectangle whose Opacity (crossfade) or Width (wipe) is
+        // computed directly per frame, linearly, from 0 to full over durationSeconds.
+        private static async Task RunTransitionAsync(Canvas canvas, SceneTransition transition, double durationSeconds, VideoExporter exporter, int frameRate, CancellationToken cancellationToken)
         {
             if (canvas.Children.Count == 0)
                 return;
@@ -291,117 +181,372 @@ namespace OpenBoardAnim.Utils
             Rectangle overlay = new()
             {
                 Fill = Brushes.White,
-                Width = canvas.Width,
-                Height = canvas.Height
+                Width = transition == SceneTransition.Wipe ? 0 : canvas.Width,
+                Height = canvas.Height,
+                Opacity = transition == SceneTransition.Wipe ? 1 : 0
             };
             Canvas.SetLeft(overlay, 0);
             Canvas.SetTop(overlay, 0);
             Canvas.SetZIndex(overlay, 1000);
             canvas.Children.Add(overlay);
 
-            TimeSpan duration = TimeSpan.FromSeconds(durationSeconds);
-            Storyboard storyboard = new();
-
-            if (transition == SceneTransition.Wipe)
+            int frameCount = Math.Max(1, (int)Math.Round(durationSeconds * frameRate));
+            for (int f = 0; f < frameCount; f++)
             {
-                overlay.Width = 0;
-                DoubleAnimation widthAnimation = new(0, canvas.Width, duration) { FillBehavior = FillBehavior.HoldEnd };
-                Storyboard.SetTarget(widthAnimation, overlay);
-                Storyboard.SetTargetProperty(widthAnimation, new PropertyPath(FrameworkElement.WidthProperty));
-                storyboard.Children.Add(widthAnimation);
-            }
-            else
-            {
-                overlay.Opacity = 0;
-                DoubleAnimation opacityAnimation = new(0, 1, duration) { FillBehavior = FillBehavior.HoldEnd };
-                Storyboard.SetTarget(opacityAnimation, overlay);
-                Storyboard.SetTargetProperty(opacityAnimation, new PropertyPath(UIElement.OpacityProperty));
-                storyboard.Children.Add(opacityAnimation);
-            }
+                cancellationToken.ThrowIfCancellationRequested();
+                double fraction = durationSeconds > 0 ? Math.Clamp(f / (double)frameRate / durationSeconds, 0, 1) : 1;
+                if (transition == SceneTransition.Wipe)
+                    overlay.Width = fraction * canvas.Width;
+                else
+                    overlay.Opacity = fraction;
 
-            storyboard.Begin();
-            await Task.Delay(duration, cancellationToken);
+                canvas.UpdateLayout();
+                exporter.CaptureFrame();
+                await YieldToUiAsync(canvas);
+            }
 
             canvas.Children.Clear();
         }
 
-        // Non-hand-drawn reveals for graphics that don't need the "drawn by hand" look.
-        // Runs in real time (like the hand-drawn path animation) so the frame-capture loop in
-        // VideoExporter, which samples the live canvas, records the motion.
-        private static async Task AnimateElementEntrance(Canvas canvas, UIElement element, GraphicModelBase graphic, EntranceStyle style, CancellationToken cancellationToken)
+        // Precomputed, timing-independent facts about one visible graphic - built once per scene,
+        // then evaluated at every frame's virtual scene-elapsed time by ApplyGraphicState.
+        private sealed class GraphicPlan
         {
-            Canvas.SetLeft(element, graphic.X);
-            Canvas.SetTop(element, graphic.Y);
-            canvas.Children.Add(element);
-
-            TimeSpan duration = TimeSpan.FromSeconds(Math.Max(graphic.Duration, 0.1));
-            Storyboard storyboard = new();
-
-            if (style == EntranceStyle.PopIn && element is FrameworkElement frameworkElement)
-            {
-                frameworkElement.RenderTransformOrigin = new Point(0.5, 0.5);
-                frameworkElement.RenderTransform = new ScaleTransform(0, 0);
-
-                DoubleAnimation scaleXAnimation = new(0, 1, duration) { EasingFunction = new BackEase { EasingMode = EasingMode.EaseOut }, FillBehavior = FillBehavior.HoldEnd };
-                DoubleAnimation scaleYAnimation = new(0, 1, duration) { EasingFunction = new BackEase { EasingMode = EasingMode.EaseOut }, FillBehavior = FillBehavior.HoldEnd };
-                Storyboard.SetTarget(scaleXAnimation, frameworkElement);
-                Storyboard.SetTargetProperty(scaleXAnimation, new PropertyPath("RenderTransform.ScaleX"));
-                Storyboard.SetTarget(scaleYAnimation, frameworkElement);
-                Storyboard.SetTargetProperty(scaleYAnimation, new PropertyPath("RenderTransform.ScaleY"));
-                storyboard.Children.Add(scaleXAnimation);
-                storyboard.Children.Add(scaleYAnimation);
-            }
-            else
-            {
-                element.Opacity = 0;
-                DoubleAnimation opacityAnimation = new(0, 1, duration) { FillBehavior = FillBehavior.HoldEnd };
-                Storyboard.SetTarget(opacityAnimation, element);
-                Storyboard.SetTargetProperty(opacityAnimation, new PropertyPath(UIElement.OpacityProperty));
-                storyboard.Children.Add(opacityAnimation);
-            }
-
-            // Wait out the real duration directly rather than relying on Storyboard.Completed -
-            // see PlaySceneTransition for why that event isn't trustworthy here.
-            storyboard.Begin();
-            await Task.Delay(duration, cancellationToken);
+            public double Start;
+            public double Duration;
+            public bool IsHandDrawn;
+            public double X;
+            public double Y;
+            public UIElement SettledElement;
+            public List<PathPlan> Segments;
+            public EntranceStyle EntranceStyle;
         }
 
-        // Plays a scene's camera-effects layer (SceneModel.CameraEffects), sorted by StartTime
-        // (absolute seconds from the scene's start - not list/add order), concurrently with the
-        // scene's graphic entrance animations - see the call site in ExportAsync. Before the
-        // first effect's StartTime, between effects, and after the last one's EndTime, the
-        // camera simply holds wherever it last landed, since nothing touches scale/translate
-        // during those gaps. Runs in real time, awaited via Task.Delay rather than
-        // Storyboard.Completed, for the same export-capture-safety reason as PlaySceneTransition
-        // and AnimateElementEntrance above.
-        private static async Task PlayCameraEffectsAsync(SceneModel scene, ScaleTransform scale, TranslateTransform translate, double viewportWidth, double viewportHeight, CancellationToken cancellationToken)
+        private sealed class PathPlan
         {
-            if (scene?.CameraEffects == null || viewportWidth <= 0 || viewportHeight <= 0) return;
+            public Path Element;
+            public PathGeometry Geometry;
+            public double LocalStart;
+            public double LocalDuration;
+            public double Length;
+        }
 
-            double elapsed = 0;
-            foreach (CameraEffectModel effect in scene.CameraEffects.OrderBy(e => e.StartTime))
+        private sealed class CameraPlan
+        {
+            public double Start;
+            public double Duration;
+            public double StartScale;
+            public double EndScale;
+            public double StartTranslateX;
+            public double EndTranslateX;
+            public double StartTranslateY;
+            public double EndTranslateY;
+        }
+
+        // Builds one scene's full visual timeline (every graphic's stroke/entrance windows, every
+        // camera effect's window) and steps through it frame by frame, evaluating and applying
+        // state directly at each step rather than through any WPF animation clock. Returns the
+        // scene's real content duration (the same value SceneRenderHelpers.
+        // GetEstimatedSceneDurationSeconds approximates from outside).
+        private static async Task<double> RunSceneAsync(Canvas canvas, SceneModel scene, EntranceStyle entranceStyle, Image hand, bool showHand,
+            Brush strokeBrush, double strokeWidth, ScaleTransform cameraScale, TranslateTransform cameraTranslate,
+            double cameraViewportWidth, double cameraViewportHeight, VideoExporter exporter, int frameRate, CancellationToken cancellationToken)
+        {
+            List<GraphicPlan> graphicPlans = new();
+            double cursor = 0;
+            foreach (GraphicModelBase graphic in scene.Graphics.Where(g => g.IsVisible))
             {
-                await Task.Delay(TimeSpan.FromSeconds(Math.Max(0, effect.StartTime - elapsed)), cancellationToken);
-                elapsed = effect.StartTime;
+                double start = cursor + graphic.Delay;
+                Geometry geometry = null;
+                UIElement element = null;
 
-                CameraTransform start = CameraTransformMath.ComputeTransform(effect.StartFocusX, effect.StartFocusY, effect.StartZoom, viewportWidth, viewportHeight);
-                CameraTransform end = CameraTransformMath.ComputeTransform(effect.EndFocusX, effect.EndFocusY, effect.EndZoom, viewportWidth, viewportHeight);
+                if (graphic is DrawingModel drawing)
+                {
+                    DrawingGroup drawingGroup = drawing.ImgDrawingGroup.Clone();
+                    Rect drawingBounds = drawingGroup.Bounds;
+                    double drawingScale = drawingBounds.Width > 0 && drawingBounds.Height > 0
+                        ? Math.Min(drawing.Width / drawingBounds.Width, drawing.Height / drawingBounds.Height)
+                        : 1;
+                    drawingGroup.Transform = new ScaleTransform(drawingScale, drawingScale);
+                    element = new Image { Source = new DrawingImage(drawingGroup) };
+                    if (entranceStyle == EntranceStyle.HandDrawn)
+                        geometry = GeometryHelper.ConvertToGeometry(drawingGroup);
+                }
+                else if (graphic is TextModel text)
+                {
+                    element = SceneRenderHelpers.BuildTextBlock(text);
+                    Rect textBounds = text.TextGeometry?.Bounds ?? Rect.Empty;
+                    double textScale = !textBounds.IsEmpty && textBounds.Width > 0 && textBounds.Height > 0
+                        ? Math.Min(text.Width / textBounds.Width, text.Height / textBounds.Height)
+                        : 1;
+                    if (textScale != 1)
+                        element.RenderTransform = new ScaleTransform(textScale, textScale);
+                    if (entranceStyle == EntranceStyle.HandDrawn)
+                    {
+                        geometry = text.TextGeometry?.Clone();
+                        if (geometry != null)
+                            geometry.Transform = new ScaleTransform(textScale, textScale);
+                    }
+                }
 
-                TimeSpan duration = TimeSpan.FromSeconds(Math.Max(effect.EndTime - effect.StartTime, 0.01));
+                double graphicDuration;
+                GraphicPlan plan = new() { Start = start, X = graphic.X, Y = graphic.Y, EntranceStyle = entranceStyle };
 
-                DoubleAnimation scaleXAnimation = new(start.Scale, end.Scale, duration) { FillBehavior = FillBehavior.HoldEnd };
-                DoubleAnimation scaleYAnimation = new(start.Scale, end.Scale, duration) { FillBehavior = FillBehavior.HoldEnd };
-                DoubleAnimation translateXAnimation = new(start.TranslateX, end.TranslateX, duration) { FillBehavior = FillBehavior.HoldEnd };
-                DoubleAnimation translateYAnimation = new(start.TranslateY, end.TranslateY, duration) { FillBehavior = FillBehavior.HoldEnd };
+                if (entranceStyle == EntranceStyle.HandDrawn && geometry != null)
+                {
+                    graphicDuration = Math.Max(graphic.Duration, 0);
+                    plan.IsHandDrawn = true;
+                    plan.Duration = graphicDuration;
+                    plan.Segments = new List<PathPlan>();
 
-                scale.BeginAnimation(ScaleTransform.ScaleXProperty, scaleXAnimation);
-                scale.BeginAnimation(ScaleTransform.ScaleYProperty, scaleYAnimation);
-                translate.BeginAnimation(TranslateTransform.XProperty, translateXAnimation);
-                translate.BeginAnimation(TranslateTransform.YProperty, translateYAnimation);
+                    PathGeometry pathGeometry = geometry.GetFlattenedPathGeometry();
+                    List<PathGeometry> pathGeometries = GeometryHelper.GenerateMultiplePaths(pathGeometry, graphic is DrawingModel);
+                    List<double> lengths = pathGeometries.Select(GetTotalLength).ToList();
+                    double totalLength = lengths.Sum();
+                    double localCursor = 0;
+                    for (int i = 0; i < pathGeometries.Count; i++)
+                    {
+                        Path pathElement = new() { Stroke = strokeBrush, StrokeThickness = strokeWidth, Data = pathGeometries[i] };
+                        // A single-value StrokeDashArray alternates [dash=length, gap=length] -
+                        // StrokeDashOffset=length shifts the pattern so the whole path starts in
+                        // the gap (hidden); offset=0 puts the whole path in the dash (fully
+                        // drawn). Without StrokeDashArray set at all, StrokeDashOffset has no
+                        // effect and the stroke always renders solid regardless.
+                        pathElement.StrokeDashArray = new DoubleCollection(new double[] { lengths[i] });
+                        pathElement.StrokeDashOffset = lengths[i];
+                        canvas.Children.Add(pathElement);
+                        Canvas.SetLeft(pathElement, graphic.X);
+                        Canvas.SetTop(pathElement, graphic.Y);
 
-                await Task.Delay(duration, cancellationToken);
-                elapsed = effect.EndTime;
+                        double ratio = totalLength > 0 ? lengths[i] / totalLength : 0;
+                        double segDuration = graphicDuration * ratio;
+                        plan.Segments.Add(new PathPlan
+                        {
+                            Element = pathElement,
+                            Geometry = pathGeometries[i],
+                            LocalStart = localCursor,
+                            LocalDuration = segDuration,
+                            Length = lengths[i]
+                        });
+                        localCursor += segDuration;
+                    }
+
+                    if (element != null)
+                    {
+                        element.Opacity = 0;
+                        canvas.Children.Add(element);
+                        Canvas.SetLeft(element, graphic.X);
+                        Canvas.SetTop(element, graphic.Y);
+                        plan.SettledElement = element;
+                    }
+                }
+                else if (element != null)
+                {
+                    graphicDuration = Math.Max(graphic.Duration, 0.1);
+                    plan.IsHandDrawn = false;
+                    plan.Duration = graphicDuration;
+                    plan.SettledElement = element;
+                    if (entranceStyle == EntranceStyle.PopIn && element is FrameworkElement frameworkElement)
+                    {
+                        frameworkElement.RenderTransformOrigin = new Point(0.5, 0.5);
+                        frameworkElement.RenderTransform = new ScaleTransform(0, 0);
+                    }
+                    else
+                    {
+                        element.Opacity = 0;
+                    }
+                    Canvas.SetLeft(element, graphic.X);
+                    Canvas.SetTop(element, graphic.Y);
+                    canvas.Children.Add(element);
+                }
+                else
+                {
+                    graphicDuration = Math.Max(graphic.Duration, 0.1);
+                    plan.Duration = graphicDuration;
+                }
+
+                graphicPlans.Add(plan);
+                cursor = start + graphicDuration;
             }
+            double graphicsTotal = cursor;
+
+            List<CameraPlan> cameraPlans = new();
+            double cameraTotal = 0;
+            if (scene.CameraEffects != null && cameraViewportWidth > 0 && cameraViewportHeight > 0)
+            {
+                foreach (CameraEffectModel effect in scene.CameraEffects.OrderBy(e => e.StartTime))
+                {
+                    CameraTransform start = CameraTransformMath.ComputeTransform(effect.StartFocusX, effect.StartFocusY, effect.StartZoom, cameraViewportWidth, cameraViewportHeight);
+                    CameraTransform end = CameraTransformMath.ComputeTransform(effect.EndFocusX, effect.EndFocusY, effect.EndZoom, cameraViewportWidth, cameraViewportHeight);
+                    cameraPlans.Add(new CameraPlan
+                    {
+                        Start = effect.StartTime,
+                        Duration = Math.Max(effect.EndTime - effect.StartTime, 0.01),
+                        StartScale = start.Scale,
+                        EndScale = end.Scale,
+                        StartTranslateX = start.TranslateX,
+                        EndTranslateX = end.TranslateX,
+                        StartTranslateY = start.TranslateY,
+                        EndTranslateY = end.TranslateY
+                    });
+                    cameraTotal = Math.Max(cameraTotal, effect.EndTime);
+                }
+            }
+
+            double sceneDuration = Math.Max(graphicsTotal, cameraTotal);
+            int frameCount = Math.Max(1, (int)Math.Round(sceneDuration * frameRate));
+            for (int f = 0; f < frameCount; f++)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                double t = f / (double)frameRate;
+
+                foreach (GraphicPlan plan in graphicPlans)
+                    ApplyGraphicState(plan, t, showHand ? hand : null);
+                ApplyCameraState(cameraPlans, cameraScale, cameraTranslate, t);
+
+                canvas.UpdateLayout();
+                exporter.CaptureFrame();
+                await YieldToUiAsync(canvas);
+            }
+
+            return sceneDuration;
+        }
+
+        // Task.Yield()'s continuation resumes at DispatcherPriority.Normal under WPF's dispatcher
+        // - since Normal outranks Render, a tight loop that re-posts itself every frame at that
+        // priority starves the window's own repaint (and IProgress<T> reports, also posted to the
+        // dispatcher) for as long as the loop keeps running: the queue never drains down to
+        // Render/lower while Normal-priority work keeps arriving right behind it. Yielding at
+        // Background - below both Render and Normal - guarantees a paint pass and any pending
+        // progress report get serviced every single frame instead of only once capture finishes.
+        private static Task YieldToUiAsync(Canvas canvas)
+        {
+            return canvas.Dispatcher.InvokeAsync(() => { }, DispatcherPriority.Background).Task;
+        }
+
+        // Evaluates one graphic's state at scene-elapsed time t and applies it directly - stroke
+        // dash-offset reveal + hand tracking for HandDrawn, or opacity/scale for a fade/pop-in
+        // entrance. Graphics before t settle to their final look; graphics after t stay hidden;
+        // clamping the local-progress fraction to [0, 1] handles both automatically without
+        // needing separate before/after branches.
+        private static void ApplyGraphicState(GraphicPlan plan, double t, Image hand)
+        {
+            double local = Math.Clamp(t - plan.Start, 0, plan.Duration);
+            bool started = t >= plan.Start;
+            bool finished = t >= plan.Start + plan.Duration;
+
+            if (plan.IsHandDrawn)
+            {
+                if (plan.SettledElement != null)
+                    plan.SettledElement.Opacity = finished ? 1 : 0;
+
+                foreach (PathPlan seg in plan.Segments)
+                {
+                    double segLocal = Math.Clamp(local - seg.LocalStart, 0, seg.LocalDuration);
+                    double fraction = seg.LocalDuration > 0 ? segLocal / seg.LocalDuration : (local >= seg.LocalStart ? 1 : 0);
+                    seg.Element.StrokeDashOffset = seg.Length * (1 - fraction);
+                    seg.Element.Opacity = finished ? 0 : 1;
+
+                    // started (not just local >= seg.LocalStart) matters here: for a graphic that
+                    // hasn't started yet, local is clamped to 0, which trivially satisfies
+                    // `local >= seg.LocalStart` for that graphic's own first segment (LocalStart
+                    // 0) too - without the started guard, every not-yet-started graphic later in
+                    // the list would also touch the hand's matrix each frame and, being processed
+                    // after the actually-active graphic, stomp its position back to a fixed point.
+                    if (hand != null && started && local >= seg.LocalStart)
+                    {
+                        seg.Geometry.GetPointAtFractionLength(fraction, out Point point, out _);
+                        ((MatrixTransform)hand.RenderTransform).Matrix = new Matrix(1, 0, 0, 1, point.X, point.Y);
+                    }
+                }
+
+                if (hand != null)
+                {
+                    if (finished)
+                    {
+                        Canvas.SetLeft(hand, 2000);
+                        Canvas.SetTop(hand, 1100);
+                    }
+                    else if (started)
+                    {
+                        Canvas.SetLeft(hand, plan.X);
+                        Canvas.SetTop(hand, plan.Y);
+                    }
+                }
+            }
+            else if (plan.SettledElement != null)
+            {
+                double fraction = plan.Duration > 0 ? local / plan.Duration : (started ? 1 : 0);
+                if (plan.EntranceStyle == EntranceStyle.PopIn && plan.SettledElement is FrameworkElement frameworkElement
+                    && frameworkElement.RenderTransform is ScaleTransform scaleTransform)
+                {
+                    double eased = fraction <= 0 ? 0 : fraction >= 1 ? 1 : PopInEase.Ease(fraction);
+                    scaleTransform.ScaleX = eased;
+                    scaleTransform.ScaleY = eased;
+                }
+                else
+                {
+                    plan.SettledElement.Opacity = fraction;
+                }
+            }
+        }
+
+        // Evaluates the camera transform at scene-elapsed time t: holds at (1, 0, 0) before the
+        // first effect, linearly interpolates within whichever effect's window contains t, and
+        // holds at that effect's end value in the gap before the next one starts.
+        private static void ApplyCameraState(List<CameraPlan> plans, ScaleTransform scale, TranslateTransform translate, double t)
+        {
+            CameraPlan active = null;
+            foreach (CameraPlan plan in plans)
+            {
+                if (t >= plan.Start)
+                    active = plan;
+                else
+                    break;
+            }
+            if (active == null)
+            {
+                scale.ScaleX = 1;
+                scale.ScaleY = 1;
+                translate.X = 0;
+                translate.Y = 0;
+                return;
+            }
+
+            double fraction = active.Duration > 0 ? Math.Clamp((t - active.Start) / active.Duration, 0, 1) : 1;
+            double currentScale = Lerp(active.StartScale, active.EndScale, fraction);
+            scale.ScaleX = currentScale;
+            scale.ScaleY = currentScale;
+            translate.X = Lerp(active.StartTranslateX, active.EndTranslateX, fraction);
+            translate.Y = Lerp(active.StartTranslateY, active.EndTranslateY, fraction);
+        }
+
+        private static double Lerp(double from, double to, double fraction) => from + (to - from) * fraction;
+
+        private static double GetTotalLength(PathGeometry geometry)
+        {
+            double length = 0;
+            foreach (PathFigure figure in geometry.Figures)
+            {
+                Point start = figure.StartPoint;
+                foreach (PathSegment segment in figure.Segments)
+                {
+                    if (segment is LineSegment line)
+                    {
+                        length += (line.Point - start).Length;
+                        start = line.Point;
+                    }
+                    else if (segment is PolyLineSegment polyLine)
+                    {
+                        foreach (Point point in polyLine.Points)
+                        {
+                            length += (point - start).Length;
+                            start = point;
+                        }
+                    }
+                }
+            }
+            return length;
         }
     }
 }
