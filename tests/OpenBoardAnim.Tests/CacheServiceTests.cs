@@ -15,7 +15,7 @@ namespace OpenBoardAnim.Tests
     // Repositories here are mocked to return graphics/entities with empty SVGText so
     // GeometryHelper.GetPathGeometryFromSVG (SharpVectors) is never actually invoked - that
     // parsing path is WPF-rendering-coupled and out of scope for these unit tests, same as
-    // the rest of GeometryHelper/PathAnimationHelper.
+    // the rest of GeometryHelper/SceneTimelineEngine.
     public class CacheServiceTests
     {
         private readonly Mock<IGraphicRepository> _gRepo = new();

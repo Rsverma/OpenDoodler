@@ -55,8 +55,8 @@ Four projects in `OpenBoardAnim.sln`:
   references all three `src/` projects. Covers pure logic (`ExportProgressMath`), services against
   mocked repositories (`CacheService`), and ViewModels with interface-only dependencies
   (`EditorActionsViewModel`, `EditorCanvasViewModel`, `EditorTimelineViewModel`, `StateSnapshotService`).
-  Deliberately does not cover the WPF rendering pipeline (`GeometryHelper`, `PathAnimationHelper`,
-  `PreviewAndExportHandler`'s animation methods) or anything requiring a live `Application.Current`
+  Deliberately does not cover the WPF rendering pipeline (`GeometryHelper`, `SceneTimelineEngine`,
+  `PreviewPlaybackHandler`/`ExportRenderHandler`'s animation methods) or anything requiring a live `Application.Current`
   (`ThemeService`'s `ApplySkin`/`CurrentTheme`) — not economically unit-testable without a much larger
   rendering-abstraction rearchitecture.
 
@@ -113,25 +113,38 @@ a new one.
 ### Export / rendering pipeline
 
 Preview and export are deliberately separate code paths, not one `isExport`-branching method — this lets each
-be changed (e.g. export's animation timing model) without risking the other.
+be changed independently without risking the other. Both are fully deterministic: neither drives a WPF
+`Storyboard`/`Clock` at all. Every visual property (stroke reveal, hand position, camera pan/zoom, entrance
+opacity/scale) is computed analytically for a given point in time and set directly, so the same time always
+produces the exact same visual state — which is what makes both scrubbing (preview) and frame-accurate capture
+(export) possible in the first place.
 
-- `src/OpenBoardAnim/Utils/SceneRenderHelpers.cs` — static helpers shared by both paths because they're
+- `src/OpenBoardAnim/Utils/SceneTimelineEngine.cs` — the shared "what does this scene look like at time t"
+  engine both paths are built on: `BuildScenePlan(Canvas, SceneModel, EntranceStyle, Brush, double strokeWidth,
+  double viewportWidth, double viewportHeight)` builds a scene's `GraphicPlan`/`CameraPlan` list (adding hidden
+  WPF elements to the canvas as a side effect) and returns its real content duration; `ApplyGraphicState`/
+  `ApplyCameraState` evaluate those plans at any scene-elapsed time. Two public WPF APIs keep this exact rather
+  than an approximation of hand-authored animation curves: `PathGeometry.GetPointAtFractionLength` for hand
+  tracking (the same primitive `MatrixAnimationUsingPath` uses internally) and `IEasingFunction.Ease(double)`
+  for entrance/camera easing curves.
+- `src/OpenBoardAnim/Utils/SceneRenderHelpers.cs` — smaller helpers shared by both paths because they're
   genuinely timing-independent: `BuildTextBlock`/`RenderSceneSnapshot` (static, non-animated visuals),
-  `GetEstimatedSceneDurationSeconds`, `StartTrimStopTimer`, `GetEffectiveTransition` (resolves a scene's
-  `TransitionOverride` against the project default).
-- `src/OpenBoardAnim/Utils/PreviewPlaybackHandler.cs` — static `PlayAsync(ProjectDetails, Canvas,
-  CancellationToken)` replays a project's scenes onto a WPF `Canvas` for live preview, animating strokes via
-  `PathAnimationHelper` and geometry conversion via `GeometryHelper`. Real-time WPF `Storyboard`/`BeginAnimation`
-  clocks throughout.
+  `GetEstimatedSceneDurationSeconds`, `GetEffectiveTransition` (resolves a scene's `TransitionOverride` against
+  the project default), `ResolveHandImage` (skin lookup, including a user-picked `HandStyle.Custom` file).
+- `src/OpenBoardAnim/Utils/PreviewPlaybackHandler.cs` — instantiable (not static) controller for live in-app
+  preview (`ProjectPreviewView`): builds a flat, absolute-seconds timeline of scene/transition segments up
+  front, then `Seek(double)` moves the live `Canvas` to any point on it (lazily rebuilding only the segment
+  being entered via `SceneTimelineEngine`/a `RenderSceneSnapshot` for transitions), `Play()`/`Pause()` drive
+  `Seek` forward each frame off `CompositionTarget.Rendering`, and both background-music/voiceover `MediaPlayer`s
+  are resynced whenever the active segment changes. One instance per view; `Dispose()` on close.
 - `src/OpenBoardAnim/Utils/ExportRenderHandler.cs` — static `ExportAsync(ProjectDetails, Canvas,
-  IProgress<ExportProgressInfo>, string outputVideoPath, CancellationToken)`, export's own copy of the same
-  playback loop (currently also real-time `Storyboard`/`BeginAnimation`, via its own `ExportPathAnimationHelper`
-  rather than `PathAnimationHelper`), plus voiceover-cue timing and driving `VideoExporter`'s frame capture.
-  Free to move to a different (e.g. deterministic, non-realtime) timing model later without touching preview.
-- `src/OpenBoardAnim/Utils/VideoExporter.cs` — when exporting, hooks `CompositionTarget.Rendering` to capture
-  `RenderTargetBitmap` frames of the canvas as BMPs under `%TEMP%\WpfAnimationFrames`, then shells out to
-  `DLLs\ffmpeg.exe` (bundled in the app's output dir, copied via `.csproj`) through `Process`/`ProcessStartInfo`
-  to encode the frames into an MP4.
+  IProgress<ExportProgressInfo>, string outputVideoPath, CancellationToken)` steps a fixed 30fps frame clock
+  through each scene's `SceneTimelineEngine` plan, calling `VideoExporter.CaptureFrame()` once per frame, plus
+  voiceover-cue timing.
+- `src/OpenBoardAnim/Utils/VideoExporter.cs` — `CaptureFrame()` (called explicitly once per exported frame,
+  not off `CompositionTarget.Rendering`) renders the canvas to a `RenderTargetBitmap`, saved as a BMP under
+  `%TEMP%\WpfAnimationFrames`; `StopCapture` then shells out to `DLLs\ffmpeg.exe` (bundled in the app's output
+  dir, copied via `.csproj`) through `Process`/`ProcessStartInfo` to encode the frames into an MP4.
 - Export runs in the background off the UI thread (see recent commit "Updated the export feature to render in
   background") — preserve that when touching the export path so the UI doesn't block during long renders.
 
@@ -143,5 +156,5 @@ and at 3MB, under `AppDomain.CurrentDomain.BaseDirectory`. Use `Logger.LogError(
 `Logger.LogWarning(msg, LogAction)`, `Logger.LogMessage(msg, LogAction)` rather than writing new logging code;
 `LogAction` (`LogOnly`, `LogAndShow`, `LogAndThrow`) controls whether the error also surfaces to the UI. This is
 used pervasively via try/catch wrappers throughout the app (`App.xaml.cs`, `CacheService`, `PubSubService`,
-`VideoExporter`, `PreviewAndExportHandler`) — follow the same try/catch-and-log convention for new
+`VideoExporter`, `PreviewPlaybackHandler`, `ExportRenderHandler`) — follow the same try/catch-and-log convention for new
 startup/IO/export code.

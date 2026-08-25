@@ -11,7 +11,7 @@ namespace OpenBoardAnim.Tests
 {
     // AddTextCommandHandler itself is not exercised here - it calls GeometryHelper.ConvertTextToGeometry,
     // which needs Application.Current.MainWindow for DPI (real WPF rendering, out of scope - same as
-    // GeometryHelper/PathAnimationHelper elsewhere). Its CanExecute logic (pure) is covered.
+    // GeometryHelper/SceneTimelineEngine elsewhere). Its CanExecute logic (pure) is covered.
     public class EditorLibraryViewModelTests
     {
         private readonly Mock<IPubSubService> _pubSub = new();

@@ -154,7 +154,7 @@ namespace OpenBoardAnim.Models
         // ends and the next one begins - Inherit (the default) leaves the project-wide setting
         // in effect, so existing projects (saved before this existed) keep behaving exactly as
         // before. Has no effect on the last real scene, which has no "next" scene to transition
-        // into (see PreviewPlaybackHandler.PlayAsync / ExportRenderHandler.ExportAsync).
+        // into (see PreviewPlaybackHandler's constructor / ExportRenderHandler.ExportAsync).
         private SceneTransitionOverride _transitionOverride = SceneTransitionOverride.Inherit;
         public SceneTransitionOverride TransitionOverride
         {

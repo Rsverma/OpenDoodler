@@ -511,9 +511,9 @@ namespace OpenBoardAnim.ViewModels
             if (scene == null) return 0;
             double graphicsTotal = scene.Graphics?.Sum(g => g.Delay + g.Duration) ?? 0;
             // Camera effects run as a second, concurrent timeline (see
-            // PreviewPlaybackHandler.PlayCameraEffectsAsync / ExportRenderHandler.PlayCameraEffectsAsync) - a scene's real duration is
-            // whichever of the two actually runs longer. Effects are keyed by absolute EndTime,
-            // so the camera timeline's length is just the latest one.
+            // SceneTimelineEngine.BuildScenePlan) - a scene's real duration is whichever of the
+            // two actually runs longer. Effects are keyed by absolute EndTime, so the camera
+            // timeline's length is just the latest one.
             double cameraTotal = scene.CameraEffects != null && scene.CameraEffects.Count > 0
                 ? scene.CameraEffects.Max(e => e.EndTime)
                 : 0;
