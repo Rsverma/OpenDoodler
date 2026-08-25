@@ -254,7 +254,7 @@ namespace OpenBoardAnim.ViewModels
         private BindingList<TimeRulerTick> _timeRulerTicks;
 
         // Scene-to-scene transition markers on the graphics track - see
-        // SceneTransitionTimelineBlock and PreviewAndExportHandler.GetEffectiveTransition.
+        // SceneTransitionTimelineBlock and SceneRenderHelpers.GetEffectiveTransition.
         public BindingList<SceneTransitionTimelineBlock> TransitionBlocks
         {
             get { return _transitionBlocks; }
@@ -398,7 +398,7 @@ namespace OpenBoardAnim.ViewModels
                 Segments.Clear();
                 TransitionBlocks.Clear();
                 SceneTransition projectDefaultTransition = Project?.Settings?.SceneTransition ?? SceneTransition.None;
-                // Same clamp PreviewAndExportHandler applies before actually playing a
+                // Same clamp PreviewPlaybackHandler/ExportRenderHandler apply before actually playing a
                 // transition - keeps the block's width meaningful even if the project's
                 // duration field was left at 0 or a negative value.
                 double transitionDurationSeconds = Math.Max(0.05, Project?.Settings?.TransitionDurationSeconds ?? 0.6);
@@ -419,10 +419,10 @@ namespace OpenBoardAnim.ViewModels
 
                     // A transition only plays between two real scenes - never after the last
                     // real one (nothing follows it in playback) and never involving the
-                    // trailing "+" add-scene card. See PreviewAndExportHandler.GetEffectiveTransition.
+                    // trailing "+" add-scene card. See SceneRenderHelpers.GetEffectiveTransition.
                     bool hasNextRealScene = scene != _addScene && i + 1 < _scenes.Count && _scenes[i + 1] != _addScene;
                     SceneTransition effectiveTransition = hasNextRealScene
-                        ? PreviewAndExportHandler.GetEffectiveTransition(scene, projectDefaultTransition)
+                        ? SceneRenderHelpers.GetEffectiveTransition(scene, projectDefaultTransition)
                         : SceneTransition.None;
                     double gap = SegmentGap;
                     if (effectiveTransition != SceneTransition.None)
@@ -511,7 +511,7 @@ namespace OpenBoardAnim.ViewModels
             if (scene == null) return 0;
             double graphicsTotal = scene.Graphics?.Sum(g => g.Delay + g.Duration) ?? 0;
             // Camera effects run as a second, concurrent timeline (see
-            // PreviewAndExportHandler.PlayCameraEffectsAsync) - a scene's real duration is
+            // PreviewPlaybackHandler.PlayCameraEffectsAsync / ExportRenderHandler.PlayCameraEffectsAsync) - a scene's real duration is
             // whichever of the two actually runs longer. Effects are keyed by absolute EndTime,
             // so the camera timeline's length is just the latest one.
             double cameraTotal = scene.CameraEffects != null && scene.CameraEffects.Count > 0

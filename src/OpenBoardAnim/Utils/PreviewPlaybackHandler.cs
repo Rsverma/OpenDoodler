@@ -1,15 +1,12 @@
-﻿using OpenBoardAnim.Models;
+using OpenBoardAnim.Models;
 using OpenBoardAnim.Utilities;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Documents;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
@@ -18,19 +15,23 @@ using System.Windows.Threading;
 
 namespace OpenBoardAnim.Utils
 {
-    public class PreviewAndExportHandler
+    // Live in-app preview playback (ProjectPreviewView). Split out from ExportRenderHandler
+    // deliberately - both used to live in one isExport-branching method, but that made every
+    // export-only timing change (e.g. moving export to a deterministic, non-realtime frame
+    // clock) a risk to preview's real-time playback too. The two are now free to diverge:
+    // this file owns real-time Storyboard/BeginAnimation playback and PathAnimationHelper: it
+    // should stay exactly this way even if ExportRenderHandler's timing model changes.
+    public class PreviewPlaybackHandler
     {
-        public static async Task RunAnimationsOnCanvas(ProjectDetails project, Canvas canvas, bool isExport, IProgress<ExportProgressInfo> progress = null, string outputVideoPath = null, CancellationToken cancellationToken = default)
+        public static async Task PlayAsync(ProjectDetails project, Canvas canvas, CancellationToken cancellationToken = default)
         {
-            VideoExporter exporter = null;
             MediaPlayer voiceoverPlayer = null;
             DispatcherTimer voiceoverTrimTimer = null;
             try
             {
                 if (project == null) return;
                 // A zoomed-in camera effect would otherwise render past the canvas's own bounds
-                // in the live preview (Canvas doesn't clip by default) - export is unaffected
-                // either way since RenderTargetBitmap already clips to its fixed pixel size.
+                // in the live preview (Canvas doesn't clip by default).
                 canvas.ClipToBounds = true;
                 double cameraViewportWidth = project.Settings?.EditorWidth ?? 0;
                 double cameraViewportHeight = project.Settings?.EditorHeight ?? 0;
@@ -53,19 +54,6 @@ namespace OpenBoardAnim.Utils
                 Image hand = new();
                 if (handImageUri != null)
                     hand.Source = new BitmapImage(new Uri(handImageUri));
-                // Cues collected as scenes start, in real (wall-clock) time - handed to the
-                // exporter so it can delay each voiceover clip into place when muxing, since
-                // export doesn't play audio live (frame capture is visual-only). Populated after
-                // the loop below (see rawVoiceoverCues) once every scene's start time is known,
-                // so each voiceover can be capped to not bleed into the next scene.
-                List<SceneAudioCue> sceneAudioCues = new();
-                // Keyed by scene loop index rather than a plain sequential list, so a null scene
-                // (skipped via `continue` before it gets an entry) can't shift the alignment
-                // between this and each raw cue's SceneIndex below.
-                Dictionary<int, double> sceneStartTimes = new();
-                List<(string Path, double Start, double TrimStart, double TrimEnd, int SceneIndex)> rawVoiceoverCues = new();
-                Stopwatch sceneClock = Stopwatch.StartNew();
-                const int exportFrameRate = 30;
                 int index = 1;
                 // Excludes the trailing "+" add-scene card either way; PreviewSceneIndex further
                 // narrows this to a single scene for an isolated preview (see
@@ -80,33 +68,11 @@ namespace OpenBoardAnim.Utils
                 // Clamped to a small positive minimum - a zero/negative duration would make
                 // the crossfade/wipe DoubleAnimation below meaningless (or throw).
                 double transitionDurationSeconds = Math.Max(0.05, project.Settings?.TransitionDurationSeconds ?? 0.6);
-                if (isExport)
-                {
-                    // Frame count (rather than scene or graphic count) is what actually tracks
-                    // linearly with real capture progress - a single hand-drawn stroke scene can
-                    // take far longer to render than several static ones combined, so counting
-                    // scenes/graphics made the bar jump in uneven lurches. GetEstimatedSceneDurationSeconds
-                    // is the same rough per-scene estimate the timeline already uses; scene
-                    // transitions and the trailing 0.5s hold are accounted for too so the
-                    // estimate roughly matches the real capture length.
-                    double estimatedSeconds = 0;
-                    for (int s = startSceneIndex; s <= endSceneIndex; s++)
-                        estimatedSeconds += GetEstimatedSceneDurationSeconds(project.Scenes[s]);
-                    for (int s = startSceneIndex; s < endSceneIndex; s++)
-                        if (GetEffectiveTransition(project.Scenes[s], sceneTransition) != SceneTransition.None)
-                            estimatedSeconds += transitionDurationSeconds;
-                    estimatedSeconds += 0.5;
-                    int estimatedTotalFrames = Math.Max(1, (int)Math.Round(estimatedSeconds * exportFrameRate));
 
-                    exporter = new(canvas, exportFrameRate, outputVideoPath, project.AudioPath, project.AudioVolume, sceneAudioCues,
-                        project.AudioTrimStart, project.AudioTrimEnd, progress, estimatedTotalFrames);
-                    exporter.StartCapture();
-                    sceneClock.Restart();
-                }
                 for (int i = startSceneIndex; i <= endSceneIndex; i++)
                 {
                     SceneTransition boundaryTransition = i > startSceneIndex
-                        ? GetEffectiveTransition(project.Scenes[i - 1], sceneTransition)
+                        ? SceneRenderHelpers.GetEffectiveTransition(project.Scenes[i - 1], sceneTransition)
                         : SceneTransition.None;
                     if (boundaryTransition != SceneTransition.None)
                         await PlaySceneTransition(canvas, boundaryTransition, transitionDurationSeconds, cancellationToken);
@@ -137,28 +103,18 @@ namespace OpenBoardAnim.Utils
                     if (scene == null) continue;
 
                     bool hasVoiceover = !string.IsNullOrWhiteSpace(scene.VoiceoverPath) && System.IO.File.Exists(scene.VoiceoverPath);
-                    if (isExport)
+                    voiceoverTrimTimer?.Stop();
+                    voiceoverTrimTimer = null;
+                    voiceoverPlayer?.Close();
+                    voiceoverPlayer = null;
+                    if (hasVoiceover)
                     {
-                        double sceneStart = sceneClock.Elapsed.TotalSeconds;
-                        sceneStartTimes[i] = sceneStart;
-                        if (hasVoiceover)
-                            rawVoiceoverCues.Add((scene.VoiceoverPath, sceneStart, scene.VoiceoverTrimStart, scene.VoiceoverTrimEnd, i));
-                    }
-                    else
-                    {
-                        voiceoverTrimTimer?.Stop();
-                        voiceoverTrimTimer = null;
-                        voiceoverPlayer?.Close();
-                        voiceoverPlayer = null;
-                        if (hasVoiceover)
-                        {
-                            voiceoverPlayer = new MediaPlayer();
-                            voiceoverPlayer.Open(new Uri(scene.VoiceoverPath));
-                            voiceoverPlayer.Position = TimeSpan.FromSeconds(Math.Max(0, scene.VoiceoverTrimStart));
-                            voiceoverPlayer.Play();
-                            if (scene.VoiceoverTrimEnd > scene.VoiceoverTrimStart)
-                                voiceoverTrimTimer = StartTrimStopTimer(voiceoverPlayer, scene.VoiceoverTrimEnd);
-                        }
+                        voiceoverPlayer = new MediaPlayer();
+                        voiceoverPlayer.Open(new Uri(scene.VoiceoverPath));
+                        voiceoverPlayer.Position = TimeSpan.FromSeconds(Math.Max(0, scene.VoiceoverTrimStart));
+                        voiceoverPlayer.Play();
+                        if (scene.VoiceoverTrimEnd > scene.VoiceoverTrimStart)
+                            voiceoverTrimTimer = SceneRenderHelpers.StartTrimStopTimer(voiceoverPlayer, scene.VoiceoverTrimEnd);
                     }
 
                     async Task PlayGraphicsAsync()
@@ -197,7 +153,7 @@ namespace OpenBoardAnim.Utils
                         }
                         else if (graphic is TextModel text)
                         {
-                            element = BuildTextBlock(text);
+                            element = SceneRenderHelpers.BuildTextBlock(text);
                             // Same rationale as the DrawingModel branch above - scale from the
                             // text's natural (unscaled) geometry bounds to its current
                             // Height/Width so a canvas resize is reflected here too, since
@@ -235,9 +191,7 @@ namespace OpenBoardAnim.Utils
                             // PathAnimationHelper isn't cancellation-aware internally (it
                             // completes tcs.Task via a Storyboard callback) - WaitAsync stops
                             // *waiting* as soon as the token fires without needing that, so
-                            // Play/Close doesn't have to sit through a whole stroke animation
-                            // (previously the biggest reason cancelling only took effect after
-                            // roughly a full scene's worth of drawing).
+                            // Play/Close doesn't have to sit through a whole stroke animation.
                             await example.tcs.Task.WaitAsync(cancellationToken);
 
                             if (element != null)
@@ -265,26 +219,6 @@ namespace OpenBoardAnim.Utils
                 }
                 canvas.Children.Remove(hand);
                 await Task.Delay(500, cancellationToken);
-
-                // Cap each voiceover to the following scene's start time so it can't bleed into
-                // a scene it doesn't belong to - adelay only controls when a clip starts, not
-                // when it stops, so without this a voiceover longer than its own scene (or with
-                // no explicit trim end) would keep playing over whatever comes next. The last
-                // scene has no following start time to cap against, so it's left uncapped.
-                if (isExport)
-                {
-                    foreach (var raw in rawVoiceoverCues)
-                    {
-                        double effectiveTrimEnd = raw.TrimEnd;
-                        if (sceneStartTimes.TryGetValue(raw.SceneIndex + 1, out double nextSceneStart))
-                        {
-                            double capEnd = raw.TrimStart + Math.Max(0, nextSceneStart - raw.Start);
-                            if (effectiveTrimEnd <= raw.TrimStart || effectiveTrimEnd > capEnd)
-                                effectiveTrimEnd = capEnd;
-                        }
-                        sceneAudioCues.Add(new SceneAudioCue(raw.Path, raw.Start, raw.TrimStart, effectiveTrimEnd));
-                    }
-                }
             }
             catch (OperationCanceledException)
             {
@@ -297,180 +231,15 @@ namespace OpenBoardAnim.Utils
             }
             finally
             {
-                if (isExport && exporter != null)
-                    await exporter.StopCapture(progress, cancellationToken);
                 voiceoverTrimTimer?.Stop();
                 voiceoverPlayer?.Close();
             }
         }
 
-        // Renders a single scene's graphics in their final (fully-drawn) state onto an
-        // off-screen Canvas and returns a snapshot bitmap - used for the Launch screen's
-        // project thumbnails, which always show scene 1 regardless of whichever scene happens
-        // to be open in the editor at save time. Deliberately an off-screen render rather than
-        // capturing the live editor canvas: it has zero visible impact (no flicker to a
-        // different scene) and works no matter which scene is currently open.
-        public static RenderTargetBitmap RenderSceneSnapshot(ProjectDetails project, int sceneIndex)
-        {
-            if (project?.Scenes == null || sceneIndex < 0 || sceneIndex >= project.Scenes.Count) return null;
-            SceneModel scene = project.Scenes[sceneIndex];
-            if (scene?.Graphics == null) return null;
-
-            double width = project.Settings?.EditorWidth ?? 0;
-            double height = project.Settings?.EditorHeight ?? 0;
-            if (width <= 0 || height <= 0) return null;
-
-            Canvas canvas = new() { Width = width, Height = height, Background = Brushes.White };
-            foreach (GraphicModelBase graphic in scene.Graphics)
-            {
-                if (!graphic.IsVisible) continue;
-                UIElement element = BuildStaticElement(graphic);
-                if (element == null) continue;
-                canvas.Children.Add(element);
-                Canvas.SetLeft(element, graphic.X);
-                Canvas.SetTop(element, graphic.Y);
-            }
-
-            canvas.Measure(new Size(width, height));
-            canvas.Arrange(new Rect(0, 0, width, height));
-            canvas.UpdateLayout();
-
-            RenderTargetBitmap bitmap = new((int)width, (int)height, 96, 96, PixelFormats.Pbgra32);
-            bitmap.Render(canvas);
-            bitmap.Freeze();
-            return bitmap;
-        }
-
-        // Builds the settled (non-hand-drawn-stroke) visual for a text graphic - shared by the
-        // entrance-animation branch above and BuildStaticElement below, since both need the exact
-        // same per-block bold/italic rendering. TextModel.TextGeometry (used for the hand-drawn
-        // stroke animation itself) already bakes the same per-run formatting in via
-        // GeometryHelper.ConvertTextToGeometry, so this only needs to match it for the TextBlock
-        // shown once strokes finish (or immediately, for Fade In / Pop In entrance styles).
-        private static TextBlock BuildTextBlock(TextModel text)
-        {
-            TextDecorationCollection baseDecorations = GeometryHelper.BuildDecorations(text.IsUnderline, text.IsStrikethrough);
-            TextBlock textBlock = new()
-            {
-                Foreground = text.SelectedColor,
-                FontFamily = text.SelectedFontFamily,
-                FontSize = text.SelectedFontSize,
-                FontStyle = text.SelectedFontStyle,
-                FontWeight = text.SelectedFontWeight,
-                TextDecorations = baseDecorations.Count > 0 ? baseDecorations : null
-            };
-            string rawText = text.RawText ?? string.Empty;
-            if (text.FormatRuns == null || text.FormatRuns.Count == 0)
-            {
-                textBlock.Text = rawText;
-            }
-            else
-            {
-                foreach (TextFormatRun run in text.FormatRuns)
-                {
-                    if (run.Length <= 0) continue;
-                    TextDecorationCollection runDecorations = GeometryHelper.BuildDecorations(run.IsUnderline, run.IsStrikethrough);
-                    textBlock.Inlines.Add(new Run(rawText.Substring(run.Start, run.Length))
-                    {
-                        FontWeight = run.IsBold ? FontWeights.Bold : FontWeights.Normal,
-                        FontStyle = run.IsItalic ? FontStyles.Italic : FontStyles.Normal,
-                        TextDecorations = runDecorations.Count > 0 ? runDecorations : null
-                    });
-                }
-            }
-            return textBlock;
-        }
-
-        // The same final-state (non-hand-drawn) visual construction as the entrance-animation
-        // branch above, factored out separately rather than shared - that branch is also
-        // responsible for building the hand-drawn stroke geometry and driving the entrance
-        // Storyboard, neither of which a static snapshot needs at all.
-        private static UIElement BuildStaticElement(GraphicModelBase graphic)
-        {
-            if (graphic is DrawingModel drawing)
-            {
-                DrawingGroup drawingGroup = drawing.ImgDrawingGroup?.Clone();
-                if (drawingGroup == null) return null;
-                Rect drawingBounds = drawingGroup.Bounds;
-                double drawingScale = drawingBounds.Width > 0 && drawingBounds.Height > 0
-                    ? Math.Min(drawing.Width / drawingBounds.Width, drawing.Height / drawingBounds.Height)
-                    : 1;
-                drawingGroup.Transform = new ScaleTransform(drawingScale, drawingScale);
-                return new Image { Source = new DrawingImage(drawingGroup) };
-            }
-            if (graphic is TextModel text)
-            {
-                TextBlock element = BuildTextBlock(text);
-                Rect textBounds = text.TextGeometry?.Bounds ?? Rect.Empty;
-                double textScale = !textBounds.IsEmpty && textBounds.Width > 0 && textBounds.Height > 0
-                    ? Math.Min(text.Width / textBounds.Width, text.Height / textBounds.Height)
-                    : 1;
-                if (textScale != 1)
-                    element.RenderTransform = new ScaleTransform(textScale, textScale);
-                return element;
-            }
-            return null;
-        }
-
-        // Rough per-scene duration estimate (sum of each visible graphic's Delay + Duration) -
-        // the same approximation EditorTimelineViewModel already uses for the timeline's
-        // proportional layout (hand-drawn stroke timing isn't known ahead of time, so this is
-        // "good enough", not a promise). Used by ProjectPreviewView to position/cap the
-        // background-music track for a single-scene preview so it lines up roughly where that
-        // scene would fall in the full project, without actually having to play through
-        // everything before it.
-        public static double GetEstimatedSceneDurationSeconds(SceneModel scene)
-        {
-            if (scene?.Graphics == null) return 0;
-            double graphicsTotal = scene.Graphics.Where(g => g.IsVisible).Sum(g => g.Delay + g.Duration);
-            // Camera effects run as a second, concurrent timeline (see PlayCameraEffectsAsync) -
-            // the scene's real duration is whichever of the two actually runs longer. Effects are
-            // keyed by absolute EndTime now, so the camera timeline's length is just the latest one.
-            double cameraTotal = scene.CameraEffects != null && scene.CameraEffects.Count > 0
-                ? scene.CameraEffects.Max(e => e.EndTime)
-                : 0;
-            return Math.Max(graphicsTotal, cameraTotal);
-        }
-
-        // Live playback (preview) has no equivalent to ffmpeg's -t, so a trimmed clip's end is
-        // enforced by polling position and pausing once it's reached. Shared with
-        // ProjectPreviewView for the background-music track, which needs the same behavior.
-        public static DispatcherTimer StartTrimStopTimer(MediaPlayer player, double trimEndSeconds)
-        {
-            DispatcherTimer timer = new() { Interval = TimeSpan.FromMilliseconds(200) };
-            timer.Tick += (s, e) =>
-            {
-                if (player.Position.TotalSeconds >= trimEndSeconds)
-                {
-                    player.Pause();
-                    timer.Stop();
-                }
-            };
-            timer.Start();
-            return timer;
-        }
-
-        // Resolves a scene's outgoing transition: its own TransitionOverride if set to
-        // anything but Inherit, otherwise the project-wide default. Shared by the playback loop
-        // and the export progress estimate above, and by EditorTimelineViewModel's timeline
-        // marker so the badge shown there always matches what actually plays.
-        public static SceneTransition GetEffectiveTransition(SceneModel precedingScene, SceneTransition projectDefault)
-        {
-            return precedingScene?.TransitionOverride switch
-            {
-                SceneTransitionOverride.None => SceneTransition.None,
-                SceneTransitionOverride.Crossfade => SceneTransition.Crossfade,
-                SceneTransitionOverride.Wipe => SceneTransition.Wipe,
-                _ => projectDefault
-            };
-        }
-
         // Plays a hard-cut alternative between the outgoing (fully-drawn) scene and the
         // incoming (blank) one: lays a plain white rectangle over the existing content and
         // animates it in (fading in, or wiping across) to obscure the old scene, rather than
-        // capturing/animating a bitmap snapshot of it - simpler and avoids relying on
-        // RenderTargetBitmap producing a usable capture of a canvas that isn't backed by an
-        // on-screen HWND during export. Runs in real time so frame-capture records it.
+        // capturing/animating a bitmap snapshot of it.
         private static async Task PlaySceneTransition(Canvas canvas, SceneTransition transition, double durationSeconds, CancellationToken cancellationToken)
         {
             if (canvas.Children.Count == 0)
@@ -514,8 +283,6 @@ namespace OpenBoardAnim.Utils
         }
 
         // Non-hand-drawn reveals for graphics that don't need the "drawn by hand" look.
-        // Runs in real time (like the hand-drawn path animation) so the frame-capture
-        // loop in VideoExporter, which samples the live canvas, records the motion.
         private static async Task AnimateElementEntrance(Canvas canvas, UIElement element, GraphicModelBase graphic, EntranceStyle style, CancellationToken cancellationToken)
         {
             Canvas.SetLeft(element, graphic.X);
@@ -549,19 +316,17 @@ namespace OpenBoardAnim.Utils
             }
 
             // Wait out the real duration directly rather than relying on Storyboard.Completed -
-            // see PlaySceneTransition for why that event isn't trustworthy here.
+            // see PlaySceneTransition for why that event isn't trustworthy here either.
             storyboard.Begin();
             await Task.Delay(duration, cancellationToken);
         }
 
         // Plays a scene's camera-effects layer (SceneModel.CameraEffects), sorted by StartTime
         // (absolute seconds from the scene's start - not list/add order), concurrently with the
-        // scene's graphic entrance animations - see the call site in RunAnimationsOnCanvas.
-        // Before the first effect's StartTime, between effects, and after the last one's EndTime,
-        // the camera simply holds wherever it last landed, since nothing touches scale/translate
-        // during those gaps. Runs in real time, awaited via Task.Delay rather than
-        // Storyboard.Completed, for the same export-capture-safety reason as PlaySceneTransition
-        // and AnimateElementEntrance above.
+        // scene's graphic entrance animations - see the call site in PlayAsync. Before the first
+        // effect's StartTime, between effects, and after the last one's EndTime, the camera
+        // simply holds wherever it last landed, since nothing touches scale/translate during
+        // those gaps.
         private static async Task PlayCameraEffectsAsync(SceneModel scene, ScaleTransform scale, TranslateTransform translate, double viewportWidth, double viewportHeight, CancellationToken cancellationToken)
         {
             if (scene?.CameraEffects == null || viewportWidth <= 0 || viewportHeight <= 0) return;
@@ -584,7 +349,7 @@ namespace OpenBoardAnim.Utils
                 // every effect in this loop was not reliably driving their values; direct
                 // BeginAnimation is the standard technique for animating a detached Freezable
                 // and needs no target/property-path resolution at all. Each call's explicit
-                // From (start.Scale/TranslateX/Y) makes the earlier "snap to start" assignment
+                // From (start.Scale/TranslateX/Y) makes an earlier "snap to start" assignment
                 // unnecessary - BeginAnimation establishes that starting value itself.
                 DoubleAnimation scaleXAnimation = new(start.Scale, end.Scale, duration) { FillBehavior = FillBehavior.HoldEnd };
                 DoubleAnimation scaleYAnimation = new(start.Scale, end.Scale, duration) { FillBehavior = FillBehavior.HoldEnd };

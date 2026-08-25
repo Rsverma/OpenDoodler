@@ -156,7 +156,7 @@ namespace OpenBoardAnim.Tests
             CacheService sut = CreateSut();
             // 3 real scenes plus the trailing "+" add-scene card every ProjectDetails.Scenes
             // list carries (see ProjectDetails's constructor) - the count synced out should
-            // exclude that card, same as PreviewAndExportHandler/EditorTimelineViewModel do.
+            // exclude that card, same as PreviewPlaybackHandler/ExportRenderHandler/EditorTimelineViewModel do.
             ProjectDetails project = new() { Path = path, Title = "My Project", Scenes = [new SceneModel(), new SceneModel(), new SceneModel(), new SceneModel { Name = "+" }] };
 
             try

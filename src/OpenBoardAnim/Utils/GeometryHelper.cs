@@ -73,8 +73,8 @@ namespace OpenBoardAnim.Utils
         // Underline and Strikethrough both live on the one TextDecorations collection, so
         // combining them into a single collection (rather than two separate Set calls, which
         // would just overwrite each other) is what lets a run carry both at once. Public since
-        // PreviewAndExportHandler's settled-state TextBlock/Run rendering needs the exact same
-        // combined collection to match this geometry.
+        // SceneRenderHelpers.BuildTextBlock's settled-state TextBlock/Run rendering needs the
+        // exact same combined collection to match this geometry.
         public static TextDecorationCollection BuildDecorations(bool isUnderline, bool isStrikethrough)
         {
             TextDecorationCollection decorations = new();

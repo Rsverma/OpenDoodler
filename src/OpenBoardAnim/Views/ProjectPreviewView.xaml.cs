@@ -69,8 +69,8 @@ namespace OpenBoardAnim.Views
                         // the next scene's portion would start.
                         double offset = 0;
                         for (int i = 0; i < sceneIndex; i++)
-                            offset += PreviewAndExportHandler.GetEstimatedSceneDurationSeconds(project.Scenes[i]);
-                        double sceneDuration = PreviewAndExportHandler.GetEstimatedSceneDurationSeconds(project.Scenes[sceneIndex]);
+                            offset += SceneRenderHelpers.GetEstimatedSceneDurationSeconds(project.Scenes[i]);
+                        double sceneDuration = SceneRenderHelpers.GetEstimatedSceneDurationSeconds(project.Scenes[sceneIndex]);
 
                         audioStart += offset;
                         double sceneCap = audioStart + sceneDuration;
@@ -80,9 +80,9 @@ namespace OpenBoardAnim.Views
                     _audioPlayer.Position = TimeSpan.FromSeconds(audioStart);
                     _audioPlayer.Play();
                     if (audioCap.HasValue)
-                        _audioTrimTimer = PreviewAndExportHandler.StartTrimStopTimer(_audioPlayer, audioCap.Value);
+                        _audioTrimTimer = SceneRenderHelpers.StartTrimStopTimer(_audioPlayer, audioCap.Value);
                 }
-                await PreviewAndExportHandler.RunAnimationsOnCanvas(project, PreviewCanvas, false, cancellationToken: cancellationToken);
+                await PreviewPlaybackHandler.PlayAsync(project, PreviewCanvas, cancellationToken);
             }
             catch (OperationCanceledException)
             {

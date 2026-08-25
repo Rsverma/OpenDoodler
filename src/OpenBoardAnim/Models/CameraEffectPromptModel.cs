@@ -15,7 +15,7 @@ namespace OpenBoardAnim.Models
         public Action<CameraEffectModel> SaveEffect;
 
         // A static render of the target scene's final-state graphics (see
-        // PreviewAndExportHandler.RenderSceneSnapshot), shown as the background the Start/End
+        // SceneRenderHelpers.RenderSceneSnapshot), shown as the background the Start/End
         // rectangles are drawn over, plus the editor's own coordinate space they're drawn in -
         // both needed by the view to convert between screen pixels and editor-space units.
         public ImageSource SceneSnapshot { get; set; }

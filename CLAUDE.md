@@ -112,12 +112,24 @@ a new one.
 
 ### Export / rendering pipeline
 
-- `src/OpenBoardAnim/Utils/PreviewAndExportHandler.cs` — static `RunAnimationsOnCanvas(ProjectDetails, Canvas,
-  isExport)` replays a project's scenes onto a WPF `Canvas`, animating strokes via `PathAnimationHelper` and
-  geometry conversion via `GeometryHelper`. This is the shared code path for both live preview and export
-  (`isExport` toggles the recording side).
+Preview and export are deliberately separate code paths, not one `isExport`-branching method — this lets each
+be changed (e.g. export's animation timing model) without risking the other.
+
+- `src/OpenBoardAnim/Utils/SceneRenderHelpers.cs` — static helpers shared by both paths because they're
+  genuinely timing-independent: `BuildTextBlock`/`RenderSceneSnapshot` (static, non-animated visuals),
+  `GetEstimatedSceneDurationSeconds`, `StartTrimStopTimer`, `GetEffectiveTransition` (resolves a scene's
+  `TransitionOverride` against the project default).
+- `src/OpenBoardAnim/Utils/PreviewPlaybackHandler.cs` — static `PlayAsync(ProjectDetails, Canvas,
+  CancellationToken)` replays a project's scenes onto a WPF `Canvas` for live preview, animating strokes via
+  `PathAnimationHelper` and geometry conversion via `GeometryHelper`. Real-time WPF `Storyboard`/`BeginAnimation`
+  clocks throughout.
+- `src/OpenBoardAnim/Utils/ExportRenderHandler.cs` — static `ExportAsync(ProjectDetails, Canvas,
+  IProgress<ExportProgressInfo>, string outputVideoPath, CancellationToken)`, export's own copy of the same
+  playback loop (currently also real-time `Storyboard`/`BeginAnimation`, via its own `ExportPathAnimationHelper`
+  rather than `PathAnimationHelper`), plus voiceover-cue timing and driving `VideoExporter`'s frame capture.
+  Free to move to a different (e.g. deterministic, non-realtime) timing model later without touching preview.
 - `src/OpenBoardAnim/Utils/VideoExporter.cs` — when exporting, hooks `CompositionTarget.Rendering` to capture
-  `RenderTargetBitmap` frames of the canvas as PNGs under `%TEMP%\WpfAnimationFrames`, then shells out to
+  `RenderTargetBitmap` frames of the canvas as BMPs under `%TEMP%\WpfAnimationFrames`, then shells out to
   `DLLs\ffmpeg.exe` (bundled in the app's output dir, copied via `.csproj`) through `Process`/`ProcessStartInfo`
   to encode the frames into an MP4.
 - Export runs in the background off the UI thread (see recent commit "Updated the export feature to render in
