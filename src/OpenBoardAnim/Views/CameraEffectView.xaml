@@ -23,35 +23,69 @@
         </DataTemplate>
     </UserControl.Resources>
     <StackPanel Margin="24" HorizontalAlignment="Center" VerticalAlignment="Top">
-        <Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="4" HorizontalAlignment="Center">
-            <!--
-                Drag anywhere on a rectangle's body to move it (sets Start/EndFocusX/Y); drag its
-                bottom-right handle to resize it, which grows/shrinks from its own center and maps
-                to Start/EndZoom - see CameraEffectView.xaml.cs. Start = green, End = orange. The
-                corner numeric fields below stay in sync with these rectangles in both directions.
-            -->
-            <Canvas x:Name="PreviewCanvas" Background="Black" ClipToBounds="True">
-                <Image x:Name="SnapshotImage" Source="{Binding SceneSnapshot}" Stretch="Fill"/>
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+            <StackPanel Margin="0 0 16 0">
+                <TextBlock Text="Framing" FontSize="11" Opacity="0.65" HorizontalAlignment="Center" Margin="0 0 0 4"/>
+                <Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="4" HorizontalAlignment="Center">
+                    <!--
+                        Drag anywhere on a rectangle's body to move it (sets Start/EndFocusX/Y);
+                        drag its bottom-right handle to resize it, which grows/shrinks from its
+                        own center and maps to Start/EndZoom - see CameraEffectView.xaml.cs.
+                        Start = green, End = orange. The corner numeric fields below stay in sync
+                        with these rectangles in both directions.
+                    -->
+                    <Canvas x:Name="PreviewCanvas" Background="Black" ClipToBounds="True">
+                        <Image x:Name="SnapshotImage" Source="{Binding SceneSnapshot}" Stretch="Fill"/>
 
-                <Border x:Name="StartRect" BorderBrush="LimeGreen" BorderThickness="2" Background="Transparent">
-                    <Grid>
-                        <Thumb Template="{StaticResource PlainThumbTemplate}" Background="Transparent" Cursor="SizeAll" DragDelta="StartMoveThumb_DragDelta"/>
-                        <TextBlock Text="S" FontWeight="Bold" Foreground="LimeGreen" Margin="3" IsHitTestVisible="False"/>
-                        <Thumb Template="{StaticResource PlainThumbTemplate}" Width="12" Height="12" HorizontalAlignment="Right" VerticalAlignment="Bottom"
-                               Background="LimeGreen" Cursor="SizeNWSE" DragDelta="StartResizeThumb_DragDelta"/>
-                    </Grid>
-                </Border>
+                        <Border x:Name="StartRect" BorderBrush="LimeGreen" BorderThickness="2" Background="Transparent">
+                            <Grid>
+                                <Thumb Template="{StaticResource PlainThumbTemplate}" Background="Transparent" Cursor="SizeAll" DragDelta="StartMoveThumb_DragDelta"/>
+                                <TextBlock Text="S" FontWeight="Bold" Foreground="LimeGreen" Margin="3" IsHitTestVisible="False"/>
+                                <Thumb Template="{StaticResource PlainThumbTemplate}" Width="12" Height="12" HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                                       Background="LimeGreen" Cursor="SizeNWSE" DragDelta="StartResizeThumb_DragDelta"/>
+                            </Grid>
+                        </Border>
 
-                <Border x:Name="EndRect" BorderBrush="OrangeRed" BorderThickness="2" Background="Transparent">
-                    <Grid>
-                        <Thumb Template="{StaticResource PlainThumbTemplate}" Background="Transparent" Cursor="SizeAll" DragDelta="EndMoveThumb_DragDelta"/>
-                        <TextBlock Text="E" FontWeight="Bold" Foreground="OrangeRed" Margin="3" IsHitTestVisible="False"/>
-                        <Thumb Template="{StaticResource PlainThumbTemplate}" Width="12" Height="12" HorizontalAlignment="Right" VerticalAlignment="Bottom"
-                               Background="OrangeRed" Cursor="SizeNWSE" DragDelta="EndResizeThumb_DragDelta"/>
-                    </Grid>
+                        <Border x:Name="EndRect" BorderBrush="OrangeRed" BorderThickness="2" Background="Transparent">
+                            <Grid>
+                                <Thumb Template="{StaticResource PlainThumbTemplate}" Background="Transparent" Cursor="SizeAll" DragDelta="EndMoveThumb_DragDelta"/>
+                                <TextBlock Text="E" FontWeight="Bold" Foreground="OrangeRed" Margin="3" IsHitTestVisible="False"/>
+                                <Thumb Template="{StaticResource PlainThumbTemplate}" Width="12" Height="12" HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                                       Background="OrangeRed" Cursor="SizeNWSE" DragDelta="EndResizeThumb_DragDelta"/>
+                            </Grid>
+                        </Border>
+                    </Canvas>
                 </Border>
-            </Canvas>
-        </Border>
+            </StackPanel>
+
+            <StackPanel>
+                <TextBlock Text="Camera Output" FontSize="11" Opacity="0.65" HorizontalAlignment="Center" Margin="0 0 0 4"/>
+                <Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="4" HorizontalAlignment="Center">
+                    <!--
+                        What the exported video actually shows at the scrubbed progress below -
+                        the same scene snapshot as the Framing canvas, but cropped/zoomed by the
+                        interpolated camera transform (RefreshOutputPreview in
+                        CameraEffectView.xaml.cs) instead of overlaid with Start/End rectangles.
+                    -->
+                    <Canvas x:Name="OutputPreviewCanvas" Background="Black" ClipToBounds="True">
+                        <Image x:Name="OutputSnapshotImage" Source="{Binding SceneSnapshot}" Stretch="Fill">
+                            <Image.RenderTransform>
+                                <TransformGroup>
+                                    <ScaleTransform x:Name="OutputScaleTransform"/>
+                                    <TranslateTransform x:Name="OutputTranslateTransform"/>
+                                </TransformGroup>
+                            </Image.RenderTransform>
+                        </Image>
+                    </Canvas>
+                </Border>
+            </StackPanel>
+        </StackPanel>
+
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0 10 0 0">
+            <TextBlock Text="Preview" VerticalAlignment="Center" Margin="0 0 4 0"/>
+            <Slider x:Name="ProgressSlider" Width="240" Minimum="0" Maximum="1" Value="0" VerticalAlignment="Center" ValueChanged="ProgressSlider_ValueChanged"/>
+            <TextBlock x:Name="ProgressPercentText" Text="0%" VerticalAlignment="Center" Width="36" Margin="6 0 0 0"/>
+        </StackPanel>
 
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0 12 0 0">
             <Rectangle Width="10" Height="10" Fill="LimeGreen" VerticalAlignment="Center" Margin="0 0 6 0"/>
