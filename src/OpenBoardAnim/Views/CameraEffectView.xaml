@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:hc="https://handyorg.github.io/handycontrol"
+             xmlns:utils="clr-namespace:OpenBoardAnim.Utils"
              mc:Ignorable="d"
              d:DesignHeight="620" d:DesignWidth="560">
     <UserControl.Resources>
@@ -16,6 +17,10 @@
         <ControlTemplate x:Key="PlainThumbTemplate" TargetType="Thumb">
             <Rectangle Fill="{TemplateBinding Background}"/>
         </ControlTemplate>
+        <utils:FriendlyEnumConverter x:Key="FriendlyEnumConverter"/>
+        <DataTemplate x:Key="FriendlyEnumItemTemplate">
+            <TextBlock Text="{Binding Converter={StaticResource FriendlyEnumConverter}}"/>
+        </DataTemplate>
     </UserControl.Resources>
     <StackPanel Margin="24" HorizontalAlignment="Center" VerticalAlignment="Top">
         <Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="4" HorizontalAlignment="Center">
@@ -78,6 +83,11 @@
             <TextBlock Text="End Time" VerticalAlignment="Center" Margin="16 0 4 0"/>
             <hc:NumericUpDown Width="70" DecimalPlaces="1" ValueFormat="0.0" Value="{Binding Effect.EndTime, Mode=TwoWay}"
                               Minimum="{Binding Effect.StartTime}"/>
+        </StackPanel>
+
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0 8 0 0">
+            <TextBlock Text="Timing" VerticalAlignment="Center" Margin="0 0 4 0"/>
+            <hc:ComboBox x:Name="EasingComboBox" Width="150" ItemTemplate="{StaticResource FriendlyEnumItemTemplate}" SelectedItem="{Binding Effect.Easing, Mode=TwoWay}"/>
         </StackPanel>
 
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0 16 0 0">
