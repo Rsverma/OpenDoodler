@@ -38,7 +38,7 @@ namespace OpenBoardAnim.Utils
         // ones combined).
         private readonly IProgress<ExportProgressInfo> _progress;
         private readonly int _estimatedTotalFrames;
-        // Frames captured (OnRendering, live during capture) can outpace frames actually
+        // Frames captured (CaptureFrame, live during capture) can outpace frames actually
         // written to disk (WriteQueuedFramesAsync, a single background consumer) if disk I/O is
         // the bottleneck - StopCapture then has to sit and wait for that backlog to drain before
         // ffmpeg can start, since it reads the frame files, not the in-memory queue. _isDraining
@@ -46,33 +46,18 @@ namespace OpenBoardAnim.Utils
         // just a stall at whatever percentage capture happened to end on.
         private int _framesWritten;
         private volatile bool _isDraining;
-        // Measures real elapsed time across the capture. Also the source of each frame's own
-        // timestamp (see _frameTimestamps) - a single averaged fps across the whole capture
-        // isn't good enough, because real per-frame throughput varies a lot within one export
-        // (a hand-drawn stroke scene renders far slower than a static one), so assuming uniform
-        // spacing drifts audio cues (based on true wall-clock time) out of sync with a video
-        // built on that average rate - most visibly, a voiceover creeping into the wrong scene
-        // the further into the export it is.
-        private Stopwatch _captureStopwatch;
-        // CompositionTarget.Rendering fires at the display's own refresh rate (60/120/144Hz+),
-        // not at _frameRate - without gating, a high-refresh monitor would render, BMP-encode,
-        // and disk-write several times more frames than the export video will ever use, all for
-        // no visual benefit (the concat list already times each frame by its own real elapsed
-        // timestamp, so extra frames beyond _frameRate just add I/O, not smoothness). Tracks the
-        // stopwatch time of the last frame actually captured so OnRendering can skip ticks that
-        // land inside the same 1/_frameRate window.
-        private double _lastCapturedSeconds = double.NegativeInfinity;
-        // Real capture time of each frame, in the same order as _frameCount - used to build a
-        // concat-demuxer list with each frame's own duration instead of assuming a fixed
-        // -framerate, so the video's internal timing matches wall-clock time exactly rather than
-        // on average.
+        // Every captured frame is exactly 1/_frameRate apart by construction - ExportRenderHandler
+        // drives capture itself (CaptureFrame is called once per deterministic animation step,
+        // never sampled off a real clock), so frame i's timestamp is always i/_frameRate. Still
+        // populated (rather than assumed implicitly) so BuildConcatListFile/BuildFrameDurations
+        // don't need to know that - they just see uniformly-spaced timestamps, which happens to
+        // always be true now.
         private readonly List<double> _frameTimestamps = new();
-        // OnRendering only renders+freezes the bitmap and hands it off here; the actual
+        // CaptureFrame only renders+freezes the bitmap and hands it off here; the actual
         // encode-to-BMP and disk write happen on this single background consumer instead of
-        // synchronously on the UI thread. That's what OnRendering was actually bottlenecked on
-        // (PNG encoding a full-canvas bitmap is expensive) - CompositionTarget.Rendering could
-        // only fire as often as that finished, capping real throughput far below 30fps and
-        // making the exported motion visibly choppy even once the timing math above was correct.
+        // synchronously on the UI thread - that's what capture would otherwise be bottlenecked on
+        // (BMP encoding a full-canvas bitmap is not free), capping how fast ExportRenderHandler
+        // could step through frames for no visual benefit.
         private Channel<(int Index, BitmapSource Bitmap)> _frameChannel;
         private Task _frameWriterTask;
 
@@ -108,8 +93,6 @@ namespace OpenBoardAnim.Utils
         {
             _frameChannel = Channel.CreateUnbounded<(int, BitmapSource)>();
             _frameWriterTask = Task.Run(() => WriteQueuedFramesAsync(_frameChannel.Reader));
-            _captureStopwatch = Stopwatch.StartNew();
-            CompositionTarget.Rendering += OnRendering;
         }
 
         // Stop capturing and compile the video
@@ -117,8 +100,6 @@ namespace OpenBoardAnim.Utils
         {
             try
             {
-                CompositionTarget.Rendering -= OnRendering;
-                _captureStopwatch?.Stop();
                 _isDraining = true;
                 _frameChannel.Writer.Complete();
                 await _frameWriterTask; // wait for every queued frame to actually land on disk
@@ -142,19 +123,20 @@ namespace OpenBoardAnim.Utils
             }
         }
 
-        // Renders and hands the bitmap off to the background writer instead of encoding/saving
-        // it here - Freeze() is required to make it safe to touch from that other thread. This
-        // is the part that has to stay on the UI thread (RenderTargetBitmap.Render needs it);
-        // keeping it to just that is what lets CompositionTarget.Rendering fire close to its
-        // natural rate instead of being capped by encode+disk-write time on every tick.
-        private void OnRendering(object sender, EventArgs e)
+        // Renders the canvas's current state as one frame and hands the bitmap off to the
+        // background writer instead of encoding/saving it here - Freeze() is required to make it
+        // safe to touch from that other thread. This is the part that has to stay on the UI
+        // thread (RenderTargetBitmap.Render needs it); keeping it to just that is what lets
+        // ExportRenderHandler step through frames as fast as the machine allows instead of being
+        // capped by encode+disk-write time on every one. Called exactly once per deterministic
+        // animation step (see ExportRenderHandler.PlayStoryboardDeterministically) - never
+        // sampled off a live clock - so frame i always lands at i/_frameRate in the output,
+        // regardless of how long this call itself took.
+        public void CaptureFrame()
         {
             try
             {
-                double elapsedSeconds = _captureStopwatch.Elapsed.TotalSeconds;
-                if (!ExportProgressMath.ShouldCaptureFrame(elapsedSeconds, _lastCapturedSeconds, _frameRate))
-                    return;
-                _lastCapturedSeconds = elapsedSeconds;
+                double timestamp = _frameCount / (double)_frameRate;
 
                 var rtb = new RenderTargetBitmap(
                             (int)_targetCanvas.Width,
@@ -164,7 +146,7 @@ namespace OpenBoardAnim.Utils
                 rtb.Render(_targetCanvas);
                 rtb.Freeze();
 
-                _frameTimestamps.Add(elapsedSeconds);
+                _frameTimestamps.Add(timestamp);
                 _frameChannel.Writer.TryWrite((_frameCount, rtb));
                 _frameCount++;
 
@@ -209,7 +191,7 @@ namespace OpenBoardAnim.Utils
                     _framesWritten++;
 
                     // Only report once StopCapture has stopped capturing and is waiting on this
-                    // same task to drain the backlog - during live capture, OnRendering's own
+                    // same task to drain the backlog - during live capture, CaptureFrame's own
                     // 0-70% reports already track overall progress, and this writer runs
                     // concurrently the whole time (started back in StartCapture), so reporting
                     // here too would just make the percentage jump around between two different
@@ -240,11 +222,12 @@ namespace OpenBoardAnim.Utils
 
                 string ffmpegPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "DLLs", "ffmpeg.exe");
 
-                // Total real capture time - used to cap the output at the video's actual length
+                // Total captured duration - used to cap the output at the video's actual length
                 // (below) so audio (background music or an uncapped last-scene voiceover) can
                 // never outlast the video and leave it frozen on the last frame while audio
-                // keeps playing.
-                double videoDurationSeconds = _captureStopwatch?.Elapsed.TotalSeconds ?? 0;
+                // keeps playing. Frame count directly gives this exactly (every frame is exactly
+                // 1/_frameRate apart by construction), no elapsed-time measurement needed.
+                double videoDurationSeconds = _frameCount / (double)_frameRate;
                 string videoDuration = videoDurationSeconds.ToString("0.000", CultureInfo.InvariantCulture);
                 string concatListPath = BuildConcatListFile();
                 string videoInput = $"-f concat -safe 0 -i \"{concatListPath}\"";
@@ -419,16 +402,16 @@ namespace OpenBoardAnim.Utils
             }
         }
 
-        // Writes an ffmpeg concat-demuxer list giving each captured frame its own real duration
-        // (the gap to the next frame's actual timestamp), instead of assuming every frame is
-        // spaced by a fixed 1/framerate interval. That's what lets the video's internal timing
-        // track wall-clock time exactly - and so stay in sync with voiceover cues, which are
-        // scheduled by wall-clock time too - even though real per-frame capture speed varies
-        // through the export (a hand-drawn stroke scene renders much slower than a static one).
+        // Writes an ffmpeg concat-demuxer list giving each captured frame its own duration (the
+        // gap to the next frame's timestamp) rather than a bare -framerate input - every gap is
+        // exactly 1/_frameRate now (frames are captured deterministically, not sampled off a real
+        // clock), so this just gives ffmpeg N uniform frames; kept as the general per-frame-
+        // duration form rather than hardcoding uniform spacing so a future non-uniform capture
+        // mode wouldn't have to touch this method at all.
         private string BuildConcatListFile()
         {
             string listPath = Path.Combine(_tempImageDir, "concat_list.txt");
-            double totalElapsedSeconds = _captureStopwatch?.Elapsed.TotalSeconds ?? 0;
+            double totalElapsedSeconds = _frameCount / (double)_frameRate;
             List<FrameDurationEntry> entries = ExportProgressMath.BuildFrameDurations(_frameTimestamps, totalElapsedSeconds);
             using (StreamWriter writer = new(listPath, false))
             {

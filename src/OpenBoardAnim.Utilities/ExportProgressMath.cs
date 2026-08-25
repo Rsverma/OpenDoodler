@@ -13,13 +13,6 @@ namespace OpenBoardAnim.Utilities
     // VideoExporter - no behavior change.
     public static class ExportProgressMath
     {
-        // CompositionTarget.Rendering fires at the display's own refresh rate (60/120/144Hz+),
-        // not at frameRate - this gates capture to roughly one frame per 1/frameRate seconds of
-        // elapsed capture time so a high-refresh monitor doesn't render/encode/write far more
-        // frames than the export video will ever use.
-        public static bool ShouldCaptureFrame(double elapsedSeconds, double lastCapturedSeconds, int frameRate)
-            => elapsedSeconds - lastCapturedSeconds >= 1.0 / frameRate;
-
         // Capped below 70 - actual progress can outrun the rough estimate; 70-80 is reserved for
         // flushing any not-yet-written frame backlog to disk and 80-100 for the encoding phase.
         public static double CapturePercentage(int frameCount, int estimatedTotalFrames)
