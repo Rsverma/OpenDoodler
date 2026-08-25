@@ -2,379 +2,420 @@ using OpenBoardAnim.Models;
 using OpenBoardAnim.Utilities;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Windows;
+using System.IO;
 using System.Windows.Controls;
 using System.Windows.Media;
-using System.Windows.Media.Animation;
+using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
-using System.Windows.Threading;
 
 namespace OpenBoardAnim.Utils
 {
     // Live in-app preview playback (ProjectPreviewView). Split out from ExportRenderHandler
     // deliberately - both used to live in one isExport-branching method, but that made every
-    // export-only timing change (e.g. moving export to a deterministic, non-realtime frame
-    // clock) a risk to preview's real-time playback too. The two are now free to diverge:
-    // this file owns real-time Storyboard/BeginAnimation playback and PathAnimationHelper: it
-    // should stay exactly this way even if ExportRenderHandler's timing model changes.
-    public class PreviewPlaybackHandler
+    // export-only timing change a risk to preview too. The two remain free to diverge in how they
+    // drive time (export steps a fixed frame clock forward; this scrubs/plays a live Canvas), but
+    // both now share SceneTimelineEngine's "what does this scene look like at time t" math, since
+    // that question has exactly one right answer regardless of who's asking.
+    //
+    // This is an instance, not the old static PlayAsync: a scrub timeline needs a persistent
+    // notion of "where we currently are" that both a Play/Pause loop and a dragged Slider can
+    // read and write, which a fire-and-forget async method can't offer. One instance is built per
+    // ProjectPreviewView and owns the canvas, the built timeline layout, and both audio players
+    // for its lifetime; call Dispose() when the view closes.
+    public sealed class PreviewPlaybackHandler : IDisposable
     {
-        public static async Task PlayAsync(ProjectDetails project, Canvas canvas, CancellationToken cancellationToken = default)
+        // One scene's place on the flat, absolute-seconds preview timeline: an optional
+        // transition segment [TransitionStart, ContentStart) immediately followed by the scene's
+        // own content segment [ContentStart, ContentStart + ContentDuration). ContentDuration is
+        // SceneRenderHelpers.GetEstimatedSceneDurationSeconds's estimate, not the exact duration
+        // SceneTimelineEngine.BuildScenePlan computes once the scene is actually built - close
+        // enough for slider layout (same tolerance GetEstimatedSceneDurationSeconds's own callers
+        // already accept), and ApplyGraphicState/ApplyCameraState's own [0,1] clamping absorbs
+        // any tiny mismatch at a scene's very end harmlessly.
+        private sealed class SceneLayout
         {
-            MediaPlayer voiceoverPlayer = null;
-            DispatcherTimer voiceoverTrimTimer = null;
+            public int SceneIndex;
+            public double TransitionStart;
+            public double TransitionDuration;
+            public SceneTransition TransitionType;
+            public double ContentStart;
+            public double ContentDuration;
+        }
+
+        private readonly ProjectDetails _project;
+        private readonly Canvas _canvas;
+        private readonly List<SceneLayout> _layout = new();
+        private readonly EntranceStyle _entranceStyle;
+        private readonly HandStyle _handStyle;
+        private readonly SceneTransition _sceneTransitionDefault;
+        private readonly Brush _strokeBrush;
+        private readonly double _strokeWidth;
+        private readonly double _cameraViewportWidth;
+        private readonly double _cameraViewportHeight;
+        private readonly Image _hand;
+
+        private readonly ScaleTransform _cameraScale = new(1, 1);
+        private readonly TranslateTransform _cameraTranslate = new(0, 0);
+
+        // Where CurrentTime's audio (background music) offset/cap map to - see the constructor
+        // for why single-scene preview needs both, mirroring the old Button_Click logic.
+        private readonly double _musicOffsetSeconds;
+        private readonly double? _musicCapSeconds;
+
+        // Whichever segment is currently reflected on the live canvas - null until the first
+        // Seek. Rebuilt only when Seek's target segment/phase differs from this, not every call.
+        private SceneLayout _builtSegment;
+        private bool _builtInTransition;
+        private SceneTimelinePlan _activePlan;
+        private bool _handAddedForActiveScene;
+        private Rectangle _transitionOverlay;
+
+        private MediaPlayer _musicPlayer;
+        private MediaPlayer _voiceoverPlayer;
+        private int _voiceoverSceneIndex = -1;
+
+        private double _lastRenderingTimeSeconds = -1;
+
+        public double TotalDuration { get; }
+        public double CurrentTime { get; private set; }
+        public bool IsPlaying { get; private set; }
+
+        // Raised on every Seek (both from dragging and from auto-play ticking) so the view can
+        // keep its Slider/time label in sync without polling.
+        public event Action<double> TimeChanged;
+        // Raised once when auto-play reaches the end on its own (not from a manual Seek to the
+        // end) so the view can flip its Play button back to "Play".
+        public event Action PlaybackEnded;
+
+        public PreviewPlaybackHandler(ProjectDetails project, Canvas canvas)
+        {
+            _project = project ?? throw new ArgumentNullException(nameof(project));
+            _canvas = canvas ?? throw new ArgumentNullException(nameof(canvas));
+            // A zoomed-in camera effect would otherwise render past the canvas's own bounds.
+            _canvas.ClipToBounds = true;
+
+            _cameraViewportWidth = project.Settings?.EditorWidth ?? 0;
+            _cameraViewportHeight = project.Settings?.EditorHeight ?? 0;
+            _entranceStyle = project.Settings?.EntranceStyle ?? EntranceStyle.HandDrawn;
+            _handStyle = project.Settings?.HandStyle ?? HandStyle.LightSkin;
+            _sceneTransitionDefault = project.Settings?.SceneTransition ?? SceneTransition.None;
+            _strokeBrush = Brushes.Black;
             try
             {
-                if (project == null) return;
-                // A zoomed-in camera effect would otherwise render past the canvas's own bounds
-                // in the live preview (Canvas doesn't clip by default).
-                canvas.ClipToBounds = true;
-                double cameraViewportWidth = project.Settings?.EditorWidth ?? 0;
-                double cameraViewportHeight = project.Settings?.EditorHeight ?? 0;
-                EntranceStyle entranceStyle = project.Settings?.EntranceStyle ?? EntranceStyle.HandDrawn;
-                HandStyle handStyle = project.Settings?.HandStyle ?? HandStyle.LightSkin;
-                SceneTransition sceneTransition = project.Settings?.SceneTransition ?? SceneTransition.None;
-                Brush strokeBrush = Brushes.Black;
-                try
-                {
-                    if (!string.IsNullOrWhiteSpace(project.Settings?.StrokeColorHex))
-                        strokeBrush = (Brush)new BrushConverter().ConvertFromString(project.Settings.StrokeColorHex);
-                }
-                catch (FormatException) { /* keep default black on an unparsable hex value */ }
-                double strokeWidth = project.Settings != null && project.Settings.StrokeWidth > 0 ? project.Settings.StrokeWidth : 1;
-
-                // Null for HandStyle.None (or a Custom style with no/missing file) - hand stays a
-                // sourceless, never-added Image in that case (see the HandDrawn branch below),
-                // harmlessly passed through to PathAnimationHelper regardless since it only ever
-                // moves/transforms it.
-                Image hand = new() { Source = SceneRenderHelpers.ResolveHandImage(handStyle, project.Settings?.CustomHandImagePath) };
-                int index = 1;
-                // Excludes the trailing "+" add-scene card either way; PreviewSceneIndex further
-                // narrows this to a single scene for an isolated preview (see
-                // ProjectDetails.PreviewSceneIndex) instead of always starting from scene 1.
-                int startSceneIndex = 0;
-                int endSceneIndex = project.Scenes.Count - 2;
-                if (project.PreviewSceneIndex is int previewIndex && previewIndex >= 0 && previewIndex <= endSceneIndex)
-                {
-                    startSceneIndex = previewIndex;
-                    endSceneIndex = previewIndex;
-                }
-                // Clamped to a small positive minimum - a zero/negative duration would make
-                // the crossfade/wipe DoubleAnimation below meaningless (or throw).
-                double transitionDurationSeconds = Math.Max(0.05, project.Settings?.TransitionDurationSeconds ?? 0.6);
-
-                for (int i = startSceneIndex; i <= endSceneIndex; i++)
-                {
-                    SceneTransition boundaryTransition = i > startSceneIndex
-                        ? SceneRenderHelpers.GetEffectiveTransition(project.Scenes[i - 1], sceneTransition)
-                        : SceneTransition.None;
-                    if (boundaryTransition != SceneTransition.None)
-                        await PlaySceneTransition(canvas, boundaryTransition, transitionDurationSeconds, cancellationToken);
-                    else
-                        canvas.Children.Clear();
-
-                    // RenderTransform is a canvas-level property that Children.Clear() doesn't
-                    // touch - reset it every scene (camera effects or not) so a previous scene's
-                    // pan/zoom end-state can't bleed into this one.
-                    ScaleTransform cameraScale = new(1, 1);
-                    TranslateTransform cameraTranslate = new(0, 0);
-                    canvas.RenderTransform = new TransformGroup { Children = { cameraScale, cameraTranslate } };
-
-                    if (entranceStyle == EntranceStyle.HandDrawn)
-                    {
-                        // HandStyle.None keeps the stroke-by-stroke draw animation (still driven
-                        // below via PathAnimationHelper) but skips showing the cursor image itself.
-                        if (handStyle != HandStyle.None)
-                        {
-                            canvas.Children.Add(hand);
-                            Canvas.SetLeft(hand, 0);
-                            Canvas.SetTop(hand, 1150);
-                            Canvas.SetZIndex(hand, 1);
-                        }
-                        index = canvas.Children.Count;
-                    }
-                    SceneModel scene = project.Scenes[i];
-                    if (scene == null) continue;
-
-                    bool hasVoiceover = !string.IsNullOrWhiteSpace(scene.VoiceoverPath) && System.IO.File.Exists(scene.VoiceoverPath);
-                    voiceoverTrimTimer?.Stop();
-                    voiceoverTrimTimer = null;
-                    voiceoverPlayer?.Close();
-                    voiceoverPlayer = null;
-                    if (hasVoiceover)
-                    {
-                        voiceoverPlayer = new MediaPlayer();
-                        voiceoverPlayer.Open(new Uri(scene.VoiceoverPath));
-                        voiceoverPlayer.Position = TimeSpan.FromSeconds(Math.Max(0, scene.VoiceoverTrimStart));
-                        voiceoverPlayer.Play();
-                        if (scene.VoiceoverTrimEnd > scene.VoiceoverTrimStart)
-                            voiceoverTrimTimer = SceneRenderHelpers.StartTrimStopTimer(voiceoverPlayer, scene.VoiceoverTrimEnd);
-                    }
-
-                    async Task PlayGraphicsAsync()
-                    {
-                    for (int j = 0; j < scene.Graphics.Count; j++)
-                    {
-                        cancellationToken.ThrowIfCancellationRequested();
-                        GraphicModelBase graphic = scene.Graphics[j];
-                        // A hidden layer contributes nothing to the animation sequence - not
-                        // even its own Delay - so the next visible graphic just waits for its
-                        // own configured delay as normal, as if the hidden one weren't there.
-                        if (!graphic.IsVisible) continue;
-                        await Task.Delay((int)graphic.Delay * 1000, cancellationToken);
-                        Geometry geometry = null;
-                        UIElement element = null;
-                        if (graphic is DrawingModel drawing)
-                        {
-                            DrawingGroup drawingGroup = drawing.ImgDrawingGroup.Clone();
-                            // Scale from the drawing's own untransformed bounds to its current
-                            // Height/Width - the same values the canvas resize handle edits -
-                            // rather than the separately-tracked ResizeRatio, which only reflects
-                            // the scale delta of the most recent resize gesture (not the
-                            // cumulative scale from the drawing's natural size) once a graphic has
-                            // been resized more than once.
-                            Rect drawingBounds = drawingGroup.Bounds;
-                            double drawingScale = drawingBounds.Width > 0 && drawingBounds.Height > 0
-                                ? Math.Min(drawing.Width / drawingBounds.Width, drawing.Height / drawingBounds.Height)
-                                : 1;
-                            drawingGroup.Transform = new ScaleTransform(drawingScale, drawingScale);
-                            element = new Image
-                            {
-                                Source = new DrawingImage(drawingGroup)
-                            };
-                            if (entranceStyle == EntranceStyle.HandDrawn)
-                                geometry = GeometryHelper.ConvertToGeometry(drawingGroup);
-                        }
-                        else if (graphic is TextModel text)
-                        {
-                            element = SceneRenderHelpers.BuildTextBlock(text);
-                            // Same rationale as the DrawingModel branch above - scale from the
-                            // text's natural (unscaled) geometry bounds to its current
-                            // Height/Width so a canvas resize is reflected here too, since
-                            // TextBlock rendering otherwise has no relationship to those at all.
-                            Rect textBounds = text.TextGeometry?.Bounds ?? Rect.Empty;
-                            double textScale = !textBounds.IsEmpty && textBounds.Width > 0 && textBounds.Height > 0
-                                ? Math.Min(text.Width / textBounds.Width, text.Height / textBounds.Height)
-                                : 1;
-                            if (textScale != 1)
-                                element.RenderTransform = new ScaleTransform(textScale, textScale);
-                            if (entranceStyle == EntranceStyle.HandDrawn)
-                            {
-                                geometry = text.TextGeometry?.Clone();
-                                if (geometry != null)
-                                    geometry.Transform = new ScaleTransform(textScale, textScale);
-                            }
-                        }
-
-                        if (entranceStyle == EntranceStyle.HandDrawn && geometry != null)
-                        {
-                            PathGeometry pathGeometry = geometry.GetFlattenedPathGeometry();
-                            List<PathGeometry> pathGeometries = GeometryHelper.GenerateMultiplePaths(pathGeometry, graphic is DrawingModel);
-                            List<Path> paths = [];
-                            foreach (var geo in pathGeometries)
-                            {
-                                paths.Add(new Path
-                                {
-                                    Data = geo,
-                                    Stroke = strokeBrush,
-                                    StrokeThickness = strokeWidth
-                                });
-                            }
-                            var example = new PathAnimationHelper(canvas, paths, graphic, hand);
-                            example.AnimatePathOnCanvas();
-                            // PathAnimationHelper isn't cancellation-aware internally (it
-                            // completes tcs.Task via a Storyboard callback) - WaitAsync stops
-                            // *waiting* as soon as the token fires without needing that, so
-                            // Play/Close doesn't have to sit through a whole stroke animation.
-                            await example.tcs.Task.WaitAsync(cancellationToken);
-
-                            if (element != null)
-                            {
-                                canvas.Children.Add(element);
-                                Canvas.SetLeft(element, graphic.X);
-                                Canvas.SetTop(element, graphic.Y);
-                                int count = canvas.Children.Count - index - 1;
-                                canvas.Children.RemoveRange(index, count);
-                                index = canvas.Children.Count;
-                            }
-                        }
-                        else if (element != null)
-                        {
-                            await AnimateElementEntrance(canvas, element, graphic, entranceStyle, cancellationToken);
-                            index = canvas.Children.Count;
-                        }
-
-                    }
-                    }
-
-                    Task graphicsTask = PlayGraphicsAsync();
-                    Task cameraTask = PlayCameraEffectsAsync(scene, cameraScale, cameraTranslate, cameraViewportWidth, cameraViewportHeight, cancellationToken);
-                    await Task.WhenAll(graphicsTask, cameraTask);
-                }
-                canvas.Children.Remove(hand);
-                await Task.Delay(500, cancellationToken);
+                if (!string.IsNullOrWhiteSpace(project.Settings?.StrokeColorHex))
+                    _strokeBrush = (Brush)new BrushConverter().ConvertFromString(project.Settings.StrokeColorHex);
             }
-            catch (OperationCanceledException)
+            catch (FormatException) { /* keep default black on an unparsable hex value */ }
+            _strokeWidth = project.Settings != null && project.Settings.StrokeWidth > 0 ? project.Settings.StrokeWidth : 1;
+            double transitionDurationSeconds = Math.Max(0.05, project.Settings?.TransitionDurationSeconds ?? 0.6);
+
+            _hand = new Image { Source = SceneRenderHelpers.ResolveHandImage(_handStyle, project.Settings?.CustomHandImagePath) };
+
+            // Excludes the trailing "+" add-scene card either way; PreviewSceneIndex further
+            // narrows this to a single scene for an isolated preview (see
+            // ProjectDetails.PreviewSceneIndex) instead of always starting from scene 1.
+            int startSceneIndex = 0;
+            int endSceneIndex = project.Scenes.Count - 2;
+            if (project.PreviewSceneIndex is int previewIndex && previewIndex >= 0 && previewIndex <= endSceneIndex)
             {
-                throw;
+                startSceneIndex = previewIndex;
+                endSceneIndex = previewIndex;
             }
-            catch (Exception ex)
+
+            double cursor = 0;
+            for (int i = startSceneIndex; i <= endSceneIndex; i++)
             {
-                if (Logger.LogError(ex, LogAction.LogAndThrow))
-                    throw;
+                SceneTransition transitionType = i > startSceneIndex
+                    ? SceneRenderHelpers.GetEffectiveTransition(project.Scenes[i - 1], _sceneTransitionDefault)
+                    : SceneTransition.None;
+                double transitionDuration = transitionType != SceneTransition.None ? transitionDurationSeconds : 0;
+                double transitionStart = cursor;
+                double contentStart = transitionStart + transitionDuration;
+                double contentDuration = SceneRenderHelpers.GetEstimatedSceneDurationSeconds(project.Scenes[i]);
+
+                _layout.Add(new SceneLayout
+                {
+                    SceneIndex = i,
+                    TransitionStart = transitionStart,
+                    TransitionDuration = transitionDuration,
+                    TransitionType = transitionType,
+                    ContentStart = contentStart,
+                    ContentDuration = contentDuration
+                });
+                cursor = contentStart + contentDuration;
             }
-            finally
+            TotalDuration = cursor;
+
+            // Roughly lines the background-music track up with where an isolated single-scene
+            // preview would fall in the full project (an estimate, same as GetEstimatedScene
+            // DurationSeconds itself), and caps it so it doesn't bleed into the next scene's
+            // portion - mirrors the old Button_Click logic, just computed once up front instead
+            // of per Play click.
+            double musicOffset = Math.Max(0, project.AudioTrimStart);
+            double? musicCap = project.AudioTrimEnd > project.AudioTrimStart ? project.AudioTrimEnd : null;
+            if (project.PreviewSceneIndex is int isolatedIndex && isolatedIndex >= 0 && isolatedIndex <= project.Scenes.Count - 2)
             {
-                voiceoverTrimTimer?.Stop();
-                voiceoverPlayer?.Close();
+                double priorOffset = 0;
+                for (int s = 0; s < isolatedIndex; s++)
+                    priorOffset += SceneRenderHelpers.GetEstimatedSceneDurationSeconds(project.Scenes[s]);
+                musicOffset += priorOffset;
+                double sceneCap = musicOffset + TotalDuration;
+                musicCap = musicCap.HasValue ? Math.Min(musicCap.Value, sceneCap) : sceneCap;
             }
+            _musicOffsetSeconds = musicOffset;
+            _musicCapSeconds = musicCap;
+
+            Seek(0);
         }
 
-        // Plays a hard-cut alternative between the outgoing (fully-drawn) scene and the
-        // incoming (blank) one: lays a plain white rectangle over the existing content and
-        // animates it in (fading in, or wiping across) to obscure the old scene, rather than
-        // capturing/animating a bitmap snapshot of it.
-        private static async Task PlaySceneTransition(Canvas canvas, SceneTransition transition, double durationSeconds, CancellationToken cancellationToken)
+        // Moves the live canvas to show exactly what time (seconds, absolute across the whole
+        // previewed range) looks like - the one entry point both dragging the Slider and each
+        // Play tick go through, so both always agree on what a given time renders as.
+        public void Seek(double time)
         {
-            if (canvas.Children.Count == 0)
+            double clamped = Math.Clamp(time, 0, TotalDuration);
+            CurrentTime = clamped;
+
+            SceneLayout segment = FindSegment(clamped);
+            if (segment == null)
+            {
+                TimeChanged?.Invoke(CurrentTime);
+                return;
+            }
+
+            bool inTransition = clamped < segment.ContentStart;
+            if (!ReferenceEquals(segment, _builtSegment) || inTransition != _builtInTransition)
+                EnterSegment(segment, inTransition);
+
+            if (inTransition)
+            {
+                double localT = segment.TransitionDuration > 0
+                    ? Math.Clamp((clamped - segment.TransitionStart) / segment.TransitionDuration, 0, 1)
+                    : 1;
+                if (segment.TransitionType == SceneTransition.Wipe)
+                    _transitionOverlay.Width = localT * _canvas.Width;
+                else
+                    _transitionOverlay.Opacity = localT;
+            }
+            else
+            {
+                double localT = clamped - segment.ContentStart;
+                foreach (GraphicPlan plan in _activePlan.GraphicPlans)
+                    SceneTimelineEngine.ApplyGraphicState(plan, localT, _handAddedForActiveScene ? _hand : null);
+                SceneTimelineEngine.ApplyCameraState(_activePlan.CameraPlans, _cameraScale, _cameraTranslate, localT);
+            }
+
+            _canvas.UpdateLayout();
+
+            if (IsPlaying)
+                ApplyAudioCaps(segment, inTransition);
+
+            TimeChanged?.Invoke(CurrentTime);
+        }
+
+        public void Play()
+        {
+            if (IsPlaying) return;
+            if (CurrentTime >= TotalDuration)
+                Seek(0);
+            IsPlaying = true;
+            _lastRenderingTimeSeconds = -1;
+            CompositionTarget.Rendering += OnRendering;
+            SyncAudioForNewSegment(_builtSegment, _builtInTransition);
+        }
+
+        public void Pause()
+        {
+            if (!IsPlaying) return;
+            IsPlaying = false;
+            CompositionTarget.Rendering -= OnRendering;
+            _musicPlayer?.Pause();
+            _voiceoverPlayer?.Pause();
+        }
+
+        public void Dispose()
+        {
+            Pause();
+            _musicPlayer?.Close();
+            _musicPlayer = null;
+            _voiceoverPlayer?.Close();
+            _voiceoverPlayer = null;
+        }
+
+        private void OnRendering(object sender, EventArgs e)
+        {
+            if (e is not RenderingEventArgs args) return;
+            double now = args.RenderingTime.TotalSeconds;
+            if (_lastRenderingTimeSeconds < 0)
+            {
+                _lastRenderingTimeSeconds = now;
+                return;
+            }
+            double delta = now - _lastRenderingTimeSeconds;
+            _lastRenderingTimeSeconds = now;
+
+            double next = CurrentTime + delta;
+            if (next >= TotalDuration)
+            {
+                Seek(TotalDuration);
+                Pause();
+                PlaybackEnded?.Invoke();
+                return;
+            }
+            Seek(next);
+        }
+
+        private SceneLayout FindSegment(double time)
+        {
+            for (int i = 0; i < _layout.Count; i++)
+            {
+                double segmentEnd = _layout[i].ContentStart + _layout[i].ContentDuration;
+                if (time < segmentEnd || i == _layout.Count - 1)
+                    return _layout[i];
+            }
+            return null;
+        }
+
+        // Rebuilds the live canvas for a newly-entered segment - either a transition (the
+        // outgoing scene's fully-drawn snapshot with a white wipe/crossfade overlay on top,
+        // mirroring ExportRenderHandler.RunTransitionAsync's "whatever's already on screen"
+        // approach but via a static snapshot instead of live elements, so scrubbing straight into
+        // the middle of a transition without ever having played the outgoing scene still renders
+        // correctly) or a scene's content (fresh graphic/camera plans from SceneTimelineEngine).
+        private void EnterSegment(SceneLayout segment, bool inTransition)
+        {
+            _canvas.Children.Clear();
+
+            if (inTransition)
+            {
+                int layoutIndex = _layout.IndexOf(segment);
+                int outgoingSceneIndex = layoutIndex > 0 ? _layout[layoutIndex - 1].SceneIndex : segment.SceneIndex;
+                RenderTargetBitmap snapshot = SceneRenderHelpers.RenderSceneSnapshot(_project, outgoingSceneIndex);
+                if (snapshot != null)
+                {
+                    Image snapshotImage = new()
+                    {
+                        Source = snapshot,
+                        Width = _cameraViewportWidth,
+                        Height = _cameraViewportHeight,
+                        Stretch = Stretch.Fill
+                    };
+                    _canvas.Children.Add(snapshotImage);
+                }
+
+                _transitionOverlay = new Rectangle
+                {
+                    Fill = Brushes.White,
+                    Width = segment.TransitionType == SceneTransition.Wipe ? 0 : _canvas.Width,
+                    Height = _canvas.Height,
+                    Opacity = segment.TransitionType == SceneTransition.Wipe ? 1 : 0
+                };
+                Canvas.SetLeft(_transitionOverlay, 0);
+                Canvas.SetTop(_transitionOverlay, 0);
+                Canvas.SetZIndex(_transitionOverlay, 1000);
+                _canvas.Children.Add(_transitionOverlay);
+
+                _activePlan = null;
+            }
+            else
+            {
+                // RenderTransform is a canvas-level property Children.Clear() doesn't touch -
+                // reset it for every scene's content (camera effects or not) so a previous
+                // scene's pan/zoom end-state can't bleed into this one. Left untouched during a
+                // transition (above) so the outgoing scene's last camera position keeps applying
+                // to its snapshot, matching ExportRenderHandler's equivalent behavior.
+                _cameraScale.ScaleX = 1;
+                _cameraScale.ScaleY = 1;
+                _cameraTranslate.X = 0;
+                _cameraTranslate.Y = 0;
+                _canvas.RenderTransform = new TransformGroup { Children = { _cameraScale, _cameraTranslate } };
+
+                _handAddedForActiveScene = _entranceStyle == EntranceStyle.HandDrawn && _handStyle != HandStyle.None;
+                if (_handAddedForActiveScene)
+                {
+                    _canvas.Children.Add(_hand);
+                    Canvas.SetLeft(_hand, 0);
+                    Canvas.SetTop(_hand, 1150);
+                    Canvas.SetZIndex(_hand, 1);
+                    _hand.RenderTransform = new MatrixTransform();
+                }
+
+                SceneModel scene = _project.Scenes[segment.SceneIndex];
+                _activePlan = SceneTimelineEngine.BuildScenePlan(_canvas, scene, _entranceStyle, _strokeBrush, _strokeWidth,
+                    _cameraViewportWidth, _cameraViewportHeight);
+            }
+
+            _builtSegment = segment;
+            _builtInTransition = inTransition;
+
+            if (IsPlaying)
+                SyncAudioForNewSegment(segment, inTransition);
+        }
+
+        private void EnsureMusicPlayer()
+        {
+            if (_musicPlayer != null || string.IsNullOrWhiteSpace(_project.AudioPath) || !File.Exists(_project.AudioPath))
+                return;
+            _musicPlayer = new MediaPlayer();
+            _musicPlayer.Open(new Uri(_project.AudioPath));
+            _musicPlayer.Volume = _project.AudioVolume / 100.0;
+        }
+
+        // Starts (or repositions) both audio tracks for wherever CurrentTime currently is -
+        // called when Play begins and whenever auto-play ticks across into a new segment. Not
+        // called on every tick/every Seek while already playing: reassigning a MediaPlayer's
+        // Position continuously (rather than just once, then letting it run) causes audible
+        // stutter, so once started each track is left to play freely until the next segment
+        // change or an explicit Pause.
+        private void SyncAudioForNewSegment(SceneLayout segment, bool inTransition)
+        {
+            if (segment == null) return;
+
+            EnsureMusicPlayer();
+            if (_musicPlayer != null)
+            {
+                _musicPlayer.Position = TimeSpan.FromSeconds(Math.Max(0, _musicOffsetSeconds + CurrentTime));
+                _musicPlayer.Play();
+            }
+
+            if (inTransition || segment.SceneIndex != _voiceoverSceneIndex)
+            {
+                _voiceoverPlayer?.Close();
+                _voiceoverPlayer = null;
+                _voiceoverSceneIndex = -1;
+            }
+
+            if (inTransition) return;
+
+            SceneModel scene = _project.Scenes[segment.SceneIndex];
+            if (string.IsNullOrWhiteSpace(scene.VoiceoverPath) || !File.Exists(scene.VoiceoverPath))
                 return;
 
-            Rectangle overlay = new()
+            if (_voiceoverPlayer == null)
             {
-                Fill = Brushes.White,
-                Width = canvas.Width,
-                Height = canvas.Height
-            };
-            Canvas.SetLeft(overlay, 0);
-            Canvas.SetTop(overlay, 0);
-            Canvas.SetZIndex(overlay, 1000);
-            canvas.Children.Add(overlay);
-
-            TimeSpan duration = TimeSpan.FromSeconds(durationSeconds);
-            Storyboard storyboard = new();
-
-            if (transition == SceneTransition.Wipe)
-            {
-                overlay.Width = 0;
-                DoubleAnimation widthAnimation = new(0, canvas.Width, duration) { FillBehavior = FillBehavior.HoldEnd };
-                Storyboard.SetTarget(widthAnimation, overlay);
-                Storyboard.SetTargetProperty(widthAnimation, new PropertyPath(FrameworkElement.WidthProperty));
-                storyboard.Children.Add(widthAnimation);
+                _voiceoverPlayer = new MediaPlayer();
+                _voiceoverPlayer.Open(new Uri(scene.VoiceoverPath));
+                _voiceoverSceneIndex = segment.SceneIndex;
             }
-            else
-            {
-                overlay.Opacity = 0;
-                DoubleAnimation opacityAnimation = new(0, 1, duration) { FillBehavior = FillBehavior.HoldEnd };
-                Storyboard.SetTarget(opacityAnimation, overlay);
-                Storyboard.SetTargetProperty(opacityAnimation, new PropertyPath(UIElement.OpacityProperty));
-                storyboard.Children.Add(opacityAnimation);
-            }
-
-            storyboard.Begin();
-            await Task.Delay(duration, cancellationToken);
-
-            canvas.Children.Clear();
+            double localTime = CurrentTime - segment.ContentStart;
+            _voiceoverPlayer.Position = TimeSpan.FromSeconds(Math.Max(0, scene.VoiceoverTrimStart) + localTime);
+            _voiceoverPlayer.Play();
         }
 
-        // Non-hand-drawn reveals for graphics that don't need the "drawn by hand" look.
-        private static async Task AnimateElementEntrance(Canvas canvas, UIElement element, GraphicModelBase graphic, EntranceStyle style, CancellationToken cancellationToken)
+        // Pauses either track once its own trim-end is reached - the polling-timer equivalent
+        // this replaces (SceneRenderHelpers.StartTrimStopTimer) isn't needed since Seek already
+        // runs every frame while playing, so the check just rides along with that.
+        private void ApplyAudioCaps(SceneLayout segment, bool inTransition)
         {
-            Canvas.SetLeft(element, graphic.X);
-            Canvas.SetTop(element, graphic.Y);
-            canvas.Children.Add(element);
+            if (_musicPlayer != null && _musicCapSeconds.HasValue && _musicOffsetSeconds + CurrentTime >= _musicCapSeconds.Value)
+                _musicPlayer.Pause();
 
-            TimeSpan duration = TimeSpan.FromSeconds(Math.Max(graphic.Duration, 0.1));
-            Storyboard storyboard = new();
-
-            if (style == EntranceStyle.PopIn && element is FrameworkElement frameworkElement)
-            {
-                frameworkElement.RenderTransformOrigin = new Point(0.5, 0.5);
-                frameworkElement.RenderTransform = new ScaleTransform(0, 0);
-
-                DoubleAnimation scaleXAnimation = new(0, 1, duration) { EasingFunction = new BackEase { EasingMode = EasingMode.EaseOut }, FillBehavior = FillBehavior.HoldEnd };
-                DoubleAnimation scaleYAnimation = new(0, 1, duration) { EasingFunction = new BackEase { EasingMode = EasingMode.EaseOut }, FillBehavior = FillBehavior.HoldEnd };
-                Storyboard.SetTarget(scaleXAnimation, frameworkElement);
-                Storyboard.SetTargetProperty(scaleXAnimation, new PropertyPath("RenderTransform.ScaleX"));
-                Storyboard.SetTarget(scaleYAnimation, frameworkElement);
-                Storyboard.SetTargetProperty(scaleYAnimation, new PropertyPath("RenderTransform.ScaleY"));
-                storyboard.Children.Add(scaleXAnimation);
-                storyboard.Children.Add(scaleYAnimation);
-            }
-            else
-            {
-                element.Opacity = 0;
-                DoubleAnimation opacityAnimation = new(0, 1, duration) { FillBehavior = FillBehavior.HoldEnd };
-                Storyboard.SetTarget(opacityAnimation, element);
-                Storyboard.SetTargetProperty(opacityAnimation, new PropertyPath(UIElement.OpacityProperty));
-                storyboard.Children.Add(opacityAnimation);
-            }
-
-            // Wait out the real duration directly rather than relying on Storyboard.Completed -
-            // see PlaySceneTransition for why that event isn't trustworthy here either.
-            storyboard.Begin();
-            await Task.Delay(duration, cancellationToken);
+            if (_voiceoverPlayer == null || inTransition) return;
+            SceneModel scene = _project.Scenes[segment.SceneIndex];
+            if (scene.VoiceoverTrimEnd <= scene.VoiceoverTrimStart) return;
+            double voiceoverPosition = Math.Max(0, scene.VoiceoverTrimStart) + (CurrentTime - segment.ContentStart);
+            if (voiceoverPosition >= scene.VoiceoverTrimEnd)
+                _voiceoverPlayer.Pause();
         }
-
-        // Plays a scene's camera-effects layer (SceneModel.CameraEffects), sorted by StartTime
-        // (absolute seconds from the scene's start - not list/add order), concurrently with the
-        // scene's graphic entrance animations - see the call site in PlayAsync. Before the first
-        // effect's StartTime, between effects, and after the last one's EndTime, the camera
-        // simply holds wherever it last landed, since nothing touches scale/translate during
-        // those gaps.
-        private static async Task PlayCameraEffectsAsync(SceneModel scene, ScaleTransform scale, TranslateTransform translate, double viewportWidth, double viewportHeight, CancellationToken cancellationToken)
-        {
-            if (scene?.CameraEffects == null || viewportWidth <= 0 || viewportHeight <= 0) return;
-
-            double elapsed = 0;
-            foreach (CameraEffectModel effect in scene.CameraEffects.OrderBy(e => e.StartTime))
-            {
-                await Task.Delay(TimeSpan.FromSeconds(Math.Max(0, effect.StartTime - elapsed)), cancellationToken);
-                elapsed = effect.StartTime;
-
-                CameraTransform start = CameraTransformMath.ComputeTransform(effect.StartFocusX, effect.StartFocusY, effect.StartZoom, viewportWidth, viewportHeight);
-                CameraTransform end = CameraTransformMath.ComputeTransform(effect.EndFocusX, effect.EndFocusY, effect.EndZoom, viewportWidth, viewportHeight);
-
-                TimeSpan duration = TimeSpan.FromSeconds(Math.Max(effect.EndTime - effect.StartTime, 0.01));
-
-                // Animate scale/translate directly on the Transform objects (Transform
-                // implements IAnimatable) rather than via a Storyboard.SetTarget(...)+Begin() -
-                // these two Transforms are standalone Freezables (children of a TransformGroup,
-                // never a named/rooted element), and a fresh Storyboard re-targeting them on
-                // every effect in this loop was not reliably driving their values; direct
-                // BeginAnimation is the standard technique for animating a detached Freezable
-                // and needs no target/property-path resolution at all. Each call's explicit
-                // From (start.Scale/TranslateX/Y) makes an earlier "snap to start" assignment
-                // unnecessary - BeginAnimation establishes that starting value itself.
-                IEasingFunction easingFunction = ToEasingFunction(effect.Easing);
-                DoubleAnimation scaleXAnimation = new(start.Scale, end.Scale, duration) { FillBehavior = FillBehavior.HoldEnd, EasingFunction = easingFunction };
-                DoubleAnimation scaleYAnimation = new(start.Scale, end.Scale, duration) { FillBehavior = FillBehavior.HoldEnd, EasingFunction = easingFunction };
-                DoubleAnimation translateXAnimation = new(start.TranslateX, end.TranslateX, duration) { FillBehavior = FillBehavior.HoldEnd, EasingFunction = easingFunction };
-                DoubleAnimation translateYAnimation = new(start.TranslateY, end.TranslateY, duration) { FillBehavior = FillBehavior.HoldEnd, EasingFunction = easingFunction };
-
-                scale.BeginAnimation(ScaleTransform.ScaleXProperty, scaleXAnimation);
-                scale.BeginAnimation(ScaleTransform.ScaleYProperty, scaleYAnimation);
-                translate.BeginAnimation(TranslateTransform.XProperty, translateXAnimation);
-                translate.BeginAnimation(TranslateTransform.YProperty, translateYAnimation);
-
-                await Task.Delay(duration, cancellationToken);
-                elapsed = effect.EndTime;
-            }
-        }
-
-        // QuadraticEase's per-EasingMode curve is exactly the formula ExportRenderHandler's
-        // CameraTransformMath.ApplyEasing hand-computes for the same CameraEasing value (verified
-        // against QuadraticEase.EaseInCore(t) = t*t) - using it here keeps preview and export
-        // pixel-identical without either side depending on the other's animation system. Null for
-        // Linear, WPF's own DoubleAnimation default.
-        private static IEasingFunction ToEasingFunction(CameraEasing easing) => easing switch
-        {
-            CameraEasing.EaseIn => new QuadraticEase { EasingMode = EasingMode.EaseIn },
-            CameraEasing.EaseOut => new QuadraticEase { EasingMode = EasingMode.EaseOut },
-            CameraEasing.EaseInOut => new QuadraticEase { EasingMode = EasingMode.EaseInOut },
-            _ => null
-        };
     }
 }

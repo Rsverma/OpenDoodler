@@ -7,7 +7,6 @@ using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using System.Windows.Threading;
 
 namespace OpenBoardAnim.Utils
 {
@@ -127,9 +126,9 @@ namespace OpenBoardAnim.Utils
 
         // Rough per-scene duration estimate (sum of each visible graphic's Delay + Duration) -
         // used by EditorTimelineViewModel for the timeline's proportional layout and by
-        // ProjectPreviewView to position/cap the background-music track for a single-scene
-        // preview (hand-drawn stroke timing isn't known ahead of time, so this is "good enough",
-        // not a promise).
+        // PreviewPlaybackHandler both for its scrub-timeline segment layout and to position/cap
+        // the background-music track for a single-scene preview (hand-drawn stroke timing isn't
+        // known ahead of time, so this is "good enough", not a promise).
         public static double GetEstimatedSceneDurationSeconds(SceneModel scene)
         {
             if (scene?.Graphics == null) return 0;
@@ -141,24 +140,6 @@ namespace OpenBoardAnim.Utils
                 ? scene.CameraEffects.Max(e => e.EndTime)
                 : 0;
             return Math.Max(graphicsTotal, cameraTotal);
-        }
-
-        // Live playback (preview) has no equivalent to ffmpeg's -t, so a trimmed clip's end is
-        // enforced by polling position and pausing once it's reached. Shared with
-        // ProjectPreviewView for the background-music track, which needs the same behavior.
-        public static DispatcherTimer StartTrimStopTimer(MediaPlayer player, double trimEndSeconds)
-        {
-            DispatcherTimer timer = new() { Interval = TimeSpan.FromMilliseconds(200) };
-            timer.Tick += (s, e) =>
-            {
-                if (player.Position.TotalSeconds >= trimEndSeconds)
-                {
-                    player.Pause();
-                    timer.Stop();
-                }
-            };
-            timer.Start();
-            return timer;
         }
 
         // Resolves the hand-cursor image for the current HandStyle, or null for HandStyle.None

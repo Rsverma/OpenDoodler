@@ -261,8 +261,8 @@ namespace OpenBoardAnim.Models
         }
 
         // How long the crossfade/wipe overlay animation runs for, in seconds - was hardcoded
-        // to 0.6 in PlaySceneTransition (now duplicated in both PreviewPlaybackHandler and
-        // ExportRenderHandler); has no effect when SceneTransition is None.
+        // to 0.6; used by both PreviewPlaybackHandler and ExportRenderHandler's own transition
+        // handling. Has no effect when SceneTransition is None.
         private double _transitionDurationSeconds = 0.6;
         public double TransitionDurationSeconds
         {
