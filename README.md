@@ -33,13 +33,13 @@
 * Editor canvas to compose SVG and text graphics, with drag, resize, zoom/pan (plus zoom-to-fit and zoom-to-selection), snapping/alignment guides while dragging, lock-in-place, persistent grouping, a visual layers panel with visibility/lock toggles and drag-to-reorder, multi-select with group move/delete/align, a right-click context menu (copy/cut/duplicate/lock/group/align/move to top/up/down/bottom/delete), and copy/paste across scenes
 * Library Manager to import graphics, delete graphics you no longer need, and clean up any invalid/corrupted graphics from your library
 * Scene-template gallery: built-in starter layouts plus your own saved scenes, inserted as a brand-new scene so picking one never overwrites your current work
-* Stroke-by-stroke hand-drawn animation with configurable stroke color/width and a choice of hand-cursor skins (or no cursor at all), plus Fade In / Pop In as alternate entrance styles
-* Per-scene camera pan/zoom (Ken Burns-style) effects - layer multiple start/end focus-point-and-zoom moves onto a scene via a visual timeline track, with a draggable/resizable rectangle editor for picking each move's start and end framing
-* Whole-project timeline: scenes sized proportionally to their duration with a draggable, zoomable playhead, drag-to-reorder/duplicate/delete, hard-cut/crossfade/wipe transitions with configurable duration, per-scene voiceover (with trim in/out points and waveform display) layered under project-wide background music, and the ability to preview a single scene in isolation
+* Stroke-by-stroke hand-drawn animation with configurable stroke color/width and a choice of hand-cursor skins (your own custom PNG, or no cursor at all), plus Fade In / Pop In as alternate entrance styles
+* Per-scene camera pan/zoom (Ken Burns-style) effects - layer multiple start/end focus-point-and-zoom moves onto a scene via a visual timeline track, with a draggable/resizable rectangle editor (plus a live scrub preview of the actual cropped/zoomed output) for picking each move's start and end framing and Linear/Ease In/Ease Out/Ease In-Out timing
+* Whole-project timeline: scenes sized proportionally to their duration with zoom in/out, drag-to-reorder/duplicate/delete, hard-cut/crossfade/wipe transitions with configurable duration, per-scene voiceover (with trim in/out points and waveform display) layered under project-wide background music, and the ability to preview a single scene in isolation
 * Undo/redo
 * Light / Dark / System UI theme
 * Project Settings: board type, background music, stroke styling and hand-cursor skin, entrance style, one-click export presets for popular platforms (YouTube, TikTok, Instagram Reel/Post, etc.) or a custom 16:9 / 9:16 / 1:1 aspect ratio, and scene transitions
-* In-app preview and MP4 video export (background music and per-scene voiceovers mixed in) with progress reporting and cancellation
+* In-app preview with a scrubbable timeline (Play/Pause, drag-to-seek) for either a single scene or the whole project, and MP4 video export (background music and per-scene voiceovers mixed in) with progress reporting and cancellation
 * Keyboard shortcuts for undo/redo, save, new/open project, delete, cut/copy/paste, and nudging the selected graphic(s)
 
 ## Wishlist
