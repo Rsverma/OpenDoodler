@@ -55,11 +55,68 @@
                 <Button Padding="4" Command="{Binding ZoomInCommand}" ToolTip="Zoom In" Content="{materialDesign:PackIcon MagnifyPlus}"/>
                 <Button Margin="8 0 0 0" Padding="4" Command="{Binding ResetZoomCommand}" ToolTip="Reset Zoom" Content="{materialDesign:PackIcon Restore}"/>
             </StackPanel>
-            <ScrollViewer x:Name="TimelineScrollViewer" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" Margin="10 4 10 16"
-                          PreviewMouseWheel="TimelineScrollViewer_PreviewMouseWheel">
-            <Canvas Width="{Binding TotalWidth}" Height="150">
+            <DockPanel Margin="10 4 10 16" LastChildFill="True">
+                <!-- Track-header column: a fixed (non-scrolling) icon per timeline row, aligned
+                     to the same Canvas.Top offsets as their data rows below via the shared
+                     EditorTimelineViewModel.TimelineCanvasHeight constant, so the two Canvases
+                     can't drift apart. Order matches the rows: audio (voiceover), effects
+                     (camera), graphics (scenes), music. -->
+                <Canvas DockPanel.Dock="Left" Width="24" Height="{Binding TimelineCanvasHeight}">
+                    <materialDesign:PackIcon Kind="Microphone" Width="14" Height="14" Canvas.Left="5" Canvas.Top="22"
+                                              Opacity="0.55" ToolTip="Audio (voiceover) track"/>
+                    <!-- Divider lines between each icon, at the midpoint of the gap between its
+                         row and the next - matching the row boundaries in EditorTimelineViewModel
+                         (see TimelineCanvasHeight). -->
+                    <Rectangle Canvas.Top="39" Canvas.Left="0" Width="24" Height="1" Fill="{DynamicResource PrimaryTextBrush}" Opacity="0.2"/>
+                    <materialDesign:PackIcon Kind="MovieFilter" Width="13" Height="13" Canvas.Left="5.5" Canvas.Top="42"
+                                              Opacity="0.55" ToolTip="Camera effects track"/>
+                    <Rectangle Canvas.Top="57" Canvas.Left="0" Width="24" Height="1" Fill="{DynamicResource PrimaryTextBrush}" Opacity="0.2"/>
+                    <materialDesign:PackIcon Kind="ImageMultiple" Width="16" Height="16" Canvas.Left="4" Canvas.Top="93"
+                                              Opacity="0.55" ToolTip="Graphics (scenes) track"/>
+                    <Rectangle Canvas.Top="146" Canvas.Left="0" Width="24" Height="1" Fill="{DynamicResource PrimaryTextBrush}" Opacity="0.2"/>
+                    <materialDesign:PackIcon Kind="MusicNote" Width="14" Height="14" Canvas.Left="5" Canvas.Top="152"
+                                              Opacity="0.55" ToolTip="Background music track"/>
+                </Canvas>
+                <!-- Vertical divider separating the icon column from the scrollable timeline. -->
+                <Border DockPanel.Dock="Left" Width="1" Height="{Binding TimelineCanvasHeight}" Margin="4 0 6 0"
+                        Background="{DynamicResource PrimaryTextBrush}" Opacity="0.2"/>
+                <ScrollViewer x:Name="TimelineScrollViewer" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled"
+                              PreviewMouseWheel="TimelineScrollViewer_PreviewMouseWheel">
+            <!-- HorizontalAlignment="Left" - without it, WPF's layout system centers an element
+                 with an explicit Width (like this one, bound to TotalWidth) within whatever
+                 extra space its container gives it, so a short timeline (few/short scenes,
+                 zoomed out) would float away from the icon column instead of starting right
+                 after it. -->
+            <Canvas Width="{Binding TotalWidth}" Height="{Binding TimelineCanvasHeight}" HorizontalAlignment="Left">
+                <!-- Time ruler: labeled tick marks (seconds, mm:ss) spaced from
+                     EditorTimelineViewModel.TimeRulerTicks, which already picks a "nice"
+                     interval for the current zoom - purely a navigational scale, not
+                     reconciled against individual (possibly width-floored) segment widths. -->
+                <ItemsControl ItemsSource="{Binding TimeRulerTicks}" Canvas.Left="0" Canvas.Top="0">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <Canvas IsItemsHost="True"/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemContainerStyle>
+                        <Style TargetType="ContentPresenter">
+                            <Setter Property="Canvas.Left" Value="{Binding X}"/>
+                            <Setter Property="Canvas.Top" Value="0"/>
+                        </Style>
+                    </ItemsControl.ItemContainerStyle>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="{x:Type models:TimeRulerTick}">
+                            <StackPanel>
+                                <TextBlock Text="{Binding Label}" FontSize="9" Foreground="{DynamicResource PrimaryTextBrush}"
+                                           Opacity="0.7" Width="40" Margin="-20 0 0 0" TextAlignment="Center"/>
+                                <Rectangle Width="1" Height="6" Fill="{DynamicResource PrimaryTextBrush}" Opacity="0.35" HorizontalAlignment="Left"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
                 <!-- Voiceover layer: one bar per scene, above the cards, only visible for scenes that have one set -->
-                <ItemsControl ItemsSource="{Binding Segments}" Canvas.Left="0" Canvas.Top="0">
+                <ItemsControl ItemsSource="{Binding Segments}" Canvas.Left="0" Canvas.Top="20">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
                             <Canvas IsItemsHost="True"/>
@@ -89,7 +146,7 @@
                 </ItemsControl>
 
                 <!-- Camera effects layer: one strip per scene, showing each effect's position/duration within it -->
-                <ItemsControl ItemsSource="{Binding Segments}" Canvas.Left="0" Canvas.Top="20">
+                <ItemsControl ItemsSource="{Binding Segments}" Canvas.Left="0" Canvas.Top="40">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
                             <Canvas IsItemsHost="True"/>
@@ -134,8 +191,11 @@
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
 
-                <!-- Background music layer: one bar spanning every real scene, below the cards -->
-                <Border Canvas.Left="0" Canvas.Top="132" Width="{Binding RealContentWidth}" Height="18" CornerRadius="4" Background="#FF43A047"
+                <!-- Background music layer: one bar spanning every real scene, below the cards.
+                     Height is 20% taller than the other track bars (18 -> 22px) for visual
+                     emphasis - the graphics/scenes track below is shrunk by the same 4px to
+                     compensate, keeping TimelineCanvasHeight unchanged. -->
+                <Border Canvas.Left="0" Canvas.Top="148" Width="{Binding RealContentWidth}" Height="22" CornerRadius="4" Background="#FF43A047"
                         Visibility="{Binding Project.AudioPath, Converter={StaticResource NullToVisibilityConverter}}"
                         ToolTip="{Binding Project.AudioPath}" ClipToBounds="True">
                     <Grid>
@@ -150,7 +210,7 @@
                 <!-- AllowDrop/DragOver/Drop here (not on each card) so a card dropped anywhere
                      within another card's bounds still resolves to that card via DataContext
                      hit-testing in the Drop handler - simpler than tracking per-card drop zones. -->
-                <ItemsControl ItemsSource="{Binding Segments}" Canvas.Left="0" Canvas.Top="38"
+                <ItemsControl ItemsSource="{Binding Segments}" Canvas.Left="0" Canvas.Top="58"
                               AllowDrop="True" DragOver="ScenesItemsControl_DragOver" Drop="ScenesItemsControl_Drop">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
@@ -169,7 +229,7 @@
                                  a movement threshold, without ever marking the event Handled, so
                                  a plain click still reaches MouseLeftButtonDown below and selects
                                  normally - dragging only kicks in once the mouse actually moves. -->
-                            <Border Width="{Binding Width}" Height="90" Style="{StaticResource SceneCardBorderStyle}"
+                            <Border Width="{Binding Width}" Height="86" Style="{StaticResource SceneCardBorderStyle}"
                                     MouseLeftButtonDown="SceneCard_MouseLeftButtonDown"
                                     PreviewMouseLeftButtonDown="SceneCard_PreviewMouseLeftButtonDown"
                                     PreviewMouseMove="SceneCard_PreviewMouseMove"
@@ -243,7 +303,7 @@
                 </ItemsControl>
 
                 <Thumb Canvas.Left="{Binding PlayheadX, Converter={StaticResource SubtractHalfConverter}, ConverterParameter=12}"
-                       Canvas.Top="0" Width="12" Height="150" Cursor="SizeWE"
+                       Canvas.Top="0" Width="12" Height="{Binding TimelineCanvasHeight}" Cursor="SizeWE"
                        DragDelta="Playhead_DragDelta" DragCompleted="Playhead_DragCompleted"
                        ToolTip="Drag to jump between scenes">
                     <Thumb.Template>
@@ -256,7 +316,8 @@
                     </Thumb.Template>
                 </Thumb>
             </Canvas>
-            </ScrollViewer>
+                </ScrollViewer>
+            </DockPanel>
         </DockPanel>
     </Border>
 </UserControl>

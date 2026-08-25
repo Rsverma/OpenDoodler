@@ -24,6 +24,17 @@ namespace OpenBoardAnim.ViewModels
         private const double MaxZoom = 4.0;
         private const double ZoomStep = 1.25;
 
+        // Fixed row layout shared between the timeline's own Canvas and the track-header icon
+        // column next to it (EditorTimelineView.xaml) - kept as one source of truth here so the
+        // two Canvases can never drift out of vertical alignment. Order: time ruler, voiceover
+        // (audio) track, camera-effects track, scene/graphics track, background-music track.
+        public double TimelineCanvasHeight => 170;
+
+        // "Nice" tick intervals (seconds) to choose from, smallest to largest - RecomputeTimeRuler
+        // picks the first one wide enough (in pixels, at the current zoom) to keep labels legible.
+        private static readonly double[] NiceTickIntervalsSeconds = { 1, 2, 5, 10, 15, 30, 60, 120, 300, 600 };
+        private const double MinPixelsBetweenTicks = 50;
+
         private double PixelsPerSecond => BasePixelsPerSecond * _zoomLevel;
         private double MinSegmentWidth => Math.Max(AbsoluteMinSegmentWidth, BaseMinSegmentWidth * _zoomLevel);
 
@@ -55,6 +66,7 @@ namespace OpenBoardAnim.ViewModels
                 o => { if (o is SceneModel scene) _pubSub.Publish(SubTopic.CameraEffectRequested, scene); },
                 canExecute: o => Project != null);
             Segments = new BindingList<SceneTimelineSegment>();
+            TimeRulerTicks = new BindingList<TimeRulerTick>();
         }
 
         // Isolates the preview dialog to just this scene, instead of always previewing the
@@ -199,6 +211,22 @@ namespace OpenBoardAnim.ViewModels
             }
         }
 
+        // Time-ruler tick marks along the top of the timeline. Purely a pixels-per-second
+        // reading of the same rough duration estimate used for segment widths (see
+        // GetEstimatedDurationSeconds) - not reconciled against individual segments' actual
+        // (possibly MinSegmentWidth-floored) widths, since this is a navigational aid rather
+        // than a frame-accurate scale.
+        public BindingList<TimeRulerTick> TimeRulerTicks
+        {
+            get { return _timeRulerTicks; }
+            private set
+            {
+                _timeRulerTicks = value;
+                OnPropertyChanged();
+            }
+        }
+        private BindingList<TimeRulerTick> _timeRulerTicks;
+
         private double _playheadX;
         public double PlayheadX
         {
@@ -333,12 +361,41 @@ namespace OpenBoardAnim.ViewModels
                 _maxPlayheadX = lastRealSegment != null ? lastRealSegment.X + lastRealSegment.Width : 0;
                 RealContentWidth = Math.Max(_maxPlayheadX, MinSegmentWidth);
                 UpdatePlayheadPosition();
+                RecomputeTimeRuler();
             }
             catch (Exception ex)
             {
                 if (Logger.LogError(ex, LogAction.LogAndShow))
                     throw;
             }
+        }
+
+        // Regenerates the time-ruler ticks from scratch at the current zoom level - cheap
+        // enough (at most a few dozen ticks) to just rebuild rather than diff against the
+        // previous set.
+        private void RecomputeTimeRuler()
+        {
+            TimeRulerTicks.Clear();
+            double intervalSeconds = ChooseTickIntervalSeconds();
+            double totalSeconds = RealContentWidth / PixelsPerSecond;
+            for (double seconds = 0; seconds <= totalSeconds + intervalSeconds; seconds += intervalSeconds)
+                TimeRulerTicks.Add(new TimeRulerTick { X = seconds * PixelsPerSecond, Label = FormatTickLabel(seconds) });
+        }
+
+        private double ChooseTickIntervalSeconds()
+        {
+            foreach (double step in NiceTickIntervalsSeconds)
+            {
+                if (step * PixelsPerSecond >= MinPixelsBetweenTicks)
+                    return step;
+            }
+            return NiceTickIntervalsSeconds[^1];
+        }
+
+        private static string FormatTickLabel(double seconds)
+        {
+            int total = (int)Math.Round(seconds);
+            return $"{total / 60}:{total % 60:00}";
         }
 
         // Pixel position/width of each camera effect within its scene's own segment, directly
