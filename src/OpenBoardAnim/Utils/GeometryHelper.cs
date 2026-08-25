@@ -1,4 +1,5 @@
-﻿using OpenBoardAnim.Utilities;
+﻿using OpenBoardAnim.Models;
+using OpenBoardAnim.Utilities;
 using SharpVectors.Converters;
 using SharpVectors.Renderers.Wpf;
 using System;
@@ -15,7 +16,7 @@ namespace OpenBoardAnim.Utils
 {
     public class GeometryHelper
     {
-        public static PathGeometry ConvertTextToGeometry(string text, FontFamily fontFamily, FontStyle fontStyle, FontWeight fontWeight, double fontSize, bool isUnderline = false)
+        public static PathGeometry ConvertTextToGeometry(string text, FontFamily fontFamily, FontStyle fontStyle, FontWeight fontWeight, double fontSize, bool isUnderline = false, bool isStrikethrough = false, List<TextFormatRun> formatRuns = null)
         {
             try
             {
@@ -30,12 +31,28 @@ namespace OpenBoardAnim.Utils
                     Brushes.Black,
                     VisualTreeHelper.GetDpi(Application.Current.MainWindow).PixelsPerDip);
 
-                // Baking the underline into the outlined geometry itself (rather than drawing it
-                // separately) keeps it consistent with how text is rendered everywhere else in
-                // the app - as plain vector paths, both for the settled look and for the
-                // hand-drawn stroke animation, which reuses this same geometry.
-                if (isUnderline)
-                    formattedText.SetTextDecorations(TextDecorations.Underline);
+                // Baking the underline/strikethrough into the outlined geometry itself (rather
+                // than drawing it separately) keeps it consistent with how text is rendered
+                // everywhere else in the app - as plain vector paths, both for the settled look
+                // and for the hand-drawn stroke animation, which reuses this same geometry.
+                TextDecorationCollection baseDecorations = BuildDecorations(isUnderline, isStrikethrough);
+                if (baseDecorations.Count > 0)
+                    formattedText.SetTextDecorations(baseDecorations);
+
+                // Per-block bold/italic/underline/strikethrough overrides on top of the base
+                // typeface/decorations above - each run covers a slice of the raw text by
+                // character index, set explicitly (rather than only when true) so it also
+                // correctly clears a slice's formatting when the base itself has it set.
+                if (formatRuns != null)
+                {
+                    foreach (TextFormatRun run in formatRuns)
+                    {
+                        if (run.Length <= 0) continue;
+                        formattedText.SetFontWeight(run.IsBold ? FontWeights.Bold : FontWeights.Normal, run.Start, run.Length);
+                        formattedText.SetFontStyle(run.IsItalic ? FontStyles.Italic : FontStyles.Normal, run.Start, run.Length);
+                        formattedText.SetTextDecorations(BuildDecorations(run.IsUnderline, run.IsStrikethrough), run.Start, run.Length);
+                    }
+                }
 
                 // Create a geometry from the formatted text
                 Geometry textGeometry = formattedText.BuildGeometry(new Point(0, 0));
@@ -51,6 +68,21 @@ namespace OpenBoardAnim.Utils
                     throw;
                 return null;
             }
+        }
+
+        // Underline and Strikethrough both live on the one TextDecorations collection, so
+        // combining them into a single collection (rather than two separate Set calls, which
+        // would just overwrite each other) is what lets a run carry both at once. Public since
+        // PreviewAndExportHandler's settled-state TextBlock/Run rendering needs the exact same
+        // combined collection to match this geometry.
+        public static TextDecorationCollection BuildDecorations(bool isUnderline, bool isStrikethrough)
+        {
+            TextDecorationCollection decorations = new();
+            if (isUnderline)
+                decorations.Add(TextDecorations.Underline[0]);
+            if (isStrikethrough)
+                decorations.Add(TextDecorations.Strikethrough[0]);
+            return decorations;
         }
 
         public static DrawingGroup GetPathGeometryFromSVG(string svgText)

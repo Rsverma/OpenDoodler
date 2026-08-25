@@ -182,6 +182,10 @@ namespace OpenBoardAnim.ViewModels
             }
         }
 
+        // Set from EditorLibraryView's code-behind (extracted from the RichTextBox's FlowDocument
+        // runs) right before AddTextCommand executes - see EditorLibraryView.xaml.cs AddText_Click.
+        public List<TextFormatRun> FormatRuns { get; set; } = new();
+
         private FontFamily _selectedFontFamily;
 
         public FontFamily SelectedFontFamily
@@ -214,17 +218,6 @@ namespace OpenBoardAnim.ViewModels
             set
             {
                 _fontSize = value;
-                OnPropertyChanged();
-            }
-        }
-
-        private bool _isUnderline;
-        public bool IsUnderline
-        {
-            get { return _isUnderline; }
-            set
-            {
-                _isUnderline = value;
                 OnPropertyChanged();
             }
         }
@@ -422,8 +415,12 @@ namespace OpenBoardAnim.ViewModels
         {
             try
             {
+                // IsUnderline/IsStrikethrough are left at their default false - the RichTextBox's
+                // per-block FormatRuns already cover every character with their own underline/
+                // strikethrough state, so these base flags (kept only for pre-existing saved
+                // projects with no FormatRuns) would never actually apply to freshly-created text.
                 PathGeometry pathGeometry = GeometryHelper.ConvertTextToGeometry(RawText, SelectedFontFamily,
-                        SelectedTypeFace.Style, SelectedTypeFace.Weight, FontSize, IsUnderline);
+                        SelectedTypeFace.Style, SelectedTypeFace.Weight, FontSize, false, false, FormatRuns);
                 TextModel textModel = new TextModel
                 {
                     TextGeometry = pathGeometry,
@@ -432,8 +429,8 @@ namespace OpenBoardAnim.ViewModels
                     SelectedFontStyle = SelectedTypeFace.Style,
                     SelectedFontWeight = SelectedTypeFace.Weight,
                     SelectedFontSize = FontSize,
-                    IsUnderline = IsUnderline,
-                    SelectedColorHex = SelectedTextColorHex
+                    SelectedColorHex = SelectedTextColorHex,
+                    FormatRuns = FormatRuns
                 };
                 _pubSub.Publish(SubTopic.GraphicAdded, textModel);
             }
