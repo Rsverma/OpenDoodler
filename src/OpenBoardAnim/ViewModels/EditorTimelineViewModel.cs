@@ -2,6 +2,7 @@ using OpenBoardAnim.Core;
 using OpenBoardAnim.Models;
 using OpenBoardAnim.Services;
 using OpenBoardAnim.Utilities;
+using OpenBoardAnim.Utils;
 using System.ComponentModel;
 using System.Windows.Input;
 using System.Xml.Linq;
@@ -20,6 +21,11 @@ namespace OpenBoardAnim.ViewModels
         // card stays clickable.
         private const double AbsoluteMinSegmentWidth = 40;
         private const double SegmentGap = 6;
+        // Floor on a transition block's width, even zoomed all the way out or at a very short
+        // duration, so its icon stays visible - otherwise it's sized to TransitionDurationSeconds
+        // at the current zoom, same as segment widths are sized to scene duration.
+        private const double MinTransitionBlockWidth = 20;
+        private const double TransitionBlockHeight = 20;
         private const double MinZoom = 0.25;
         private const double MaxZoom = 4.0;
         private const double ZoomStep = 1.25;
@@ -67,6 +73,7 @@ namespace OpenBoardAnim.ViewModels
                 canExecute: o => Project != null);
             Segments = new BindingList<SceneTimelineSegment>();
             TimeRulerTicks = new BindingList<TimeRulerTick>();
+            TransitionBlocks = new BindingList<SceneTransitionTimelineBlock>();
         }
 
         // Isolates the preview dialog to just this scene, instead of always previewing the
@@ -173,7 +180,26 @@ namespace OpenBoardAnim.ViewModels
             {
                 _project = value;
                 OnPropertyChanged();
+                // TransitionBlocks (unlike AudioPath above) is computed imperatively rather than
+                // bound straight to Settings.SceneTransition, so a change made in the Project
+                // Settings dialog needs an explicit nudge to reach the timeline's markers.
+                if (_project?.Settings != null)
+                {
+                    _project.Settings.PropertyChanged -= ProjectSettingsPropertyChangedHandler;
+                    _project.Settings.PropertyChanged += ProjectSettingsPropertyChangedHandler;
+                }
+                // Scenes is assigned right after Project by EditorViewModel.LoadProjectIntoEditor -
+                // guard against the brief window where Project is set but Scenes (and so
+                // Segments, which TransitionBlocks is derived alongside) isn't populated yet.
+                if (_scenes != null)
+                    RecomputeSegments();
             }
+        }
+
+        private void ProjectSettingsPropertyChangedHandler(object sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(ProjectSettings.SceneTransition) || e.PropertyName == nameof(ProjectSettings.TransitionDurationSeconds))
+                RecomputeSegments();
         }
 
         // Width of the background-music layer - spans every real scene (excluding the
@@ -227,6 +253,19 @@ namespace OpenBoardAnim.ViewModels
         }
         private BindingList<TimeRulerTick> _timeRulerTicks;
 
+        // Scene-to-scene transition markers on the graphics track - see
+        // SceneTransitionTimelineBlock and PreviewAndExportHandler.GetEffectiveTransition.
+        public BindingList<SceneTransitionTimelineBlock> TransitionBlocks
+        {
+            get { return _transitionBlocks; }
+            private set
+            {
+                _transitionBlocks = value;
+                OnPropertyChanged();
+            }
+        }
+        private BindingList<SceneTransitionTimelineBlock> _transitionBlocks;
+
         private double _playheadX;
         public double PlayheadX
         {
@@ -272,6 +311,16 @@ namespace OpenBoardAnim.ViewModels
         // effects the same way, since GetEstimatedDurationSeconds now factors those in too.
         private void WireGraphicsNotifications(SceneModel scene)
         {
+            if (scene != null)
+            {
+                scene.PropertyChanged += ScenePropertyChangedHandler;
+                // Routes SceneModel.AddCameraEffectCommand (bound directly from the Scene
+                // Settings dialog, which has no ViewModel to reach) through the same pub/sub
+                // topic the timeline's own right-click menu already uses - EditorActionsViewModel
+                // is the one actually subscribed and holding the Project context this needs.
+                scene.AddCameraEffectAction = s => _pubSub.Publish(SubTopic.CameraEffectRequested, s);
+            }
+
             if (scene?.Graphics != null)
             {
                 scene.Graphics.ListChanged += (s, e) =>
@@ -295,6 +344,12 @@ namespace OpenBoardAnim.ViewModels
                 foreach (CameraEffectModel effect in scene.CameraEffects)
                     effect.PropertyChanged += CameraEffectPropertyChangedHandler;
             }
+        }
+
+        private void ScenePropertyChangedHandler(object sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(SceneModel.TransitionOverride))
+                RecomputeSegments();
         }
 
         private void GraphicPropertyChangedHandler(object sender, PropertyChangedEventArgs e)
@@ -341,9 +396,16 @@ namespace OpenBoardAnim.ViewModels
             try
             {
                 Segments.Clear();
+                TransitionBlocks.Clear();
+                SceneTransition projectDefaultTransition = Project?.Settings?.SceneTransition ?? SceneTransition.None;
+                // Same clamp PreviewAndExportHandler applies before actually playing a
+                // transition - keeps the block's width meaningful even if the project's
+                // duration field was left at 0 or a negative value.
+                double transitionDurationSeconds = Math.Max(0.05, Project?.Settings?.TransitionDurationSeconds ?? 0.6);
                 double x = 0;
-                foreach (SceneModel scene in _scenes)
+                for (int i = 0; i < _scenes.Count; i++)
                 {
+                    SceneModel scene = _scenes[i];
                     double sceneDuration = GetEstimatedDurationSeconds(scene);
                     double width = Math.Max(MinSegmentWidth, sceneDuration * PixelsPerSecond);
                     Segments.Add(new SceneTimelineSegment
@@ -354,7 +416,33 @@ namespace OpenBoardAnim.ViewModels
                         IsSelected = scene == _selectedScene,
                         CameraEffectBlocks = new BindingList<CameraEffectTimelineBlock>(BuildCameraEffectBlocks(scene, width, sceneDuration))
                     });
-                    x += width + SegmentGap;
+
+                    // A transition only plays between two real scenes - never after the last
+                    // real one (nothing follows it in playback) and never involving the
+                    // trailing "+" add-scene card. See PreviewAndExportHandler.GetEffectiveTransition.
+                    bool hasNextRealScene = scene != _addScene && i + 1 < _scenes.Count && _scenes[i + 1] != _addScene;
+                    SceneTransition effectiveTransition = hasNextRealScene
+                        ? PreviewAndExportHandler.GetEffectiveTransition(scene, projectDefaultTransition)
+                        : SceneTransition.None;
+                    double gap = SegmentGap;
+                    if (effectiveTransition != SceneTransition.None)
+                    {
+                        // The block fills the entire gap - its width is what actually reads as
+                        // "how much time this transition takes" on the timeline, same idea as a
+                        // segment's own width standing in for scene duration.
+                        gap = Math.Max(MinTransitionBlockWidth, transitionDurationSeconds * PixelsPerSecond);
+                        TransitionBlocks.Add(new SceneTransitionTimelineBlock
+                        {
+                            X = x + width,
+                            Width = gap,
+                            Height = TransitionBlockHeight,
+                            IsOverride = scene.TransitionOverride != SceneTransitionOverride.Inherit,
+                            ToolTipText = scene.TransitionOverride != SceneTransitionOverride.Inherit
+                                ? $"{effectiveTransition}, {transitionDurationSeconds:0.0}s (override on this scene)"
+                                : $"{effectiveTransition}, {transitionDurationSeconds:0.0}s (project default)"
+                        });
+                    }
+                    x += width + gap;
                 }
                 TotalWidth = Math.Max(x, MinSegmentWidth);
                 SceneTimelineSegment lastRealSegment = Segments.LastOrDefault(s => s.Scene != _addScene);
