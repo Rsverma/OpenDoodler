@@ -158,33 +158,6 @@ namespace OpenBoardAnim.Tests
         }
 
         [Fact]
-        public void MovePlayheadPreview_ClampsWithinRealContentBounds()
-        {
-            EditorTimelineViewModel sut = CreateSut();
-            sut.Scenes = CreateScenes(2);
-
-            sut.MovePlayheadPreview(-99999);
-            Assert.Equal(0, sut.PlayheadX, 3);
-
-            sut.MovePlayheadPreview(99999 + 99999);
-            Assert.Equal(sut.RealContentWidth, sut.PlayheadX, 3);
-        }
-
-        [Fact]
-        public void CommitPlayheadPosition_SelectsTheNearestRealScene()
-        {
-            EditorTimelineViewModel sut = CreateSut();
-            sut.Scenes = CreateScenes(2); // ["1","2","+"]
-            SceneModel secondScene = sut.Scenes[1];
-            double secondSegmentCenter = sut.Segments[1].X + sut.Segments[1].Width / 2;
-            sut.PlayheadX = secondSegmentCenter;
-
-            sut.CommitPlayheadPosition();
-
-            Assert.Same(secondScene, sut.SelectedScene);
-        }
-
-        [Fact]
         public void SceneReplacedHandler_SwapsInTheNewSceneAtTheSelectedIndex()
         {
             EditorTimelineViewModel sut = CreateSut();

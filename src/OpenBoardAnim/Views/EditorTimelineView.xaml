@@ -30,7 +30,6 @@
         <utils:ResizeConverter x:Key="ResizeConverter"/>
         <utils:NullToVisibilityConverter x:Key="NullToVisibilityConverter"/>
         <utils:CountToVisibilityConverter x:Key="CountToVisibilityConverter"/>
-        <utils:SubtractHalfConverter x:Key="SubtractHalfConverter"/>
         <BooleanToVisibilityConverter x:Key="BoolToVisConverter"/>
 
         <Style x:Key="SceneCardBorderStyle" TargetType="Border">
@@ -341,20 +340,6 @@
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
-
-                <Thumb Canvas.Left="{Binding PlayheadX, Converter={StaticResource SubtractHalfConverter}, ConverterParameter=12}"
-                       Canvas.Top="0" Width="12" Height="{Binding TimelineCanvasHeight}" Cursor="SizeWE"
-                       DragDelta="Playhead_DragDelta" DragCompleted="Playhead_DragCompleted"
-                       ToolTip="Drag to jump between scenes">
-                    <Thumb.Template>
-                        <ControlTemplate TargetType="Thumb">
-                            <Grid Width="12" Background="Transparent">
-                                <Rectangle Width="2" Fill="#FFE53935" HorizontalAlignment="Center"/>
-                                <Polygon Points="0,0 12,0 6,10" Fill="#FFE53935" VerticalAlignment="Top" HorizontalAlignment="Center"/>
-                            </Grid>
-                        </ControlTemplate>
-                    </Thumb.Template>
-                </Thumb>
             </Canvas>
                 </ScrollViewer>
             </DockPanel>
