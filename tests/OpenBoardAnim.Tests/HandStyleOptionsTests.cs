@@ -23,6 +23,17 @@ namespace OpenBoardAnim.Tests
             Assert.Null(none.ThumbnailUri);
         }
 
+        [Fact]
+        public void Custom_HasNoThumbnail()
+        {
+            // Custom's image is a per-project file path (ProjectSettings.CustomHandImagePath),
+            // not a bundled resource, so there's no fixed ThumbnailUri for it here - see
+            // SceneRenderHelpers.ResolveHandImage.
+            HandStyleOption custom = HandStyleOptions.All.Single(o => o.Style == HandStyle.Custom);
+
+            Assert.Null(custom.ThumbnailUri);
+        }
+
         [Theory]
         [MemberData(nameof(NonNoneOptions))]
         public void EveryOtherOption_HasAThumbnail(HandStyleOption option)
@@ -31,6 +42,6 @@ namespace OpenBoardAnim.Tests
         }
 
         public static IEnumerable<object[]> NonNoneOptions() =>
-            HandStyleOptions.All.Where(o => o.Style != HandStyle.None).Select(o => new object[] { o });
+            HandStyleOptions.All.Where(o => o.Style != HandStyle.None && o.Style != HandStyle.Custom).Select(o => new object[] { o });
     }
 }

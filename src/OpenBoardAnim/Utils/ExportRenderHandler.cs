@@ -9,7 +9,6 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
-using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using System.Windows.Threading;
 
@@ -58,10 +57,7 @@ namespace OpenBoardAnim.Utils
                 catch (FormatException) { /* keep default black on an unparsable hex value */ }
                 double strokeWidth = project.Settings != null && project.Settings.StrokeWidth > 0 ? project.Settings.StrokeWidth : 1;
 
-                string handImageUri = HandStyleOptions.All.FirstOrDefault(o => o.Style == handStyle)?.ThumbnailUri;
-                Image hand = new();
-                if (handImageUri != null)
-                    hand.Source = new BitmapImage(new Uri(handImageUri));
+                Image hand = new() { Source = SceneRenderHelpers.ResolveHandImage(handStyle, project.Settings?.CustomHandImagePath) };
 
                 List<SceneAudioCue> sceneAudioCues = new();
                 Dictionary<int, double> sceneStartTimes = new();

@@ -14,6 +14,9 @@
         <utils:FriendlyEnumConverter x:Key="FriendlyEnumConverter"/>
         <utils:EnumEqualsVisibilityConverter x:Key="EnumEqualsVisibilityConverter"/>
         <utils:EnumNotEqualsVisibilityConverter x:Key="EnumNotEqualsVisibilityConverter"/>
+        <utils:EnumEqualsBooleanConverter x:Key="EnumEqualsBooleanConverter"/>
+        <utils:NullToVisibilityConverter x:Key="NullToVisibilityConverter"/>
+        <utils:ThumbnailPathToImageSourceConverter x:Key="ThumbnailPathToImageSourceConverter"/>
 
         <Style x:Key="SettingsCardStyle" TargetType="Border">
             <Setter Property="Background" Value="{DynamicResource RegionBrush}"/>
@@ -178,6 +181,36 @@
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
+
+                    <!-- Custom hand image - kept out of HandStylesItemsControl since its thumbnail
+                         is a per-project file path (Settings.CustomHandImagePath) rather than a
+                         fixed bundled resource; see ProjectSettingsView.xaml.cs. -->
+                    <Border x:Name="CustomHandTile" CornerRadius="4" Margin="0 0 6 6">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="BorderThickness" Value="1"/>
+                                <Setter Property="BorderBrush" Value="Transparent"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Settings.HandStyle, Converter={StaticResource EnumEqualsBooleanConverter}, ConverterParameter=Custom}" Value="True">
+                                        <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}"/>
+                                        <Setter Property="BorderThickness" Value="2"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <Button Padding="6" Width="Auto" Height="Auto" Cursor="Hand" Template="{StaticResource TileButtonTemplate}" Click="BrowseCustomHand_Click">
+                            <StackPanel>
+                                <Border Width="93" Height="120" Background="White" CornerRadius="4" Visibility="{Binding Settings.CustomHandImagePath, Converter={StaticResource NullToVisibilityConverter}}">
+                                    <Image Source="{Binding Settings.CustomHandImagePath, Converter={StaticResource ThumbnailPathToImageSourceConverter}}" Stretch="Uniform" Margin="6"/>
+                                </Border>
+                                <Border Width="93" Height="120" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="4"
+                                        Visibility="{Binding Settings.CustomHandImagePath, Converter={StaticResource NullToVisibilityConverter}, ConverterParameter=Invert}">
+                                    <TextBlock Text="Browse for a PNG..." FontSize="10" TextAlignment="Center" TextWrapping="Wrap" VerticalAlignment="Center" Opacity="0.65"/>
+                                </Border>
+                                <TextBlock Text="Custom" FontSize="11" HorizontalAlignment="Center" Margin="0 4 0 0"/>
+                            </StackPanel>
+                        </Button>
+                    </Border>
                 </StackPanel>
             </Border>
 
