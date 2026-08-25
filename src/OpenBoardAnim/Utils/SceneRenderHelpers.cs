@@ -1,5 +1,6 @@
 using OpenBoardAnim.Models;
 using System;
+using System.IO;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
@@ -158,6 +159,37 @@ namespace OpenBoardAnim.Utils
             };
             timer.Start();
             return timer;
+        }
+
+        // Resolves the hand-cursor image for the current HandStyle, or null for HandStyle.None
+        // (or a Custom style whose file is missing/unset/unreadable) - both PreviewPlaybackHandler
+        // and ExportRenderHandler treat a null Image.Source as "no cursor", so callers can pass
+        // this straight through without a separate None/Custom branch of their own. Uses
+        // BitmapCacheOption.OnLoad (same as ThumbnailPathToImageSourceConverter) so a Custom
+        // file's handle is released immediately after reading rather than held for the rest of
+        // the playback/export.
+        public static BitmapImage ResolveHandImage(HandStyle handStyle, string customHandImagePath)
+        {
+            string uri = handStyle == HandStyle.Custom
+                ? customHandImagePath
+                : HandStyleOptions.All.FirstOrDefault(o => o.Style == handStyle)?.ThumbnailUri;
+            if (string.IsNullOrWhiteSpace(uri)) return null;
+            if (handStyle == HandStyle.Custom && !File.Exists(uri)) return null;
+
+            try
+            {
+                BitmapImage bitmap = new();
+                bitmap.BeginInit();
+                bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                bitmap.UriSource = new Uri(uri);
+                bitmap.EndInit();
+                bitmap.Freeze();
+                return bitmap;
+            }
+            catch
+            {
+                return null;
+            }
         }
 
         // Resolves a scene's outgoing transition: its own TransitionOverride if set to anything

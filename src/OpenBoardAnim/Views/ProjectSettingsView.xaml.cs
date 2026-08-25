@@ -32,7 +32,11 @@ namespace OpenBoardAnim.Views
             _presetItems.Add(new ExportPresetPickerItem { Name = "Custom" });
             ExportPresetsItemsControl.ItemsSource = _presetItems;
 
+            // Custom is excluded here - it's rendered as its own dedicated "Browse..." tile
+            // (CustomHandTile in XAML) instead of a generic tile, since its thumbnail is a
+            // per-project file path rather than a fixed bundled resource.
             _handStyleItems = HandStyleOptions.All
+                .Where(o => o.Style != HandStyle.Custom)
                 .Select(o => new HandStylePickerItem { Name = o.Name, Style = o.Style, ThumbnailUri = o.ThumbnailUri })
                 .ToList();
             HandStylesItemsControl.ItemsSource = _handStyleItems;
@@ -99,6 +103,33 @@ namespace OpenBoardAnim.Views
                 if (sender is not Button button || button.Tag is not HandStylePickerItem item) return;
                 SelectHandStyle(item);
                 project.Settings.HandStyle = item.Style;
+            }
+            catch (Exception ex)
+            {
+                if (Logger.LogError(ex, LogAction.LogAndShow))
+                    throw;
+            }
+        }
+
+        // The Custom hand tile isn't part of _handStyleItems (see the constructor comment), so
+        // picking it also has to clear any generic tile's stale IsSelected highlight itself -
+        // its own highlight is driven directly off Settings.HandStyle via a XAML DataTrigger
+        // instead (see CustomHandTile in ProjectSettingsView.xaml).
+        private void BrowseCustomHand_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                if (DataContext is not ProjectDetails project) return;
+                OpenFileDialog openFileDialog = new()
+                {
+                    Filter = "PNG images (*.png)|*.png"
+                };
+                if (openFileDialog.ShowDialog() != true) return;
+
+                foreach (HandStylePickerItem h in _handStyleItems)
+                    h.IsSelected = false;
+                project.Settings.CustomHandImagePath = openFileDialog.FileName;
+                project.Settings.HandStyle = HandStyle.Custom;
             }
             catch (Exception ex)
             {
