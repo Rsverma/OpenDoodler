@@ -157,7 +157,7 @@ namespace OpenBoardAnim.ViewModels
                 CameraEffectPromptModel prompt = new()
                 {
                     Effect = effect,
-                    SceneSnapshot = PreviewAndExportHandler.RenderSceneSnapshot(Project, Project.Scenes.IndexOf(scene)),
+                    SceneSnapshot = SceneRenderHelpers.RenderSceneSnapshot(Project, Project.Scenes.IndexOf(scene)),
                     EditorWidth = Project.Settings.EditorWidth,
                     EditorHeight = Project.Settings.EditorHeight,
                     SaveEffect = saved =>
@@ -183,7 +183,7 @@ namespace OpenBoardAnim.ViewModels
                 CameraEffectPromptModel prompt = new()
                 {
                     Effect = effect.Clone(),
-                    SceneSnapshot = PreviewAndExportHandler.RenderSceneSnapshot(Project, Project.Scenes.IndexOf(scene)),
+                    SceneSnapshot = SceneRenderHelpers.RenderSceneSnapshot(Project, Project.Scenes.IndexOf(scene)),
                     EditorWidth = Project.Settings.EditorWidth,
                     EditorHeight = Project.Settings.EditorHeight,
                     SaveEffect = saved =>
@@ -660,7 +660,7 @@ namespace OpenBoardAnim.ViewModels
                     canvas.Arrange(new Rect(0, 0, canvas.Width, canvas.Height));
                     canvas.UpdateLayout();
                     //window.Show();
-                    await PreviewAndExportHandler.RunAnimationsOnCanvas(Project, canvas, true, progress, exportPath, _exportCts.Token);
+                    await ExportRenderHandler.ExportAsync(Project, canvas, progress, exportPath, _exportCts.Token);
                 }
 
                 Logger.LogMessage("Export complete", LogAction.LogAndShow);

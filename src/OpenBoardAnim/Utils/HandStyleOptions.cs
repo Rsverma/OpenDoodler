@@ -2,9 +2,9 @@ using OpenBoardAnim.Models;
 
 namespace OpenBoardAnim.Utils
 {
-    // ThumbnailUri is null for HandStyle.None (no image, hand cursor is hidden entirely) - both
-    // ProjectSettingsView's picker and PreviewAndExportHandler read from this single list so the
-    // HandStyle-to-file mapping only lives in one place.
+    // ThumbnailUri is null for HandStyle.None (no image, hand cursor is hidden entirely) -
+    // ProjectSettingsView's picker, PreviewPlaybackHandler, and ExportRenderHandler all read from
+    // this single list so the HandStyle-to-file mapping only lives in one place.
     public record HandStyleOption(HandStyle Style, string Name, string ThumbnailUri);
 
     public static class HandStyleOptions

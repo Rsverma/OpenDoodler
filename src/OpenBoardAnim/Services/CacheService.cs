@@ -100,7 +100,7 @@ namespace OpenBoardAnim.Services
                 File.WriteAllText(filePath, JsonSerializer.Serialize(project));
                 // project.Scenes always has a trailing "+" add-scene card appended (see
                 // ProjectDetails's constructor) that isn't a real scene - same convention
-                // PreviewAndExportHandler/EditorTimelineViewModel already exclude it under.
+                // PreviewPlaybackHandler/ExportRenderHandler/EditorTimelineViewModel already exclude it under.
                 int realSceneCount = project.Scenes.Count - 1;
                 _pRepo.SaveNewProject(new ProjectEntity
                 {
