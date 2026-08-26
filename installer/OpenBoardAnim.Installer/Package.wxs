@@ -13,6 +13,19 @@
          being treated as unrelated products. -->
     <MajorUpgrade DowngradeErrorMessage="A newer version of OpenDoodler is already installed." />
 
+    <!-- Deliberately doesn't touch %LocalAppData% (OpenBoardAnim.db, the autosave backup,
+         thumbnails, theme setting - see CLAUDE.md's Persistence section and ThemeService.cs/
+         ThumbnailHelper.cs/CacheService.cs) on uninstall - none of it is harvested into AppFiles
+         below, so there's nothing here that could remove it. This is intentional, not an
+         oversight: it matches the common desktop-app default (Office, VS Code, etc.) of a user's
+         projects/settings surviving an uninstall or reinstall rather than being silently wiped.
+         A real "also delete my data" uninstall option was considered and explicitly deferred -
+         doing it correctly needs a deferred custom action conditioned on a UI checkbox property,
+         since a naive Component-level Condition silently doesn't work here (MSI only tracks a
+         component as removable-on-uninstall if it was recorded as installed in the FIRST place,
+         which a condition gated on a property nobody can set until the uninstall UI runs never
+         is) - judged not worth the added WiX complexity and untested risk for now. -->
+
     <!-- Without this, WiX auto-split the ~150MB self-contained payload across three
          loose external .cab files sitting next to the .msi - fine for MSI mechanics,
          bad for handing someone a single downloadable installer. EmbedCab bundles
@@ -22,6 +35,7 @@
     <Feature Id="ProductFeature" Title="OpenDoodler">
       <ComponentGroupRef Id="AppFiles" />
       <ComponentRef Id="ApplicationShortcut" />
+      <ComponentRef Id="MainExecutable" />
     </Feature>
 
     <!-- Extracted from the exe's own embedded icon (OpenBoardAnim.csproj sets
@@ -55,6 +69,11 @@
     <ComponentGroup Id="AppFiles" Directory="INSTALLFOLDER">
       <Files Include="$(var.PublishDir)**">
         <Exclude Files="$(var.PublishDir)**\*.pdb" />
+        <!-- Carved out so it can be declared explicitly below with a ProgId/Extension/Verb for
+             .obap file association - a wildcard-harvested File's auto-generated Id can't be
+             referenced from another Fragment, and two File rows can't both claim the same
+             (Directory, FileName) pair, so it can only live in one place or the other. -->
+        <Exclude Files="$(var.PublishDir)OpenBoardAnim.exe" />
       </Files>
     </ComponentGroup>
   </Fragment>
@@ -71,6 +90,23 @@
            Windows Installer to track its install state - a per-user registry value,
            same pattern used for a Start Menu-only shortcut in most WiX installers. -->
       <RegistryValue Root="HKCU" Key="Software\OpenDoodler" Name="Installed" Type="integer" Value="1" KeyPath="yes" />
+    </Component>
+  </Fragment>
+
+  <Fragment>
+    <!-- OpenBoardAnim.exe itself, carved out of the AppFiles wildcard harvest above (see its
+         Exclude) purely so a ProgId/Extension/Verb can be attached to it - this is what makes
+         double-clicking a .obap file (or File Explorer's "Open with") launch OpenDoodler with
+         that project, via MainViewModel.OpenProjectFromStartupArg (see App.xaml.cs).
+         ProgId/@Icon references a File Id (this one), not the separate Icon table element used
+         for ARPPRODUCTICON above - despite the shared name, WiX resolves them differently. -->
+    <Component Id="MainExecutable" Directory="INSTALLFOLDER" Guid="F3C2F8B1-6C2E-4E0B-9C7E-6B6C6E9E7E2F">
+      <File Id="OpenBoardAnimExe" Source="$(var.PublishDir)OpenBoardAnim.exe" KeyPath="yes" />
+      <ProgId Id="OpenDoodler.Project" Description="OpenDoodler Project" Icon="OpenBoardAnimExe">
+        <Extension Id="obap" ContentType="application/x-opendoodler-project">
+          <Verb Id="open" Command="open" TargetFile="OpenBoardAnimExe" Argument="&quot;%1&quot;" />
+        </Extension>
+      </ProgId>
     </Component>
   </Fragment>
 </Wix>
