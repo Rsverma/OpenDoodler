@@ -3,13 +3,18 @@
   <PropertyGroup>
     <OutputName>OpenDoodlerSetup</OutputName>
     <OutputType>Package</OutputType>
+    <!-- Without this, InstallerPlatform (the MSBuild equivalent of wix.exe's -arch switch)
+         defaults to x86, which makes Package.wxs's ProgramFiles6432Folder resolve to
+         "Program Files (x86)" - wrong for this app, which is always published win-x64
+         (see PublishDir below and installer/README.md). -->
+    <InstallerPlatform>x64</InstallerPlatform>
     <!-- WiX v7 requires accepting its Open Source Maintenance Fee EULA to build - free
          for non-commercial/under-$10k-revenue use (which is us), a monthly fee otherwise.
          See https://wixtoolset.org/osmf/ and installer/README.md. -->
     <AcceptEula>wix7</AcceptEula>
     <!-- No app-wide version scheme exists yet (see CLAUDE.md) - bump this manually for
          each release, or override with /p:ProductVersion=x.y.z.w. -->
-    <ProductVersion Condition="'$(ProductVersion)' == ''">1.0.0.0</ProductVersion>
+    <ProductVersion Condition="'$(ProductVersion)' == ''">1.1.0.0</ProductVersion>
     <!-- Must point at a `dotnet publish` output (see README.md in this folder), not a
          plain build output - Package.wxs harvests every file under this folder as-is.
          Override with /p:PublishDir=... to point at a different one. -->
