@@ -5,6 +5,7 @@ using OpenBoardAnim.Utilities;
 using System;
 using System.IO;
 using System.Windows;
+using System.Windows.Input;
 
 namespace OpenBoardAnim.Services
 {
@@ -12,7 +13,7 @@ namespace OpenBoardAnim.Services
     // palettes. Every HandyControl/MaterialDesign brush the app uses is DynamicResource-bound
     // to keys the skin dictionary defines, so this single swap re-skins the whole app without
     // touching individual views.
-    public class ThemeService : ObservableObject
+    public class ThemeService : ObservableObject, IThemeService
     {
         private static readonly string SettingsFilePath = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "OpenBoardAnim.theme.txt");
@@ -53,7 +54,7 @@ namespace OpenBoardAnim.Services
             }
         }
 
-        public RelayCommand SetThemeCommand { get; }
+        public ICommand SetThemeCommand { get; }
 
         // Called once at startup (before the main window is shown) to apply the persisted
         // choice, and again whenever CurrentTheme changes afterward.

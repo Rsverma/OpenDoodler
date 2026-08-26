@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace OpenBoardAnim.Library.Repositories
 {
-    public class ProjectRepository
+    public class ProjectRepository : IProjectRepository
     {
         private readonly Func<DataContext> _contextFactory;
         public ProjectRepository(Func<DataContext> contextFactory)
@@ -51,6 +51,26 @@ namespace OpenBoardAnim.Library.Repositories
                 using var context = _contextFactory();
                 context.Projects.Update(entity);
                 context.SaveChanges();
+            }
+            catch (Exception ex)
+            {
+                if (Logger.LogError(ex, LogAction.LogAndThrow))
+                    throw;
+            }
+        }
+
+        public void UpdateProjectMetadata(string filePath, int sceneCount, DateTime latestLaunchTime)
+        {
+            try
+            {
+                using var context = _contextFactory();
+                ProjectEntity project = context.Projects.FirstOrDefault(p => p.FilePath == filePath);
+                if (project != null)
+                {
+                    project.SceneCount = sceneCount;
+                    project.LatestLaunchTime = latestLaunchTime;
+                    context.SaveChanges();
+                }
             }
             catch (Exception ex)
             {

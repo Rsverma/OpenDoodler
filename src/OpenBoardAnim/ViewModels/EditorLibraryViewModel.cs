@@ -1,5 +1,4 @@
-﻿using Microsoft.Win32;
-using OpenBoardAnim.Core;
+﻿using OpenBoardAnim.Core;
 using OpenBoardAnim.Models;
 using OpenBoardAnim.Services;
 using OpenBoardAnim.Utilities;
@@ -14,9 +13,15 @@ namespace OpenBoardAnim.ViewModels
 {
     public class EditorLibraryViewModel : ViewModel
     {
+        // Must match GraphicRepository's own page size (its GetAllGraphics overloads both
+        // Take(20)) - a fetched batch smaller than this means the library has no more graphics
+        // left to load, which is what hides the "Load More.." button.
+        private const int GraphicsPageSize = 20;
         private IPubSubService _pubSub;
-        private readonly CacheService _cache;
+        private readonly ICacheService _cache;
         private readonly IDialogService _dialog;
+        private readonly IOpenFileDialogService _openFileDialog;
+        private readonly IMessageBoxService _messageBox;
         private string _oldSearchText = string.Empty;
         // Tracked purely so "Save Current Scene as Template" knows what to save - Save/Insert
         // template graphics stay independent of the current on-canvas selection.
@@ -30,15 +35,19 @@ namespace OpenBoardAnim.ViewModels
         public ICommand CleanupInvalidGraphicsCommand { get; set; }
 
 
-        public EditorLibraryViewModel(IPubSubService pubSub, CacheService cache, IDialogService dialog)
+        public EditorLibraryViewModel(IPubSubService pubSub, ICacheService cache, IDialogService dialog,
+            IOpenFileDialogService openFileDialog, IMessageBoxService messageBox)
         {
             try
             {
                 _pubSub = pubSub;
                 _cache = cache;
                 _dialog = dialog;
+                _openFileDialog = openFileDialog;
+                _messageBox = messageBox;
                 _pubSub.Subscribe(SubTopic.SceneChanged, SceneChangedHandler);
                 Graphics = cache.LoadedGraphics;
+                CanLoadMoreGraphics = Graphics.Count >= GraphicsPageSize;
                 Shapes = cache.AllShapes;
                 foreach (var graphic in Graphics)
                 {
@@ -80,6 +89,7 @@ namespace OpenBoardAnim.ViewModels
                     model.DeleteGraphic = DeleteGraphicHandler;
                     Graphics.Add(model);
                 }
+                CanLoadMoreGraphics = drawingModels.Count >= GraphicsPageSize;
             }
             catch (Exception ex)
             {
@@ -102,6 +112,7 @@ namespace OpenBoardAnim.ViewModels
                     model.DeleteGraphic = DeleteGraphicHandler;
                     Graphics.Add(model);
                 }
+                CanLoadMoreGraphics = drawingModels.Count >= GraphicsPageSize;
             }
             catch (Exception ex)
             {
@@ -114,17 +125,14 @@ namespace OpenBoardAnim.ViewModels
         {
             try
             {
-                OpenFileDialog openFileDialog = new()
+                string[] paths = _openFileDialog.ShowOpenFileDialog("SVG File (*.svg)|*.svg", multiselect: true);
+                if (paths.Length > 0)
                 {
-                    Multiselect = true,
-                    Filter = "SVG File (*.svg)|*.svg",
-                };
-                if (openFileDialog.ShowDialog() == true)
-                {
-                    await _cache.SaveNewGraphics(openFileDialog.FileNames);
+                    await _cache.SaveNewGraphics(paths);
                 }
 
                 Graphics = _cache.LoadedGraphics;
+                CanLoadMoreGraphics = Graphics.Count >= GraphicsPageSize;
                 foreach (var graphic in Graphics)
                 {
                     graphic.AddGraphic = AddGraphicHandler;
@@ -135,6 +143,18 @@ namespace OpenBoardAnim.ViewModels
             {
                 if (Logger.LogError(ex, LogAction.LogAndShow))
                     throw;
+            }
+        }
+
+        private bool _canLoadMoreGraphics = true;
+
+        public bool CanLoadMoreGraphics
+        {
+            get { return _canLoadMoreGraphics; }
+            set
+            {
+                _canLoadMoreGraphics = value;
+                OnPropertyChanged();
             }
         }
 
@@ -161,6 +181,10 @@ namespace OpenBoardAnim.ViewModels
                 OnPropertyChanged();
             }
         }
+
+        // Set from EditorLibraryView's code-behind (extracted from the RichTextBox's FlowDocument
+        // runs) right before AddTextCommand executes - see EditorLibraryView.xaml.cs AddText_Click.
+        public List<TextFormatRun> FormatRuns { get; set; } = new();
 
         private FontFamily _selectedFontFamily;
 
@@ -194,17 +218,6 @@ namespace OpenBoardAnim.ViewModels
             set
             {
                 _fontSize = value;
-                OnPropertyChanged();
-            }
-        }
-
-        private bool _isUnderline;
-        public bool IsUnderline
-        {
-            get { return _isUnderline; }
-            set
-            {
-                _isUnderline = value;
                 OnPropertyChanged();
             }
         }
@@ -387,7 +400,7 @@ namespace OpenBoardAnim.ViewModels
             try
             {
                 int removed = _cache.CleanupInvalidGraphics();
-                MessageBox.Show(
+                _messageBox.Show(
                     removed > 0 ? $"Removed {removed} invalid graphic(s) from the library." : "No invalid graphics found.",
                     "Library Cleanup", MessageBoxButton.OK, MessageBoxImage.Information);
             }
@@ -402,8 +415,12 @@ namespace OpenBoardAnim.ViewModels
         {
             try
             {
+                // IsUnderline/IsStrikethrough are left at their default false - the RichTextBox's
+                // per-block FormatRuns already cover every character with their own underline/
+                // strikethrough state, so these base flags (kept only for pre-existing saved
+                // projects with no FormatRuns) would never actually apply to freshly-created text.
                 PathGeometry pathGeometry = GeometryHelper.ConvertTextToGeometry(RawText, SelectedFontFamily,
-                        SelectedTypeFace.Style, SelectedTypeFace.Weight, FontSize, IsUnderline);
+                        SelectedTypeFace.Style, SelectedTypeFace.Weight, FontSize, false, false, FormatRuns);
                 TextModel textModel = new TextModel
                 {
                     TextGeometry = pathGeometry,
@@ -412,8 +429,8 @@ namespace OpenBoardAnim.ViewModels
                     SelectedFontStyle = SelectedTypeFace.Style,
                     SelectedFontWeight = SelectedTypeFace.Weight,
                     SelectedFontSize = FontSize,
-                    IsUnderline = IsUnderline,
-                    SelectedColorHex = SelectedTextColorHex
+                    SelectedColorHex = SelectedTextColorHex,
+                    FormatRuns = FormatRuns
                 };
                 _pubSub.Publish(SubTopic.GraphicAdded, textModel);
             }

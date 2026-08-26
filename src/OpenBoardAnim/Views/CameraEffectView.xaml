@@ -1,0 +1,132 @@
+<UserControl x:Class="OpenBoardAnim.Views.CameraEffectView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:hc="https://handyorg.github.io/handycontrol"
+             xmlns:utils="clr-namespace:OpenBoardAnim.Utils"
+             mc:Ignorable="d"
+             d:DesignHeight="620" d:DesignWidth="560">
+    <UserControl.Resources>
+        <!--
+            HandyControl's global theme (see App.xaml) applies its own default Thumb template,
+            which does not respect the local Background property - without this override, every
+            Thumb below renders HandyControl's default chrome instead of the plain color/
+            transparency set on it.
+        -->
+        <ControlTemplate x:Key="PlainThumbTemplate" TargetType="Thumb">
+            <Rectangle Fill="{TemplateBinding Background}"/>
+        </ControlTemplate>
+        <utils:FriendlyEnumConverter x:Key="FriendlyEnumConverter"/>
+        <DataTemplate x:Key="FriendlyEnumItemTemplate">
+            <TextBlock Text="{Binding Converter={StaticResource FriendlyEnumConverter}}"/>
+        </DataTemplate>
+    </UserControl.Resources>
+    <StackPanel Margin="24" HorizontalAlignment="Center" VerticalAlignment="Top">
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+            <StackPanel Margin="0 0 16 0">
+                <TextBlock Text="Framing" FontSize="11" Opacity="0.65" HorizontalAlignment="Center" Margin="0 0 0 4"/>
+                <Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="4" HorizontalAlignment="Center">
+                    <!--
+                        Drag anywhere on a rectangle's body to move it (sets Start/EndFocusX/Y);
+                        drag its bottom-right handle to resize it, which grows/shrinks from its
+                        own center and maps to Start/EndZoom - see CameraEffectView.xaml.cs.
+                        Start = green, End = orange. The corner numeric fields below stay in sync
+                        with these rectangles in both directions.
+                    -->
+                    <Canvas x:Name="PreviewCanvas" Background="Black" ClipToBounds="True">
+                        <Image x:Name="SnapshotImage" Source="{Binding SceneSnapshot}" Stretch="Fill"/>
+
+                        <Border x:Name="StartRect" BorderBrush="LimeGreen" BorderThickness="2" Background="Transparent">
+                            <Grid>
+                                <Thumb Template="{StaticResource PlainThumbTemplate}" Background="Transparent" Cursor="SizeAll" DragDelta="StartMoveThumb_DragDelta"/>
+                                <TextBlock Text="S" FontWeight="Bold" Foreground="LimeGreen" Margin="3" IsHitTestVisible="False"/>
+                                <Thumb Template="{StaticResource PlainThumbTemplate}" Width="12" Height="12" HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                                       Background="LimeGreen" Cursor="SizeNWSE" DragDelta="StartResizeThumb_DragDelta"/>
+                            </Grid>
+                        </Border>
+
+                        <Border x:Name="EndRect" BorderBrush="OrangeRed" BorderThickness="2" Background="Transparent">
+                            <Grid>
+                                <Thumb Template="{StaticResource PlainThumbTemplate}" Background="Transparent" Cursor="SizeAll" DragDelta="EndMoveThumb_DragDelta"/>
+                                <TextBlock Text="E" FontWeight="Bold" Foreground="OrangeRed" Margin="3" IsHitTestVisible="False"/>
+                                <Thumb Template="{StaticResource PlainThumbTemplate}" Width="12" Height="12" HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                                       Background="OrangeRed" Cursor="SizeNWSE" DragDelta="EndResizeThumb_DragDelta"/>
+                            </Grid>
+                        </Border>
+                    </Canvas>
+                </Border>
+            </StackPanel>
+
+            <StackPanel>
+                <TextBlock Text="Camera Output" FontSize="11" Opacity="0.65" HorizontalAlignment="Center" Margin="0 0 0 4"/>
+                <Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="4" HorizontalAlignment="Center">
+                    <!--
+                        What the exported video actually shows at the scrubbed progress below -
+                        the same scene snapshot as the Framing canvas, but cropped/zoomed by the
+                        interpolated camera transform (RefreshOutputPreview in
+                        CameraEffectView.xaml.cs) instead of overlaid with Start/End rectangles.
+                    -->
+                    <Canvas x:Name="OutputPreviewCanvas" Background="Black" ClipToBounds="True">
+                        <Image x:Name="OutputSnapshotImage" Source="{Binding SceneSnapshot}" Stretch="Fill">
+                            <Image.RenderTransform>
+                                <TransformGroup>
+                                    <ScaleTransform x:Name="OutputScaleTransform"/>
+                                    <TranslateTransform x:Name="OutputTranslateTransform"/>
+                                </TransformGroup>
+                            </Image.RenderTransform>
+                        </Image>
+                    </Canvas>
+                </Border>
+            </StackPanel>
+        </StackPanel>
+
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0 10 0 0">
+            <TextBlock Text="Preview" VerticalAlignment="Center" Margin="0 0 4 0"/>
+            <Slider x:Name="ProgressSlider" Width="240" Minimum="0" Maximum="1" Value="0" VerticalAlignment="Center" ValueChanged="ProgressSlider_ValueChanged"/>
+            <TextBlock x:Name="ProgressPercentText" Text="0%" VerticalAlignment="Center" Width="36" Margin="6 0 0 0"/>
+        </StackPanel>
+
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0 12 0 0">
+            <Rectangle Width="10" Height="10" Fill="LimeGreen" VerticalAlignment="Center" Margin="0 0 6 0"/>
+            <TextBlock Text="X1" VerticalAlignment="Center" Margin="0 0 2 0"/>
+            <hc:NumericUpDown x:Name="StartX1Input" Width="58" DecimalPlaces="0" ValueChanged="StartX1_ValueChanged"/>
+            <TextBlock Text="Y1" VerticalAlignment="Center" Margin="8 0 2 0"/>
+            <hc:NumericUpDown x:Name="StartY1Input" Width="58" DecimalPlaces="0" ValueChanged="StartY1_ValueChanged"/>
+            <TextBlock Text="X2" VerticalAlignment="Center" Margin="12 0 2 0"/>
+            <hc:NumericUpDown x:Name="StartX2Input" Width="58" DecimalPlaces="0" ValueChanged="StartX2_ValueChanged"/>
+            <TextBlock Text="Y2" VerticalAlignment="Center" Margin="8 0 2 0"/>
+            <hc:NumericUpDown x:Name="StartY2Input" Width="58" DecimalPlaces="0" ValueChanged="StartY2_ValueChanged"/>
+        </StackPanel>
+
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0 8 0 0">
+            <Rectangle Width="10" Height="10" Fill="OrangeRed" VerticalAlignment="Center" Margin="0 0 6 0"/>
+            <TextBlock Text="X1" VerticalAlignment="Center" Margin="0 0 2 0"/>
+            <hc:NumericUpDown x:Name="EndX1Input" Width="58" DecimalPlaces="0" ValueChanged="EndX1_ValueChanged"/>
+            <TextBlock Text="Y1" VerticalAlignment="Center" Margin="8 0 2 0"/>
+            <hc:NumericUpDown x:Name="EndY1Input" Width="58" DecimalPlaces="0" ValueChanged="EndY1_ValueChanged"/>
+            <TextBlock Text="X2" VerticalAlignment="Center" Margin="12 0 2 0"/>
+            <hc:NumericUpDown x:Name="EndX2Input" Width="58" DecimalPlaces="0" ValueChanged="EndX2_ValueChanged"/>
+            <TextBlock Text="Y2" VerticalAlignment="Center" Margin="8 0 2 0"/>
+            <hc:NumericUpDown x:Name="EndY2Input" Width="58" DecimalPlaces="0" ValueChanged="EndY2_ValueChanged"/>
+        </StackPanel>
+
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0 14 0 0">
+            <TextBlock Text="Start Time" VerticalAlignment="Center" Margin="0 0 4 0"/>
+            <hc:NumericUpDown Width="70" Minimum="0" DecimalPlaces="1" ValueFormat="0.0" Value="{Binding Effect.StartTime, Mode=TwoWay}"/>
+            <TextBlock Text="End Time" VerticalAlignment="Center" Margin="16 0 4 0"/>
+            <hc:NumericUpDown Width="70" DecimalPlaces="1" ValueFormat="0.0" Value="{Binding Effect.EndTime, Mode=TwoWay}"
+                              Minimum="{Binding Effect.StartTime}"/>
+        </StackPanel>
+
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0 8 0 0">
+            <TextBlock Text="Timing" VerticalAlignment="Center" Margin="0 0 4 0"/>
+            <hc:ComboBox x:Name="EasingComboBox" Width="150" ItemTemplate="{StaticResource FriendlyEnumItemTemplate}" SelectedItem="{Binding Effect.Easing, Mode=TwoWay}"/>
+        </StackPanel>
+
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0 16 0 0">
+            <Button Content="Cancel" Click="Cancel_Click"/>
+            <Button Margin="10 0 0 0" Style="{StaticResource ButtonPrimary}" Content="Save Effect" Click="Save_Click"/>
+        </StackPanel>
+    </StackPanel>
+</UserControl>

@@ -61,7 +61,7 @@ namespace OpenBoardAnim.Views
         }
 
         // Best-effort - a failed thumbnail capture shouldn't block or interrupt a save. Always
-        // scene 1 (PreviewAndExportHandler.RenderSceneSnapshot's sceneIndex: 0) regardless of
+        // scene 1 (SceneRenderHelpers.RenderSceneSnapshot's sceneIndex: 0) regardless of
         // whichever scene is actually open in the editor right now - an off-screen render
         // rather than a capture of the live canvas, so switching scenes to build it wouldn't
         // even be visible anyway, but this also means it doesn't need CanvasContentHost at all.
@@ -73,7 +73,7 @@ namespace OpenBoardAnim.Views
                 string thumbnailPath = ThumbnailHelper.GetThumbnailPath(project.Path);
                 if (thumbnailPath == null) return;
 
-                RenderTargetBitmap bitmap = PreviewAndExportHandler.RenderSceneSnapshot(project, 0);
+                RenderTargetBitmap bitmap = SceneRenderHelpers.RenderSceneSnapshot(project, 0);
                 if (bitmap == null) return;
 
                 Directory.CreateDirectory(Path.GetDirectoryName(thumbnailPath));

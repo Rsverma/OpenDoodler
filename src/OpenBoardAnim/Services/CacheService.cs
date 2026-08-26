@@ -12,12 +12,12 @@ using System.Windows.Media;
 
 namespace OpenBoardAnim.Services
 {
-    public class CacheService
+    public class CacheService : ICacheService
     {
-        private readonly GraphicRepository _gRepo;
-        private readonly SceneRepository _sRepo;
-        private readonly ProjectRepository _pRepo;
-        private readonly ShapeRepository _shRepo;
+        private readonly IGraphicRepository _gRepo;
+        private readonly ISceneRepository _sRepo;
+        private readonly IProjectRepository _pRepo;
+        private readonly IShapeRepository _shRepo;
         private List<GraphicEntity> _graphicEntities;
         public BindingList<RecentProjectModel> RecentProjects { get; set; }
         public ProjectDetails CurrentProject { get; set; }
@@ -25,7 +25,7 @@ namespace OpenBoardAnim.Services
         public BindingList<DrawingModel> AllShapes { get; set; }
         public BindingList<SceneTemplateModel> LoadedSceneTemplates { get; set; }
 
-        public CacheService(GraphicRepository gRepo, SceneRepository sRepo, ProjectRepository pRepo, ShapeRepository shRepo)
+        public CacheService(IGraphicRepository gRepo, ISceneRepository sRepo, IProjectRepository pRepo, IShapeRepository shRepo)
         {
             try
             {
@@ -80,7 +80,7 @@ namespace OpenBoardAnim.Services
                             d.ImgDrawingGroup = GeometryHelper.GetPathGeometryFromSVG(d.SVGText);
                         else if (g is TextModel t)
                             t.TextGeometry = GeometryHelper.ConvertTextToGeometry(t.RawText, t.SelectedFontFamily,
-                                t.SelectedFontStyle, t.SelectedFontWeight, t.SelectedFontSize, t.IsUnderline);
+                                t.SelectedFontStyle, t.SelectedFontWeight, t.SelectedFontSize, t.IsUnderline, t.IsStrikethrough, t.FormatRuns);
                     }
                 }
             }
@@ -98,18 +98,22 @@ namespace OpenBoardAnim.Services
                 project.Path = filePath;
                 project.Title = Path.GetFileNameWithoutExtension(project.Path);
                 File.WriteAllText(filePath, JsonSerializer.Serialize(project));
+                // project.Scenes always has a trailing "+" add-scene card appended (see
+                // ProjectDetails's constructor) that isn't a real scene - same convention
+                // PreviewPlaybackHandler/ExportRenderHandler/EditorTimelineViewModel already exclude it under.
+                int realSceneCount = project.Scenes.Count - 1;
                 _pRepo.SaveNewProject(new ProjectEntity
                 {
                     Title = project.Title,
                     CreatedOn = project.CreatedOn,
                     FilePath = project.Path,
                     LatestLaunchTime = DateTime.Now,
-                    SceneCount = project.Scenes.Count,
+                    SceneCount = realSceneCount,
                 });
                 RecentProjects.Insert(0, new RecentProjectModel
                 {
                     Title = project.Title,
-                    Scenes = project.Scenes.Count,
+                    Scenes = realSceneCount,
                     CreatedOn = project.CreatedOn,
                     FilePath = project.Path,
                     LatestLaunchTime = DateTime.Now,
@@ -148,7 +152,7 @@ namespace OpenBoardAnim.Services
                         d.ImgDrawingGroup = GeometryHelper.GetPathGeometryFromSVG(d.SVGText);
                     else if (g is TextModel t)
                         t.TextGeometry = GeometryHelper.ConvertTextToGeometry(t.RawText, t.SelectedFontFamily,
-                            t.SelectedFontStyle, t.SelectedFontWeight, t.SelectedFontSize, t.IsUnderline);
+                            t.SelectedFontStyle, t.SelectedFontWeight, t.SelectedFontSize, t.IsUnderline, t.IsStrikethrough, t.FormatRuns);
                 }
                 return new SceneTemplateModel
                 {
@@ -371,6 +375,18 @@ namespace OpenBoardAnim.Services
             try
             {
                 File.WriteAllText(project.Path, JsonSerializer.Serialize(project));
+
+                // See the same "+" add-scene card note in SaveNewProject.
+                int realSceneCount = project.Scenes.Count - 1;
+                DateTime now = DateTime.Now;
+                _pRepo.UpdateProjectMetadata(project.Path, realSceneCount, now);
+
+                RecentProjectModel recent = RecentProjects.FirstOrDefault(p => p.FilePath == project.Path);
+                if (recent != null)
+                {
+                    recent.Scenes = realSceneCount;
+                    recent.LatestLaunchTime = now;
+                }
             }
             catch (Exception ex)
             {

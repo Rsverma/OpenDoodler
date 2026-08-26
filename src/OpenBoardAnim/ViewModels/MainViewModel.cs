@@ -1,10 +1,8 @@
-﻿using Microsoft.Win32;
-using OpenBoardAnim.Core;
+﻿using OpenBoardAnim.Core;
 using OpenBoardAnim.Models;
 using OpenBoardAnim.Services;
 using OpenBoardAnim.Utilities;
 using System.ComponentModel;
-using System.Windows;
 
 namespace OpenBoardAnim.ViewModels
 {
@@ -16,13 +14,17 @@ namespace OpenBoardAnim.ViewModels
 
         private readonly IPubSubService _pubSub;
         private readonly StateSnapshotService _stateSnapshotService;
-        private readonly CacheService _cache;
+        private readonly ICacheService _cache;
         private readonly EditorActionsViewModel _actions;
+        private readonly IOpenFileDialogService _openFileDialog;
+        private readonly IApplicationService _application;
+        private readonly IDialogService _dialog;
         private INavigationService _navigation;
         private string _title;
         private string _userName;
 
-        public MainViewModel(INavigationService navService, IPubSubService pubSub, StateSnapshotService stateSnapshotService, CacheService cache, EditorActionsViewModel actions, ThemeService theme)
+        public MainViewModel(INavigationService navService, IPubSubService pubSub, StateSnapshotService stateSnapshotService, ICacheService cache, EditorActionsViewModel actions, IThemeService theme,
+            IOpenFileDialogService openFileDialog, IApplicationService application, IDialogService dialog)
         {
             try
             {
@@ -30,6 +32,9 @@ namespace OpenBoardAnim.ViewModels
                 _stateSnapshotService = stateSnapshotService;
                 _cache = cache;
                 _actions = actions;
+                _openFileDialog = openFileDialog;
+                _application = application;
+                _dialog = dialog;
                 _actions.PropertyChanged += Actions_PropertyChanged;
                 Theme = theme;
                 Title = AppName;
@@ -50,7 +55,7 @@ namespace OpenBoardAnim.ViewModels
                     canExecute: o => _stateSnapshotService.CanRedo);
                 NewProjectCommand = new RelayCommand(execute: o => NewProject(), canExecute: o => true);
                 OpenProjectCommand = new RelayCommand(execute: o => OpenProject(), canExecute: o => true);
-                ExitCommand = new RelayCommand(execute: o => Application.Current.MainWindow?.Close(), canExecute: o => true);
+                ExitCommand = new RelayCommand(execute: o => _application.CloseMainWindow(), canExecute: o => true);
                 NavigateToLaunchCommand.Execute(this);
             }
             catch (Exception ex)
@@ -95,8 +100,16 @@ namespace OpenBoardAnim.ViewModels
                 if (!_actions.ConfirmDiscardUnsavedChanges())
                     return;
 
-                Navigation.NavigateTo<EditorViewModel>();
-                _pubSub.Publish(SubTopic.ProjectLaunched, new ProjectDetails());
+                NewProjectPromptModel prompt = new()
+                {
+                    Project = new ProjectDetails(),
+                    CreateProject = project =>
+                    {
+                        Navigation.NavigateTo<EditorViewModel>();
+                        _pubSub.Publish(SubTopic.ProjectLaunched, project);
+                    }
+                };
+                _dialog.ShowDialog(DialogType.NewProject, prompt);
             }
             catch (Exception ex)
             {
@@ -112,14 +125,11 @@ namespace OpenBoardAnim.ViewModels
                 if (!_actions.ConfirmDiscardUnsavedChanges())
                     return;
 
-                OpenFileDialog openFileDialog = new()
-                {
-                    Filter = "Project file (*.obap)|*.obap"
-                };
-                if (openFileDialog.ShowDialog() != true)
+                string[] paths = _openFileDialog.ShowOpenFileDialog("Project file (*.obap)|*.obap");
+                if (paths.Length == 0)
                     return;
 
-                ProjectDetails project = _cache.LoadProjectFromFile(openFileDialog.FileName);
+                ProjectDetails project = _cache.LoadProjectFromFile(paths[0]);
                 if (project == null)
                     return;
 
@@ -148,7 +158,7 @@ namespace OpenBoardAnim.ViewModels
         public RelayCommand NewProjectCommand { get; set; }
         public RelayCommand OpenProjectCommand { get; set; }
         public RelayCommand ExitCommand { get; set; }
-        public ThemeService Theme { get; private set; }
+        public IThemeService Theme { get; private set; }
         public INavigationService Navigation
         {
             get => _navigation;

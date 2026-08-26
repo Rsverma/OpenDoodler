@@ -10,7 +10,10 @@
 
   <ItemGroup>
     <None Remove="Resources\App.ico" />
-    <None Remove="Resources\pencil.png" />
+    <None Remove="Resources\Cartoon.png" />
+    <None Remove="Resources\Dark-Skin.png" />
+    <None Remove="Resources\Light-Skin.png" />
+    <None Remove="Resources\ScrapBook.png" />
   </ItemGroup>
 
   <ItemGroup>
@@ -41,7 +44,16 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Resource Include="Resources\pencil.png">
+    <Resource Include="Resources\Cartoon.png">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Resources\Dark-Skin.png">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Resources\Light-Skin.png">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Resources\ScrapBook.png">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Resource>
   </ItemGroup>

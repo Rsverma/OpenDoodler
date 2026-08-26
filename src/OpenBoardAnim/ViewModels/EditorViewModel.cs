@@ -7,7 +7,6 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Windows.Input;
-using System.Windows.Threading;
 
 namespace OpenBoardAnim.ViewModels
 {
@@ -15,23 +14,24 @@ namespace OpenBoardAnim.ViewModels
     {
         private INavigationService _navigation;
         private readonly IPubSubService _pubSub;
-        private readonly CacheService _cache;
+        private readonly ICacheService _cache;
         private EditorActionsViewModel actions;
-        private readonly DispatcherTimer _snapshotTimer;
+        private readonly IAppTimer _snapshotTimer;
         // Periodic disk backup - distinct from _snapshotTimer's in-memory undo/redo stack,
         // which is lost on crash or close-without-saving. Runs less often than the snapshot
         // timer since it's real file I/O, not just an in-memory push.
-        private readonly DispatcherTimer _backupTimer;
+        private readonly IAppTimer _backupTimer;
         private readonly StateSnapshotService _stateSnapshotService;
 
         public EditorViewModel(INavigationService navigation,
                                IPubSubService pubSub,
-                               CacheService cache,
+                               ICacheService cache,
                                StateSnapshotService stateSnapshotService,
                                EditorActionsViewModel actions,
                                EditorCanvasViewModel canvas,
                                EditorLibraryViewModel library,
-                               EditorTimelineViewModel timeline)
+                               EditorTimelineViewModel timeline,
+                               Func<IAppTimer> timerFactory)
         {
             try
             {
@@ -46,9 +46,11 @@ namespace OpenBoardAnim.ViewModels
                 Library = library;
                 Timeline = timeline;
                 _stateSnapshotService = stateSnapshotService;
-                _snapshotTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(2) };
+                _snapshotTimer = timerFactory();
+                _snapshotTimer.Interval = TimeSpan.FromSeconds(2);
                 _snapshotTimer.Tick += SaveProjectSnapshot;
-                _backupTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(30) };
+                _backupTimer = timerFactory();
+                _backupTimer.Interval = TimeSpan.FromSeconds(30);
                 _backupTimer.Tick += SaveProjectBackup;
             }
             catch (Exception ex)

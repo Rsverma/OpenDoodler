@@ -103,9 +103,9 @@ namespace OpenBoardAnim.Models
         }
 
         // Hidden graphics are excluded from canvas rendering/hit-testing (Collapsed) and from
-        // preview/export entirely (PreviewAndExportHandler skips them outright, including their
-        // own Delay contribution to the scene's animation sequence) - matches a real "hide layer"
-        // rather than just an editor-only visual aid.
+        // preview/export entirely (PreviewPlaybackHandler/ExportRenderHandler skip them outright,
+        // including their own Delay contribution to the scene's animation sequence) - matches a
+        // real "hide layer" rather than just an editor-only visual aid.
         private bool _isVisible = true;
         public bool IsVisible
         {

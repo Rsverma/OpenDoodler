@@ -115,6 +115,8 @@ namespace OpenBoardAnim.Models
                     StrokeColorHex = Settings.StrokeColorHex,
                     StrokeWidth = Settings.StrokeWidth,
                     EntranceStyle = Settings.EntranceStyle,
+                    HandStyle = Settings.HandStyle,
+                    CustomHandImagePath = Settings.CustomHandImagePath,
                     SceneTransition = Settings.SceneTransition,
                     TransitionDurationSeconds = Settings.TransitionDurationSeconds,
                     AspectRatio = Settings.AspectRatio
@@ -139,6 +141,25 @@ namespace OpenBoardAnim.Models
         HandDrawn,
         FadeIn,
         PopIn
+    }
+
+    // Which cursor image (if any) draws alongside a HandDrawn entrance's stroke-by-stroke reveal
+    // - has no effect for FadeIn/PopIn, which never show a hand at all. None keeps the
+    // stroke-by-stroke draw animation itself but hides the cursor image, decoupling "how strokes
+    // reveal" (EntranceStyle) from "what draws them" (this). Custom appended after None (rather
+    // than grouped with the other skins) so its underlying int value can't shift None's - this
+    // enum is persisted as a raw int in project JSON (no JsonStringEnumConverter is registered),
+    // so reordering existing members would silently reinterpret already-saved projects' hand
+    // style. Custom's actual image lives in ProjectSettings.CustomHandImagePath, not a bundled
+    // resource (see HandStyleOptions).
+    public enum HandStyle
+    {
+        LightSkin,
+        DarkSkin,
+        Cartoon,
+        ScrapBook,
+        None,
+        Custom
     }
 
     public enum AspectRatioPreset
@@ -201,6 +222,33 @@ namespace OpenBoardAnim.Models
             }
         }
 
+        // Defaults to LightSkin, not None - it's the same image every existing project already
+        // shows (see HandStyleOptions), so a project saved before this setting existed keeps
+        // looking exactly the same after loading.
+        private HandStyle _handStyle = HandStyle.LightSkin;
+        public HandStyle HandStyle
+        {
+            get { return _handStyle; }
+            set
+            {
+                _handStyle = value;
+                OnPropertyChanged();
+            }
+        }
+
+        // Path to a user-picked PNG, only meaningful when HandStyle is Custom - null otherwise
+        // (see HandStyle enum comment and HandStyleOptions).
+        private string _customHandImagePath;
+        public string CustomHandImagePath
+        {
+            get { return _customHandImagePath; }
+            set
+            {
+                _customHandImagePath = value;
+                OnPropertyChanged();
+            }
+        }
+
         private SceneTransition _sceneTransition = SceneTransition.None;
         public SceneTransition SceneTransition
         {
@@ -213,8 +261,8 @@ namespace OpenBoardAnim.Models
         }
 
         // How long the crossfade/wipe overlay animation runs for, in seconds - was hardcoded
-        // to 0.6 in PreviewAndExportHandler.PlaySceneTransition; has no effect when
-        // SceneTransition is None.
+        // to 0.6; used by both PreviewPlaybackHandler and ExportRenderHandler's own transition
+        // handling. Has no effect when SceneTransition is None.
         private double _transitionDurationSeconds = 0.6;
         public double TransitionDurationSeconds
         {

@@ -1,26 +1,10 @@
-﻿using OpenBoardAnim.Models;
+using OpenBoardAnim.Models;
 using OpenBoardAnim.Utilities;
 using OpenBoardAnim.Utils;
 using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Animation;
-using System.Windows.Media.Imaging;
-using System.Windows.Media.Media3D;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
-using System.Windows.Threading;
 
 namespace OpenBoardAnim.Views
 {
@@ -29,78 +13,117 @@ namespace OpenBoardAnim.Views
     /// </summary>
     public partial class ProjectPreviewView : UserControl
     {
-        private MediaPlayer _audioPlayer;
-        private DispatcherTimer _audioTrimTimer;
-        // Button_Click is "async void" (a UI event handler), so it isn't tied to the dialog
-        // window's lifetime at all - closing the window doesn't stop it or the audio it started.
-        // Cancelling this on Unloaded (which fires as the window tears down its content) is what
-        // actually stops both the animation loop and the players in the finally block below.
-        private CancellationTokenSource _previewCts;
+        private PreviewPlaybackHandler _controller;
+        // Guards TimelineSlider.Value assignments made from OnControllerTimeChanged (the
+        // controller ticking or a resulting Seek) so they don't loop back into
+        // TimelineSlider_ValueChanged as if the user had dragged it.
+        private bool _syncingSlider;
+        private bool _wasPlayingBeforeScrub;
 
         public ProjectPreviewView()
         {
             InitializeComponent();
-            Unloaded += (s, e) => _previewCts?.Cancel();
+            Loaded += ProjectPreviewView_Loaded;
+            Unloaded += (s, e) => _controller?.Dispose();
         }
 
-        private async void Button_Click(object sender, RoutedEventArgs e)
+        // Built once per view instance (DataContext is already set by the time this fires - see
+        // DialogService) rather than per Play click, since scrubbing needs a persistent
+        // "where we currently are" that both dragging and auto-play read/write.
+        private void ProjectPreviewView_Loaded(object sender, RoutedEventArgs e)
         {
-            _previewCts?.Cancel();
-            _previewCts = new CancellationTokenSource();
-            CancellationToken cancellationToken = _previewCts.Token;
             try
             {
-                ProjectDetails project = this.DataContext as ProjectDetails;
-                if (!string.IsNullOrWhiteSpace(project?.AudioPath) && File.Exists(project.AudioPath))
-                {
-                    _audioPlayer = new MediaPlayer();
-                    _audioPlayer.Open(new Uri(project.AudioPath));
-                    _audioPlayer.Volume = project.AudioVolume / 100.0;
-
-                    double audioStart = Math.Max(0, project.AudioTrimStart);
-                    double? audioCap = project.AudioTrimEnd > project.AudioTrimStart ? project.AudioTrimEnd : null;
-
-                    if (project.PreviewSceneIndex is int sceneIndex && sceneIndex >= 0 && sceneIndex < project.Scenes.Count)
-                    {
-                        // Roughly line the background-music track up with where this scene would
-                        // fall in the full project (an estimate, not exact - see
-                        // GetEstimatedSceneDurationSeconds) instead of always starting from the
-                        // very beginning of the track, and cap it so it doesn't bleed into where
-                        // the next scene's portion would start.
-                        double offset = 0;
-                        for (int i = 0; i < sceneIndex; i++)
-                            offset += PreviewAndExportHandler.GetEstimatedSceneDurationSeconds(project.Scenes[i]);
-                        double sceneDuration = PreviewAndExportHandler.GetEstimatedSceneDurationSeconds(project.Scenes[sceneIndex]);
-
-                        audioStart += offset;
-                        double sceneCap = audioStart + sceneDuration;
-                        audioCap = audioCap.HasValue ? Math.Min(audioCap.Value, sceneCap) : sceneCap;
-                    }
-
-                    _audioPlayer.Position = TimeSpan.FromSeconds(audioStart);
-                    _audioPlayer.Play();
-                    if (audioCap.HasValue)
-                        _audioTrimTimer = PreviewAndExportHandler.StartTrimStopTimer(_audioPlayer, audioCap.Value);
-                }
-                await PreviewAndExportHandler.RunAnimationsOnCanvas(project, PreviewCanvas, false, cancellationToken: cancellationToken);
-            }
-            catch (OperationCanceledException)
-            {
-                // Expected when the preview window is closed, or Play is clicked again, mid-playback.
+                if (DataContext is not ProjectDetails project) return;
+                _controller = new PreviewPlaybackHandler(project, PreviewCanvas);
+                _controller.TimeChanged += OnControllerTimeChanged;
+                _controller.PlaybackEnded += OnPlaybackEnded;
+                TimelineSlider.Maximum = Math.Max(0.01, _controller.TotalDuration);
+                UpdateTimeLabel(0);
             }
             catch (Exception ex)
             {
                 if (Logger.LogError(ex, LogAction.LogAndShow))
                     throw;
             }
+        }
+
+        private void PlayPauseButton_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                if (_controller == null) return;
+                if (_controller.IsPlaying)
+                {
+                    _controller.Pause();
+                    PlayPauseButton.Content = "Play";
+                }
+                else
+                {
+                    _controller.Play();
+                    PlayPauseButton.Content = "Pause";
+                }
+            }
+            catch (Exception ex)
+            {
+                if (Logger.LogError(ex, LogAction.LogAndShow))
+                    throw;
+            }
+        }
+
+        private void OnPlaybackEnded()
+        {
+            PlayPauseButton.Content = "Play";
+        }
+
+        private void OnControllerTimeChanged(double time)
+        {
+            _syncingSlider = true;
+            try
+            {
+                TimelineSlider.Value = time;
+            }
             finally
             {
-                _audioTrimTimer?.Stop();
-                _audioTrimTimer = null;
-                _audioPlayer?.Stop();
-                _audioPlayer?.Close();
-                _audioPlayer = null;
+                _syncingSlider = false;
             }
+            UpdateTimeLabel(time);
+        }
+
+        private void UpdateTimeLabel(double time)
+        {
+            TimeLabel.Text = $"{FormatTime(time)} / {FormatTime(_controller?.TotalDuration ?? 0)}";
+        }
+
+        private static string FormatTime(double seconds)
+        {
+            TimeSpan span = TimeSpan.FromSeconds(Math.Max(0, seconds));
+            return span.Hours > 0 ? span.ToString(@"h\:mm\:ss") : span.ToString(@"m\:ss");
+        }
+
+        // A plain click on the slider's track (not a drag) also starts with
+        // PreviewMouseLeftButtonDown, so this covers both "click to jump" and "drag to scrub"
+        // with one pair of handlers.
+        private void TimelineSlider_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            if (_controller == null) return;
+            _wasPlayingBeforeScrub = _controller.IsPlaying;
+            _controller.Pause();
+            PlayPauseButton.Content = "Play";
+        }
+
+        private void TimelineSlider_PreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+        {
+            if (_controller == null || !_wasPlayingBeforeScrub) return;
+            _wasPlayingBeforeScrub = false;
+            _controller.Play();
+            PlayPauseButton.Content = "Pause";
+        }
+
+        private void TimelineSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            if (_syncingSlider || _controller == null) return;
+            _controller.Seek(e.NewValue);
         }
     }
 }

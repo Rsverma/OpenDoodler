@@ -4,9 +4,15 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:hc="https://handyorg.github.io/handycontrol"
+             xmlns:utils="clr-namespace:OpenBoardAnim.Utils"
              mc:Ignorable="d"
-             d:DesignHeight="260" d:DesignWidth="420">
+             d:DesignHeight="420" d:DesignWidth="420">
     <UserControl.Resources>
+        <utils:CountToVisibilityConverter x:Key="CountToVisibilityConverter"/>
+        <utils:FriendlyEnumConverter x:Key="FriendlyEnumConverter"/>
+        <DataTemplate x:Key="FriendlyEnumItemTemplate">
+            <TextBlock Text="{Binding Converter={StaticResource FriendlyEnumConverter}}"/>
+        </DataTemplate>
         <Style x:Key="SettingsCardStyle" TargetType="Border">
             <Setter Property="Background" Value="{DynamicResource RegionBrush}"/>
             <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
@@ -18,21 +24,18 @@
         <Style x:Key="SettingsSectionTitleStyle" TargetType="TextBlock" BasedOn="{StaticResource TextBlockSubTitle}">
             <Setter Property="Margin" Value="0 0 0 2"/>
         </Style>
-        <Style x:Key="SettingsHintStyle" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="11"/>
-            <Setter Property="Opacity" Value="0.65"/>
-            <Setter Property="TextWrapping" Value="Wrap"/>
-            <Setter Property="Margin" Value="0 0 0 6"/>
-        </Style>
     </UserControl.Resources>
 
     <StackPanel Margin="20" Width="360" HorizontalAlignment="Center" VerticalAlignment="Top">
         <Border Style="{StaticResource SettingsCardStyle}">
             <StackPanel>
-                <TextBlock Text="Voiceover Trim" Style="{StaticResource SettingsSectionTitleStyle}"/>
-                <TextBlock Text="Which part of this scene's voiceover file plays, instead of always starting from 0:00." Style="{StaticResource SettingsHintStyle}"/>
+                <TextBlock Text="Voiceover" Style="{StaticResource SettingsSectionTitleStyle}"/>
                 <TextBlock Margin="0 0 0 6" Text="{Binding VoiceoverPath, TargetNullValue='No voiceover set for this scene'}"
                            ToolTip="{Binding VoiceoverPath}" TextTrimming="CharacterEllipsis" FontSize="12" FontStyle="Italic"/>
+                <StackPanel Orientation="Horizontal" Margin="0 0 0 8">
+                    <Button Content="Browse..." Click="BrowseVoiceover_Click"/>
+                    <Button Margin="6 0 0 0" Style="{StaticResource ButtonDanger}" Content="Clear" Click="ClearVoiceover_Click"/>
+                </StackPanel>
                 <StackPanel Orientation="Horizontal">
                     <TextBlock Text="Start" VerticalAlignment="Center" FontSize="11" Margin="0 0 4 0"/>
                     <hc:NumericUpDown Width="70" Minimum="0" DecimalPlaces="1" ValueFormat="0.0" Value="{Binding VoiceoverTrimStart, Mode=TwoWay}"/>
@@ -40,6 +43,56 @@
                     <hc:NumericUpDown Width="70" Minimum="0" DecimalPlaces="1" ValueFormat="0.0" Value="{Binding VoiceoverTrimEnd, Mode=TwoWay}"
                                       ToolTip="Seconds from the start of the file. 0 = play to the end."/>
                 </StackPanel>
+            </StackPanel>
+        </Border>
+
+        <Border Style="{StaticResource SettingsCardStyle}">
+            <StackPanel>
+                <Grid Margin="0 0 0 4">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="Camera Effects" Style="{StaticResource SettingsSectionTitleStyle}" VerticalAlignment="Center"/>
+                    <Button Grid.Column="1" Content="Add" Command="{Binding AddCameraEffectCommand}"/>
+                </Grid>
+                <TextBlock Text="No camera effects yet." FontSize="12" FontStyle="Italic" Opacity="0.65"
+                           Visibility="{Binding CameraEffects.Count, Converter={StaticResource CountToVisibilityConverter}, ConverterParameter=Invert}"/>
+                <ItemsControl ItemsSource="{Binding CameraEffects}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0 0 0 1" Padding="0 6">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding StartZoom, StringFormat={}{0:0.0}x}" FontSize="12"/>
+                                        <TextBlock Text=" → " FontSize="12"/>
+                                        <TextBlock Text="{Binding EndZoom, StringFormat={}{0:0.0}x}" FontSize="12"/>
+                                        <TextBlock Text="," FontSize="12" Margin="0 0 4 0"/>
+                                        <TextBlock Text="{Binding StartTime, StringFormat={}{0:0.0}s}" FontSize="12"/>
+                                        <TextBlock Text="–" FontSize="12"/>
+                                        <TextBlock Text="{Binding EndTime, StringFormat={}{0:0.0}s}" FontSize="12"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                        <Button Content="Edit" Command="{Binding EditEffectCommand}"/>
+                                        <Button Margin="6 0 0 0" Style="{StaticResource ButtonDanger}" Content="Delete" Command="{Binding DeleteEffectCommand}"/>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+        </Border>
+
+        <Border Style="{StaticResource SettingsCardStyle}">
+            <StackPanel>
+                <TextBlock Text="Scene Transition" Style="{StaticResource SettingsSectionTitleStyle}"/>
+                <hc:ComboBox x:Name="TransitionOverrideComboBox" Width="200" HorizontalAlignment="Left"
+                             ItemTemplate="{StaticResource FriendlyEnumItemTemplate}" SelectedItem="{Binding TransitionOverride, Mode=TwoWay}"/>
             </StackPanel>
         </Border>
     </StackPanel>

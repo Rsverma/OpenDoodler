@@ -47,6 +47,12 @@ namespace OpenBoardAnim.Models
         public FontWeight SelectedFontWeight { get;  set; }
         public double SelectedFontSize { get;  set; }
         public bool IsUnderline { get; set; }
+        public bool IsStrikethrough { get; set; }
+        // Per-block bold/italic/underline/strikethrough overrides on top of
+        // SelectedFontStyle/SelectedFontWeight/IsUnderline/IsStrikethrough - empty for text
+        // created before this existed, in which case those base properties apply to the whole
+        // string exactly as before.
+        public List<TextFormatRun> FormatRuns { get; set; } = new();
 
         private string _selectedColorHex = "#FF000000";
         public string SelectedColorHex
@@ -87,7 +93,17 @@ namespace OpenBoardAnim.Models
                 IsLocked = IsLocked,
                 IsVisible = IsVisible,
                 IsUnderline = IsUnderline,
-                SelectedColorHex = SelectedColorHex
+                IsStrikethrough = IsStrikethrough,
+                SelectedColorHex = SelectedColorHex,
+                FormatRuns = FormatRuns?.Select(r => new TextFormatRun
+                {
+                    Start = r.Start,
+                    Length = r.Length,
+                    IsBold = r.IsBold,
+                    IsItalic = r.IsItalic,
+                    IsUnderline = r.IsUnderline,
+                    IsStrikethrough = r.IsStrikethrough
+                }).ToList() ?? new List<TextFormatRun>()
             };
         }
     }
