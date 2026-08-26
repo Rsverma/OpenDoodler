@@ -295,12 +295,6 @@
                                  Command="{Binding AddTextCommand}" Click="AddText_Click" Content ="Add Text"/>
                     </Grid>
                 </hc:TabItem>
-                <hc:TabItem Header="{materialDesign:PackIcon music}" ToolTip="Audio">
-                    <TextBlock Text="Under&#x0a;construction" TextAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="30"/>
-                </hc:TabItem>
-                <hc:TabItem Header="{materialDesign:PackIcon CloudUpload}">
-                    <TextBlock Text="Under&#x0a;construction" TextAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="30"/>
-                </hc:TabItem>
             </hc:TabControl>
         </Grid>
     </Border>
