@@ -8,6 +8,12 @@
          "Program Files (x86)" - wrong for this app, which is always published win-x64
          (see PublishDir below and installer/README.md). -->
     <InstallerPlatform>x64</InstallerPlatform>
+    <!-- ICE60 flags one harvested file (from the wildcard Files Include below) for having no
+         Language on its version resource - a benign, common false-positive for native/apphost
+         binaries in a self-contained .NET publish, not an actual install-correctness issue.
+         Suppressed rather than chased down to a specific file, since the whole point of the
+         wildcard harvest is that no file list here needs maintaining as dependencies change. -->
+    <SuppressIces>ICE60</SuppressIces>
     <!-- WiX v7 requires accepting its Open Source Maintenance Fee EULA to build - free
          for non-commercial/under-$10k-revenue use (which is us), a monthly fee otherwise.
          See https://wixtoolset.org/osmf/ and installer/README.md. -->
