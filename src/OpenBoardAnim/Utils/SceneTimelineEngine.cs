@@ -33,7 +33,7 @@ namespace OpenBoardAnim.Utils
         public PathGeometry Geometry;
         public double LocalStart;
         public double LocalDuration;
-        public double Length;
+        public double DashLength;
     }
 
     public sealed class CameraPlan
@@ -131,13 +131,14 @@ namespace OpenBoardAnim.Utils
                     for (int i = 0; i < pathGeometries.Count; i++)
                     {
                         Path pathElement = new() { Stroke = strokeBrush, StrokeThickness = strokeWidth, Data = pathGeometries[i] };
-                        // A single-value StrokeDashArray alternates [dash=length, gap=length] -
-                        // StrokeDashOffset=length shifts the pattern so the whole path starts in
-                        // the gap (hidden); offset=0 puts the whole path in the dash (fully
-                        // drawn). Without StrokeDashArray set at all, StrokeDashOffset has no
-                        // effect and the stroke always renders solid regardless.
-                        pathElement.StrokeDashArray = new DoubleCollection(new double[] { lengths[i] });
-                        pathElement.StrokeDashOffset = lengths[i];
+                        // WPF expresses dash-array values and offsets in multiples of the pen's
+                        // thickness, while lengths[i] is in geometry units. Normalizing here
+                        // makes the visible stroke tip cover the same distance per fraction as
+                        // GetPointAtFractionLength below. Using the raw geometry length made a
+                        // thickness-2 stroke finish twice as fast as the hand (the default case).
+                        double dashLength = ToStrokeDashUnits(lengths[i], pathElement.StrokeThickness);
+                        pathElement.StrokeDashArray = new DoubleCollection(new double[] { dashLength });
+                        pathElement.StrokeDashOffset = dashLength;
                         canvas.Children.Add(pathElement);
                         Canvas.SetLeft(pathElement, graphic.X);
                         Canvas.SetTop(pathElement, graphic.Y);
@@ -150,7 +151,7 @@ namespace OpenBoardAnim.Utils
                             Geometry = pathGeometries[i],
                             LocalStart = localCursor,
                             LocalDuration = segDuration,
-                            Length = lengths[i]
+                            DashLength = dashLength
                         });
                         localCursor += segDuration;
                     }
@@ -246,7 +247,7 @@ namespace OpenBoardAnim.Utils
                 {
                     double segLocal = Math.Clamp(local - seg.LocalStart, 0, seg.LocalDuration);
                     double fraction = seg.LocalDuration > 0 ? segLocal / seg.LocalDuration : (local >= seg.LocalStart ? 1 : 0);
-                    seg.Element.StrokeDashOffset = seg.Length * (1 - fraction);
+                    seg.Element.StrokeDashOffset = seg.DashLength * (1 - fraction);
                     seg.Element.Opacity = finished ? 0 : 1;
 
                     // started (not just local >= seg.LocalStart) matters here: for a graphic that
@@ -326,6 +327,11 @@ namespace OpenBoardAnim.Utils
         }
 
         private static double Lerp(double from, double to, double fraction) => from + (to - from) * fraction;
+
+        internal static double ToStrokeDashUnits(double geometryLength, double strokeThickness)
+        {
+            return strokeThickness > 0 ? geometryLength / strokeThickness : geometryLength;
+        }
 
         private static double GetTotalLength(PathGeometry geometry)
         {
