@@ -49,7 +49,6 @@ namespace OpenBoardAnim.Utils
                         strokeBrush = (Brush)new BrushConverter().ConvertFromString(project.Settings.StrokeColorHex);
                 }
                 catch (FormatException) { /* keep default black on an unparsable hex value */ }
-                double strokeWidth = project.Settings != null && project.Settings.StrokeWidth > 0 ? project.Settings.StrokeWidth : 1;
 
                 Image hand = new() { Source = SceneRenderHelpers.ResolveHandImage(handStyle, project.Settings?.CustomHandImagePath) };
 
@@ -118,7 +117,7 @@ namespace OpenBoardAnim.Utils
                     if (hasVoiceover)
                         rawVoiceoverCues.Add((scene.VoiceoverPath, virtualClock, scene.VoiceoverTrimStart, scene.VoiceoverTrimEnd, i));
 
-                    double sceneDuration = await RunSceneAsync(canvas, scene, entranceStyle, hand, showHand, strokeBrush, strokeWidth,
+                    double sceneDuration = await RunSceneAsync(canvas, scene, entranceStyle, hand, showHand, strokeBrush,
                         cameraScale, cameraTranslate, cameraViewportWidth, cameraViewportHeight, exporter, exportFrameRate, cancellationToken);
                     virtualClock += sceneDuration;
                 }
@@ -205,10 +204,10 @@ namespace OpenBoardAnim.Utils
         // scene's real content duration (the same value SceneRenderHelpers.
         // GetEstimatedSceneDurationSeconds approximates from outside).
         private static async Task<double> RunSceneAsync(Canvas canvas, SceneModel scene, EntranceStyle entranceStyle, Image hand, bool showHand,
-            Brush strokeBrush, double strokeWidth, ScaleTransform cameraScale, TranslateTransform cameraTranslate,
+            Brush strokeBrush, ScaleTransform cameraScale, TranslateTransform cameraTranslate,
             double cameraViewportWidth, double cameraViewportHeight, VideoExporter exporter, int frameRate, CancellationToken cancellationToken)
         {
-            SceneTimelinePlan plan = SceneTimelineEngine.BuildScenePlan(canvas, scene, entranceStyle, strokeBrush, strokeWidth, cameraViewportWidth, cameraViewportHeight);
+            SceneTimelinePlan plan = SceneTimelineEngine.BuildScenePlan(canvas, scene, entranceStyle, strokeBrush, cameraViewportWidth, cameraViewportHeight);
 
             int frameCount = Math.Max(1, (int)Math.Round(plan.Duration * frameRate));
             for (int f = 0; f < frameCount; f++)

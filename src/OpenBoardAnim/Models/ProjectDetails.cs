@@ -113,7 +113,6 @@ namespace OpenBoardAnim.Models
                 {
                     BoardType = Settings.BoardType,
                     StrokeColorHex = Settings.StrokeColorHex,
-                    StrokeWidth = Settings.StrokeWidth,
                     EntranceStyle = Settings.EntranceStyle,
                     HandStyle = Settings.HandStyle,
                     CustomHandImagePath = Settings.CustomHandImagePath,
@@ -196,17 +195,6 @@ namespace OpenBoardAnim.Models
             set
             {
                 _strokeColorHex = value;
-                OnPropertyChanged();
-            }
-        }
-
-        private double _strokeWidth = 2;
-        public double StrokeWidth
-        {
-            get { return _strokeWidth; }
-            set
-            {
-                _strokeWidth = value;
                 OnPropertyChanged();
             }
         }
