@@ -349,3 +349,8 @@ MigrationBackup/
 # Ionide (cross platform F# VS Code tools) working folder
 .ionide/
 /src/OpenBoardAnim/Resources/undraw_love_is_in_the_air_4uud.svg
+
+# Local-only, not project source: personal notes, and the machine-local OpenCode
+# config (opencode.json points OpenCode at CLAUDE.md - it is not needed by the app).
+OpenDoodler Code Review.txt
+opencode.json
