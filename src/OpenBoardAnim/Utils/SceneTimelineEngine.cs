@@ -33,7 +33,9 @@ namespace OpenBoardAnim.Utils
         public PathGeometry Geometry;
         public double LocalStart;
         public double LocalDuration;
-        public double Length;
+        // WPF dash units (multiples of the pen's thickness), not geometry units - see
+        // SceneTimelineEngine.ToStrokeDashUnits.
+        public double DashLength;
     }
 
     public sealed class CameraPlan
@@ -70,11 +72,20 @@ namespace OpenBoardAnim.Utils
     {
         private static readonly IEasingFunction PopInEase = new BackEase { EasingMode = EasingMode.EaseOut };
 
+        // Seconds over which a finished HandDrawn graphic cross-fades from its revealed outline
+        // to the settled artwork. Without it the swap is a single-frame jump: the outline is the
+        // project stroke brush at the graphic's derived width, while the settled element is the
+        // SVG's own filled artwork, so the graphic visibly changes weight and colour all at once.
+        // Kept short because the fade runs inside the graphic's own duration (see
+        // ApplyGraphicState) - it doesn't extend the scene, but a long window would start to read
+        // as the fill leaking in ahead of the pen.
+        private const double HandDrawnSettleFadeSeconds = 0.2;
+
         // Builds one scene's graphic and camera plans, adding every graphic's visual elements to
         // canvas.Children (hidden - ApplyGraphicState reveals them at the right time) as a side
         // effect. Callers own clearing the canvas and resetting camera transforms beforehand.
         public static SceneTimelinePlan BuildScenePlan(Canvas canvas, SceneModel scene, EntranceStyle entranceStyle,
-            Brush strokeBrush, double strokeWidth, double cameraViewportWidth, double cameraViewportHeight)
+            Brush strokeBrush, double cameraViewportWidth, double cameraViewportHeight)
         {
             List<GraphicPlan> graphicPlans = new();
             double cursor = 0;
@@ -83,6 +94,10 @@ namespace OpenBoardAnim.Utils
                 double start = cursor + graphic.Delay;
                 Geometry geometry = null;
                 UIElement element = null;
+                // How far this graphic is scaled away from the artwork's natural size. Drives the
+                // hand-drawn outline's thickness below, so the traced line stays visually
+                // proportional to the art instead of being pinned to one project-wide width.
+                double graphicScale = 1;
 
                 if (graphic is DrawingModel drawing)
                 {
@@ -92,6 +107,7 @@ namespace OpenBoardAnim.Utils
                         ? Math.Min(drawing.Width / drawingBounds.Width, drawing.Height / drawingBounds.Height)
                         : 1;
                     drawingGroup.Transform = new ScaleTransform(drawingScale, drawingScale);
+                    graphicScale = drawingScale;
                     element = new Image { Source = new DrawingImage(drawingGroup) };
                     if (entranceStyle == EntranceStyle.HandDrawn)
                         geometry = GeometryHelper.ConvertToGeometry(drawingGroup);
@@ -103,6 +119,7 @@ namespace OpenBoardAnim.Utils
                     double textScale = !textBounds.IsEmpty && textBounds.Width > 0 && textBounds.Height > 0
                         ? Math.Min(text.Width / textBounds.Width, text.Height / textBounds.Height)
                         : 1;
+                    graphicScale = textScale;
                     if (textScale != 1)
                         element.RenderTransform = new ScaleTransform(textScale, textScale);
                     if (entranceStyle == EntranceStyle.HandDrawn)
@@ -125,32 +142,52 @@ namespace OpenBoardAnim.Utils
 
                     PathGeometry pathGeometry = geometry.GetFlattenedPathGeometry();
                     List<PathGeometry> pathGeometries = GeometryHelper.GenerateMultiplePaths(pathGeometry, graphic is DrawingModel);
-                    List<double> lengths = pathGeometries.Select(GetTotalLength).ToList();
-                    double totalLength = lengths.Sum();
-                    double localCursor = 0;
-                    for (int i = 0; i < pathGeometries.Count; i++)
+                    // Keep only subpaths that actually have length. A figure containing nothing but
+                    // a move (or whose points all coincide) flattens to a figure with zero length,
+                    // and PathGeometry.GetPointAtFractionLength throws ArgumentException ("Value
+                    // does not fall within the expected range") for a geometry that is non-empty
+                    // but zero-length - IsEmpty() only checks whether there are any figures at all.
+                    // Zero length also makes an invalid pen here, because the dash array below ends
+                    // up as a single 0. Neither is recoverable at evaluation time, so filter them
+                    // out up front (issue #6: preview and export both crashed on import for real
+                    // SVGs, and both paths share this builder).
+                    List<(PathGeometry Geometry, double Length)> drawablePaths = new();
+                    foreach (PathGeometry candidate in pathGeometries)
                     {
-                        Path pathElement = new() { Stroke = strokeBrush, StrokeThickness = strokeWidth, Data = pathGeometries[i] };
-                        // A single-value StrokeDashArray alternates [dash=length, gap=length] -
-                        // StrokeDashOffset=length shifts the pattern so the whole path starts in
-                        // the gap (hidden); offset=0 puts the whole path in the dash (fully
-                        // drawn). Without StrokeDashArray set at all, StrokeDashOffset has no
-                        // effect and the stroke always renders solid regardless.
-                        pathElement.StrokeDashArray = new DoubleCollection(new double[] { lengths[i] });
-                        pathElement.StrokeDashOffset = lengths[i];
+                        double candidateLength = GetTotalLength(candidate);
+                        if (double.IsFinite(candidateLength) && candidateLength > 0)
+                            drawablePaths.Add((candidate, candidateLength));
+                    }
+
+                    // One outline weight for the whole graphic, derived from its scale: a graphic
+                    // drawn at 3x gets a 3px pen, the same visual weight per unit of art. Guarded
+                    // against a degenerate scale so a graphic never renders with a zero-width pen.
+                    double outlineWidth = graphicScale > 0 ? graphicScale : 1;
+                    double totalLength = drawablePaths.Sum(p => p.Length);
+                    double localCursor = 0;
+                    foreach ((PathGeometry segmentGeometry, double segmentLength) in drawablePaths)
+                    {
+                        Path pathElement = new() { Stroke = strokeBrush, StrokeThickness = outlineWidth, Data = segmentGeometry };
+                        // StrokeDashArray/StrokeDashOffset are measured in multiples of the pen's
+                        // thickness, while GetPointAtFractionLength (hand tracking) is geometric.
+                        // Normalizing the length into those units is what keeps the stroke tip and
+                        // the hand covering the same distance per unit of progress.
+                        double dashLength = ToStrokeDashUnits(segmentLength, outlineWidth);
+                        pathElement.StrokeDashArray = new DoubleCollection(new double[] { dashLength });
+                        pathElement.StrokeDashOffset = dashLength;
                         canvas.Children.Add(pathElement);
                         Canvas.SetLeft(pathElement, graphic.X);
                         Canvas.SetTop(pathElement, graphic.Y);
 
-                        double ratio = totalLength > 0 ? lengths[i] / totalLength : 0;
+                        double ratio = segmentLength / totalLength;
                         double segDuration = graphicDuration * ratio;
                         plan.Segments.Add(new PathPlan
                         {
                             Element = pathElement,
-                            Geometry = pathGeometries[i],
+                            Geometry = segmentGeometry,
                             LocalStart = localCursor,
                             LocalDuration = segDuration,
-                            Length = lengths[i]
+                            DashLength = dashLength
                         });
                         localCursor += segDuration;
                     }
@@ -230,7 +267,8 @@ namespace OpenBoardAnim.Utils
         // dash-offset reveal + hand tracking for HandDrawn, or opacity/scale for a fade/pop-in
         // entrance. Graphics before t settle to their final look; graphics after t stay hidden;
         // clamping the local-progress fraction to [0, 1] handles both automatically without
-        // needing separate before/after branches.
+        // needing separate before/after branches. A HandDrawn graphic additionally cross-fades
+        // outline -> settled artwork over its last moments rather than swapping in one frame.
         public static void ApplyGraphicState(GraphicPlan plan, double t, Image hand)
         {
             double local = Math.Clamp(t - plan.Start, 0, plan.Duration);
@@ -239,15 +277,42 @@ namespace OpenBoardAnim.Utils
 
             if (plan.IsHandDrawn)
             {
+                // Cross-fade from outline to settled artwork over the tail of the graphic's own
+                // duration (see HandDrawnSettleFadeSeconds). Both layers are driven by the same
+                // alpha, inverted, so the outline is fully gone exactly when the artwork is fully
+                // in - no pop at either end of the window, which is what the previous hard swap at
+                // `finished` produced. Overlapping two partly-transparent layers does dip the
+                // combined coverage slightly mid-fade; at this length that's imperceptible, and
+                // it's the price of having no visible seam. The window is clamped to the graphic's
+                // duration so a very short graphic can't fade for longer than it draws. A settled
+                // element is only ever non-null when there was artwork to settle to, so a graphic
+                // whose settled element is missing keeps its outline fully visible instead of
+                // fading to nothing.
+                double settledOpacity;
+                if (plan.SettledElement == null)
+                {
+                    settledOpacity = 0;
+                }
+                else if (plan.Duration > 0)
+                {
+                    double fadeSeconds = Math.Min(HandDrawnSettleFadeSeconds, plan.Duration);
+                    double fadeStart = plan.Duration - fadeSeconds;
+                    settledOpacity = fadeSeconds > 0 ? Math.Clamp((local - fadeStart) / fadeSeconds, 0, 1) : 1;
+                }
+                else
+                {
+                    settledOpacity = started ? 1 : 0;
+                }
+
                 if (plan.SettledElement != null)
-                    plan.SettledElement.Opacity = finished ? 1 : 0;
+                    plan.SettledElement.Opacity = settledOpacity;
 
                 foreach (PathPlan seg in plan.Segments)
                 {
                     double segLocal = Math.Clamp(local - seg.LocalStart, 0, seg.LocalDuration);
                     double fraction = seg.LocalDuration > 0 ? segLocal / seg.LocalDuration : (local >= seg.LocalStart ? 1 : 0);
-                    seg.Element.StrokeDashOffset = seg.Length * (1 - fraction);
-                    seg.Element.Opacity = finished ? 0 : 1;
+                    seg.Element.StrokeDashOffset = seg.DashLength * (1 - fraction);
+                    seg.Element.Opacity = plan.SettledElement != null ? 1 - settledOpacity : 1;
 
                     // started (not just local >= seg.LocalStart) matters here: for a graphic that
                     // hasn't started yet, local is clamped to 0, which trivially satisfies
@@ -326,6 +391,14 @@ namespace OpenBoardAnim.Utils
         }
 
         private static double Lerp(double from, double to, double fraction) => from + (to - from) * fraction;
+
+        // Converts a geometry length into the units WPF's dash properties expect (multiples of the
+        // pen's thickness). Falls back to raw geometry units for a non-positive thickness, which
+        // WPF also treats as "no dash scaling".
+        internal static double ToStrokeDashUnits(double geometryLength, double strokeThickness)
+        {
+            return strokeThickness > 0 ? geometryLength / strokeThickness : geometryLength;
+        }
 
         private static double GetTotalLength(PathGeometry geometry)
         {

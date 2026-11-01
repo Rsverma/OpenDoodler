@@ -129,8 +129,6 @@
                     <Border BorderBrush="Black" CornerRadius="4" Padding="2" Margin="0 0 6 0" BorderThickness="{Binding Settings.StrokeColorHex, Converter={StaticResource HexEqualsThicknessConverter}, ConverterParameter=#FF6D4C41}">
                         <Button Style="{StaticResource ColorSwatchButtonStyle}" Background="#FF6D4C41" Tag="#FF6D4C41" Click="StrokeColor_Click"/>
                     </Border>
-                    <TextBlock Text="Width" VerticalAlignment="Center" Margin="16 0 6 0"/>
-                    <hc:NumericUpDown Width="70" Minimum="1" Maximum="20" Style="{StaticResource NumericUpDownPlus}" Value="{Binding Settings.StrokeWidth, Mode=TwoWay}"/>
                 </StackPanel>
             </Border>
 

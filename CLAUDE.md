@@ -29,6 +29,11 @@ dotnet test tests/OpenBoardAnim.Tests/OpenBoardAnim.Tests.csproj
 
 There is no lint config — do not invent lint commands.
 
+**Do not run any of the above (build, run, test, or `dotnet ef`) unless the user explicitly asks for
+it in that turn.** The user verifies changes by hand in the running app; an unrequested build or test
+run is not helpful and can mask or pre-empt their check. Editing files is fine — just don't compile
+them. When the user asks for a build/test, report the actual result rather than restating earlier runs.
+
 ## Repository layout
 
 Buildable source lives under `src/` (three projects, listed below); the xUnit test project lives under
@@ -120,13 +125,22 @@ produces the exact same visual state — which is what makes both scrubbing (pre
 (export) possible in the first place.
 
 - `src/OpenBoardAnim/Utils/SceneTimelineEngine.cs` — the shared "what does this scene look like at time t"
-  engine both paths are built on: `BuildScenePlan(Canvas, SceneModel, EntranceStyle, Brush, double strokeWidth,
+  engine both paths are built on: `BuildScenePlan(Canvas, SceneModel, EntranceStyle, Brush,
   double viewportWidth, double viewportHeight)` builds a scene's `GraphicPlan`/`CameraPlan` list (adding hidden
   WPF elements to the canvas as a side effect) and returns its real content duration; `ApplyGraphicState`/
   `ApplyCameraState` evaluate those plans at any scene-elapsed time. Two public WPF APIs keep this exact rather
   than an approximation of hand-authored animation curves: `PathGeometry.GetPointAtFractionLength` for hand
   tracking (the same primitive `MatrixAnimationUsingPath` uses internally) and `IEasingFunction.Ease(double)`
-  for entrance/camera easing curves.
+  for entrance/camera easing curves. Two details worth knowing before touching the HandDrawn path:
+
+  - **Outline width is derived per graphic, not configured.** There is no project-wide stroke-width setting;
+    `BuildScenePlan` traces each graphic at its own artwork scale (`graphicScale`, the same fit factor used to
+    place the artwork), so the traced line stays proportional to the art. `ProjectSettings.StrokeWidth` was
+    removed — old project JSON that still carries it deserializes fine, the member is just ignored.
+  - **Dash values are normalized.** `StrokeDashArray`/`StrokeDashOffset` are measured in multiples of
+    `StrokeThickness`, while `GetPointAtFractionLength` is geometric, so `PathPlan.DashLength` stores
+    `ToStrokeDashUnits(length, thickness)`. Skipping that division makes the reveal run `thickness`× faster
+    than the hand (the bug in issues #4/#7).
 - `src/OpenBoardAnim/Utils/SceneRenderHelpers.cs` — smaller helpers shared by both paths because they're
   genuinely timing-independent: `BuildTextBlock`/`RenderSceneSnapshot` (static, non-animated visuals),
   `GetEstimatedSceneDurationSeconds`, `GetEffectiveTransition` (resolves a scene's `TransitionOverride` against

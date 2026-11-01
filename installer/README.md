@@ -51,6 +51,9 @@ dotnet build OpenBoardAnim.Setup.sln -c Release -p:ProductVersion=1.1.0.0 -p:Pub
 - Standard upgrade handling via `MajorUpgrade` - installing a newer version automatically
   removes the old one first. **Never change the `UpgradeCode` GUID in `Package.wxs`** - that's
   what makes upgrade detection work across versions.
+- Uninstalling does *not* delete `%LocalAppData%` (the project database, autosave backup,
+  thumbnails, or theme setting) - that's intentional, so an uninstall/reinstall or upgrade never
+  silently loses a user's projects. See the comment above `MajorUpgrade` in `Package.wxs`.
 
 ## Caveats
 

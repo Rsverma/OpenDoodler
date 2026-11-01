@@ -7,6 +7,7 @@ using OpenBoardAnim.Library.Repositories;
 using OpenBoardAnim.Services;
 using OpenBoardAnim.Utilities;
 using OpenBoardAnim.ViewModels;
+using System.IO;
 using System.Windows;
 
 namespace OpenBoardAnim
@@ -76,6 +77,14 @@ namespace OpenBoardAnim
             {
                 _serviceProvider.GetRequiredService<IThemeService>().ApplySkin();
                 var mainWindow = _serviceProvider.GetRequiredService<MainWindow>();
+
+                // Support double-clicking a .obap file (see the ProgId/Extension/Verb
+                // registration in Package.wxs) - Windows passes the file's path as the sole
+                // argument via the registered "%1" open command. Applied before Show() so the
+                // project opens directly with no visible flash of the default Launch screen.
+                if (e.Args.Length > 0 && File.Exists(e.Args[0]) && mainWindow.DataContext is MainViewModel mainViewModel)
+                    mainViewModel.OpenProjectFromStartupArg(e.Args[0]);
+
                 mainWindow.Show();
                 base.OnStartup(e);
             }

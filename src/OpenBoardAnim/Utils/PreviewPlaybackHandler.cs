@@ -49,7 +49,6 @@ namespace OpenBoardAnim.Utils
         private readonly HandStyle _handStyle;
         private readonly SceneTransition _sceneTransitionDefault;
         private readonly Brush _strokeBrush;
-        private readonly double _strokeWidth;
         private readonly double _cameraViewportWidth;
         private readonly double _cameraViewportHeight;
         private readonly Image _hand;
@@ -106,7 +105,6 @@ namespace OpenBoardAnim.Utils
                     _strokeBrush = (Brush)new BrushConverter().ConvertFromString(project.Settings.StrokeColorHex);
             }
             catch (FormatException) { /* keep default black on an unparsable hex value */ }
-            _strokeWidth = project.Settings != null && project.Settings.StrokeWidth > 0 ? project.Settings.StrokeWidth : 1;
             double transitionDurationSeconds = Math.Max(0.05, project.Settings?.TransitionDurationSeconds ?? 0.6);
 
             _hand = new Image { Source = SceneRenderHelpers.ResolveHandImage(_handStyle, project.Settings?.CustomHandImagePath) };
@@ -341,7 +339,7 @@ namespace OpenBoardAnim.Utils
                 }
 
                 SceneModel scene = _project.Scenes[segment.SceneIndex];
-                _activePlan = SceneTimelineEngine.BuildScenePlan(_canvas, scene, _entranceStyle, _strokeBrush, _strokeWidth,
+                _activePlan = SceneTimelineEngine.BuildScenePlan(_canvas, scene, _entranceStyle, _strokeBrush,
                     _cameraViewportWidth, _cameraViewportHeight);
             }
 

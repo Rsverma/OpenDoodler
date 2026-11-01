@@ -129,12 +129,37 @@ namespace OpenBoardAnim.ViewModels
                 if (paths.Length == 0)
                     return;
 
-                ProjectDetails project = _cache.LoadProjectFromFile(paths[0]);
-                if (project == null)
-                    return;
+                OpenProjectFile(paths[0]);
+            }
+            catch (Exception ex)
+            {
+                if (Logger.LogError(ex, LogAction.LogAndShow))
+                    throw;
+            }
+        }
 
-                Navigation.NavigateTo<EditorViewModel>();
-                _pubSub.Publish(SubTopic.ProjectLaunched, project);
+        // Shared by the file-picker flow above and OpenProjectFromStartupArg below. Doesn't
+        // itself confirm discarding unsaved changes - the file-picker caller above already did,
+        // and the startup-arg caller has nothing open yet to discard.
+        private void OpenProjectFile(string path)
+        {
+            ProjectDetails project = _cache.LoadProjectFromFile(path);
+            if (project == null)
+                return;
+
+            Navigation.NavigateTo<EditorViewModel>();
+            _pubSub.Publish(SubTopic.ProjectLaunched, project);
+        }
+
+        // Called once from App.xaml.cs's OnStartup when the app was launched by double-clicking
+        // a .obap file (see the ProgId/Extension/Verb registration in Package.wxs) - opens it
+        // directly in place of NavigateToLaunchCommand's default Launch screen, before the main
+        // window is ever shown, so there's no visible flash of the Launch screen first.
+        public void OpenProjectFromStartupArg(string path)
+        {
+            try
+            {
+                OpenProjectFile(path);
             }
             catch (Exception ex)
             {
