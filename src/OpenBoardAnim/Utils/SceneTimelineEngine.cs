@@ -142,33 +142,49 @@ namespace OpenBoardAnim.Utils
 
                     PathGeometry pathGeometry = geometry.GetFlattenedPathGeometry();
                     List<PathGeometry> pathGeometries = GeometryHelper.GenerateMultiplePaths(pathGeometry, graphic is DrawingModel);
-                    List<double> lengths = pathGeometries.Select(GetTotalLength).ToList();
+                    // Keep only subpaths that actually have length. A figure containing nothing but
+                    // a move (or whose points all coincide) flattens to a figure with zero length,
+                    // and PathGeometry.GetPointAtFractionLength throws ArgumentException ("Value
+                    // does not fall within the expected range") for a geometry that is non-empty
+                    // but zero-length - IsEmpty() only checks whether there are any figures at all.
+                    // Zero length also makes an invalid pen here, because the dash array below ends
+                    // up as a single 0. Neither is recoverable at evaluation time, so filter them
+                    // out up front (issue #6: preview and export both crashed on import for real
+                    // SVGs, and both paths share this builder).
+                    List<(PathGeometry Geometry, double Length)> drawablePaths = new();
+                    foreach (PathGeometry candidate in pathGeometries)
+                    {
+                        double candidateLength = GetTotalLength(candidate);
+                        if (double.IsFinite(candidateLength) && candidateLength > 0)
+                            drawablePaths.Add((candidate, candidateLength));
+                    }
+
                     // One outline weight for the whole graphic, derived from its scale: a graphic
                     // drawn at 3x gets a 3px pen, the same visual weight per unit of art. Guarded
                     // against a degenerate scale so a graphic never renders with a zero-width pen.
                     double outlineWidth = graphicScale > 0 ? graphicScale : 1;
-                    double totalLength = lengths.Sum();
+                    double totalLength = drawablePaths.Sum(p => p.Length);
                     double localCursor = 0;
-                    for (int i = 0; i < pathGeometries.Count; i++)
+                    foreach ((PathGeometry segmentGeometry, double segmentLength) in drawablePaths)
                     {
-                        Path pathElement = new() { Stroke = strokeBrush, StrokeThickness = outlineWidth, Data = pathGeometries[i] };
+                        Path pathElement = new() { Stroke = strokeBrush, StrokeThickness = outlineWidth, Data = segmentGeometry };
                         // StrokeDashArray/StrokeDashOffset are measured in multiples of the pen's
                         // thickness, while GetPointAtFractionLength (hand tracking) is geometric.
                         // Normalizing the length into those units is what keeps the stroke tip and
                         // the hand covering the same distance per unit of progress.
-                        double dashLength = ToStrokeDashUnits(lengths[i], outlineWidth);
+                        double dashLength = ToStrokeDashUnits(segmentLength, outlineWidth);
                         pathElement.StrokeDashArray = new DoubleCollection(new double[] { dashLength });
                         pathElement.StrokeDashOffset = dashLength;
                         canvas.Children.Add(pathElement);
                         Canvas.SetLeft(pathElement, graphic.X);
                         Canvas.SetTop(pathElement, graphic.Y);
 
-                        double ratio = totalLength > 0 ? lengths[i] / totalLength : 0;
+                        double ratio = segmentLength / totalLength;
                         double segDuration = graphicDuration * ratio;
                         plan.Segments.Add(new PathPlan
                         {
                             Element = pathElement,
-                            Geometry = pathGeometries[i],
+                            Geometry = segmentGeometry,
                             LocalStart = localCursor,
                             LocalDuration = segDuration,
                             DashLength = dashLength
