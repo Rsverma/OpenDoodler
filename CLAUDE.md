@@ -165,8 +165,10 @@ produces the exact same visual state — which is what makes both scrubbing (pre
 ### Logging
 
 `src/OpenBoardAnim.Utilities/LogWriter.cs`, static class `Logger`. Serilog with three severity-filtered file sinks
-(Information → `Logs\Messages.log`, Warning → `Logs\Warnings.log`, Error → `Logs\Exceptions.log`), rolling daily
-and at 3MB, under `AppDomain.CurrentDomain.BaseDirectory`. Use `Logger.LogError(ex, LogAction)`,
+(Information → `Messages.log`, Warning → `Warnings.log`, Error → `Exceptions.log`), rolling daily
+and at 3MB, under `%LocalAppData%\OpenBoardAnim\Logs` (`Logger.GetLogDirectory()`) — **not** next to the
+exe: an installed copy runs from `%ProgramFiles%\OpenDoodler`, where standard users can't create files, so
+a file sink there would silently discard everything. Use `Logger.LogError(ex, LogAction)`,
 `Logger.LogWarning(msg, LogAction)`, `Logger.LogMessage(msg, LogAction)` rather than writing new logging code;
 `LogAction` (`LogOnly`, `LogAndShow`, `LogAndThrow`) controls whether the error also surfaces to the UI. This is
 used pervasively via try/catch wrappers throughout the app (`App.xaml.cs`, `CacheService`, `PubSubService`,
